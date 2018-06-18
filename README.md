@@ -48,6 +48,22 @@ If everything went fine, you should see the success message in green:
 The built app it contained within the newly created `dist` folder.
 Open the `dist/index.html` file from your browser to see the app in action.
 
+The generated JavaScript file is only **580 bytes**.
+Yes, that's 0.58kB. 
+If you run that through gzip, you get **334 bytes**.
+With brotli, you're down to only **273 bytes**.
+Here's it again: 
+
+```text
+ 580 index.js
+ 334 index.js.gz
+ 273 index.js.br
+``` 
+
+And it can only get better.
+
+Below is a short overview of how it's achieved.
+
 ## How's it different
 
 The thing is, there's no _framework_ in the traditional sense.
