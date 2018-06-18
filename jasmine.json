@@ -1,0 +1,10 @@
+{
+  "spec_dir": "dist",
+  "spec_files": [
+    "**/*[sS]pec.js"
+  ],
+  "helpers": [
+    "../node_modules/ts-node/register/type-check.js"
+  ],
+  "random": false
+}

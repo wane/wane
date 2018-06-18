@@ -1,0 +1,11 @@
+node_modules/
+**/*.js
+**/*.map
+dist/
+examples/*/node_modules
+examples/*/dist
+results/
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/tasks.xml
+yarn-error.log
