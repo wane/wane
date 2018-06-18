@@ -1,5 +1,5 @@
 {
-  "name": "wane",
+  "name": "@wane/core",
   "version": "0.0.1",
   "description": "A framework for building web-apps.",
   "main": "dist/index.js",
