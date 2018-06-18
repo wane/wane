@@ -31,7 +31,6 @@
   "homepage": "https://github.com/lazarljubenovic/wane#readme",
   "dependencies": {
     "@types/acorn": "^4.0.3",
-    "@types/change-case": "^2.3.1",
     "@types/chokidar": "^1.7.5",
     "@types/gzip-size": "^4.1.0",
     "@types/node": "^9.6.0",
