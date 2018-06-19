@@ -51,12 +51,12 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
             this.writer
               .writeLine(`factoryChild.__wane__destroy()`)
           })
-          .writeLine(`while (this.__wane__root.firstChild !== null) {`)
-          .indentBlock(() => {
-            this.writer
-              .writeLine(`this.__wane__root.removeChild(this.__wane__root.firstChild)`)
-          })
           .writeLine(`}`)
+      })
+      .writeLine(`while (this.__wane__root.firstChild !== null) {`)
+      .indentBlock(() => {
+        this.writer
+          .writeLine(`this.__wane__root.removeChild(this.__wane__root.firstChild)`)
       })
       .writeLine(`}`)
     return this

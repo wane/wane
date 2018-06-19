@@ -281,29 +281,29 @@ export default async function runTests () {
         expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`User info Name Jane Doe Edit Age 43 Edit`)
       }
 
-      // HTML structure when no dialog is open
-      // {
-      //   const body = await page.evaluate(() => {
-      //     return Array.from(document.body.children)
-      //       .map(({ tagName }) => tagName)
-      //   })
-      //   const dl = await page.evaluate(() => {
-      //     return Array.from(document.querySelector(`dl`)!.children)
-      //       .map(({ tagName }) => tagName)
-      //   })
-      //   const firstDd = await page.evaluate(() => {
-      //     return Array.from(document.querySelector(`dl > dd:first-of-type`)!.children)
-      //       .map(({ tagName }) => tagName)
-      //   })
-      //   const secondDd = await page.evaluate(() => {
-      //     return Array.from(document.querySelector(`dl > dd:last-of-type`)!.children)
-      //       .map(({ tagName }) => tagName)
-      //   })
-      //   expect(body).to.eql([`SCRIPT`, `H1`, `DL`])
-      //   expect(dl).to.eql([`DT`, `DD`, `DT`, `DD`])
-      //   expect(firstDd).to.eql([`SPAN`, `BUTTON`])
-      //   expect(secondDd).to.eql([`SPAN`, `BUTTON`])
-      // }
+      // HTML structure
+      {
+        const body = await page.evaluate(() => {
+          return Array.from(document.body.children)
+            .map(({ tagName }) => tagName)
+        })
+        const dl = await page.evaluate(() => {
+          return Array.from(document.querySelector(`dl`)!.children)
+            .map(({ tagName }) => tagName)
+        })
+        const firstDd = await page.evaluate(() => {
+          return Array.from(document.querySelector(`dl > dd:first-of-type`)!.children)
+            .map(({ tagName }) => tagName)
+        })
+        const secondDd = await page.evaluate(() => {
+          return Array.from(document.querySelector(`dl > dd:last-of-type`)!.children)
+            .map(({ tagName }) => tagName)
+        })
+        expect(body).to.eql([`SCRIPT`, `H1`, `DL`])
+        expect(dl).to.eql([`DT`, `DD`, `DT`, `DD`])
+        expect(firstDd).to.eql([`SPAN`, `BUTTON`])
+        expect(secondDd).to.eql([`SPAN`, `BUTTON`])
+      }
     }
 
   } catch (e) {
