@@ -1,7 +1,7 @@
 # Wane
 
 **Wane** is a framework, compiler and a bundler: all at the same time.
-It aims to become the only tool you need to be a front-end application.
+It aims to become the only tool you need to build a front-end application.
 
 See what makes it special after the Hello World introduction below.
 
