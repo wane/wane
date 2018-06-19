@@ -16,7 +16,7 @@ import chalk from 'chalk'
 Error.stackTraceLimit = Infinity
 
 async function run () {
-  // Very basic app with basic components, inputs, outputs, events.
+  // Basic apps with basic components, inputs, outputs, events.
   await helloWorldBasic()
   await helloWorldWithBinding()
   await counter()

@@ -111,11 +111,11 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     return this.componentAnalyzer.getNamesOfAllMethods()
   }
 
-  public hasDefined (identifierAccessorPath: string): boolean {
+  public hasDefinedAndResolvesTo (identifierAccessorPath: string): string | null {
     const allProps = this.getPropAndGetterNames()
     const allMethods = this.getMethodNames()
     const [name, ...rest] = identifierAccessorPath.split('.')
-    return allProps.has(name) || allMethods.has(name)
+    return allProps.has(name) || allMethods.has(name) ? identifierAccessorPath : null
   }
 
   public isScopeBoundary (): boolean {
@@ -180,18 +180,19 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
       .flatten()
 
     // props bound to view in this component
-    const propsBoundToView = this.getPropsBoundToView()
+    const propsBoundToView: Iterable<string> = this.getPropsBoundToView().keys()
 
     const intersection = getIntersection(modifiableProps, propsBoundToView)
 
     return Array.from(intersection).length > 0
   }
 
-  public getPropsBoundToView (): Iterable<string> {
-    const result = new Set<string>()
+  public getPropsBoundToView (): Map<string, string> {
+    const result = new Map<string, string>()
     for (const prop of this.getPropAndGetterNames()) {
-      if (this.hasDefined(prop)) {
-        result.add(prop)
+      const resolved = this.hasDefinedAndResolvesTo(prop)
+      if (resolved != null) {
+        result.set(prop, resolved)
       }
     }
     return result

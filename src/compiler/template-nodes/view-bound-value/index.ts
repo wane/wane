@@ -85,7 +85,7 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
 
   public getScopeFactory (): FactoryAnalyzer<TemplateNodeValue> {
     let current = this.getResponsibleFactory()
-    while (!current.hasDefined(this.getName())) {
+    while (!current.hasDefinedAndResolvesTo(this.getName())) {
       const parent = current.getParentOrUndefined()
       if (parent == null) {
         throw new Error(`Cannot determine scope factory for "${this.path}".`)
@@ -101,7 +101,11 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
   }
 
   public resolveNameInFactory () {
-    return `__wane__data.${this.path}`
+    const resolvedName = this.getScopeFactory().hasDefinedAndResolvesTo(this.path)
+    if (resolvedName == null) {
+      throw new Error(`Expected resolved name not to be null.`)
+    }
+    return `__wane__data.${resolvedName}`
   }
 
   public resolve (from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()): string {

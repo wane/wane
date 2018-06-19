@@ -40,10 +40,10 @@ export class ConditionalViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<T
   //   return this.getBinding().isConditionNegated()
   // }
 
-  public hasDefined (propAccessorPath: string): boolean {
+  public hasDefinedAndResolvesTo (propAccessorPath: string): string | null {
     // A conditional view cannot be a scope for anything as it has no context
     // of its own.
-    return false
+    return null
   }
 
   public getFactoryName (): string {

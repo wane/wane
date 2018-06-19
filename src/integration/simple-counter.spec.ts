@@ -238,15 +238,15 @@
 //       })
 //     })
 //
-//     describe(`hasDefined`, () => {
+//     describe(`hasDefinedAndResolvesTo`, () => {
 //       it(`should report that it has the "counter" property defined`, () => {
-//         expect(entryFa.hasDefined(`counter`)).toBe(true)
+//         expect(entryFa.hasDefinedAndResolvesTo(`counter`)).toBe(true)
 //       })
 //       it(`should report that it has the "onCounterChange" method defined`, () => {
-//         expect(entryFa.hasDefined(`onCounterChange`)).toBe(true)
+//         expect(entryFa.hasDefinedAndResolvesTo(`onCounterChange`)).toBe(true)
 //       })
 //       it(`should report that "value" is not defined on this component`, () => {
-//         expect(entryFa.hasDefined(`value`)).toBe(false)
+//         expect(entryFa.hasDefinedAndResolvesTo(`value`)).toBe(false)
 //       })
 //     })
 //
@@ -323,24 +323,24 @@
 //       })
 //     })
 //
-//     describe(`hasDefined`, () => {
+//     describe(`hasDefinedAndResolvesTo`, () => {
 //       it(`returns true for "value"`, () => {
-//         expect(counterFa.hasDefined('value')).toBe(true)
+//         expect(counterFa.hasDefinedAndResolvesTo('value')).toBe(true)
 //       })
 //       it(`returns true for "valueChange"`, () => {
-//         expect(counterFa.hasDefined('valueChange')).toBe(true)
+//         expect(counterFa.hasDefinedAndResolvesTo('valueChange')).toBe(true)
 //       })
 //       it(`returns true for "onIncClick"`, () => {
-//         expect(counterFa.hasDefined('onIncClick')).toBe(true)
+//         expect(counterFa.hasDefinedAndResolvesTo('onIncClick')).toBe(true)
 //       })
 //       it(`returns true for "onDecClick"`, () => {
-//         expect(counterFa.hasDefined('onDecClick')).toBe(true)
+//         expect(counterFa.hasDefinedAndResolvesTo('onDecClick')).toBe(true)
 //       })
 //       it(`returns false for "counter"`, () => {
-//         expect(counterFa.hasDefined('counter')).toBe(false)
+//         expect(counterFa.hasDefinedAndResolvesTo('counter')).toBe(false)
 //       })
 //       it(`returns false for "onCounterChange"`, () => {
-//         expect(counterFa.hasDefined('onCounterChange')).toBe(false)
+//         expect(counterFa.hasDefinedAndResolvesTo('onCounterChange')).toBe(false)
 //       })
 //     })
 //

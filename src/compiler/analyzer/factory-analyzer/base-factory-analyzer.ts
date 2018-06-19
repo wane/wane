@@ -160,10 +160,33 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   public abstract isScopeBoundary (): boolean
 
   /**
-   * Check if this factory can resolve the given prop access path.
+   * Check if this factory can resolve the given prop access path and return
+   * the string which represents the in-memory representation of how this property
+   * can be accessed.
+   *
+   * If nothing defined can be found, it returns null.
+   *
+   * This allows for template-only aliases to variables, for example in for-loops.
+   *
+   * @example
+   *
+   * ```
+   * <w:for foo of foos>
+   *   {{ foo }}
+   * </w:for>
+   * ```
+   *
+   * The `foo` is here resolved as `this.__wane__data`.
+   *
+   * ```
+   * {{ foo }}
+   * ```
+   *
+   * Here, `foo` is resolved simply as `foo`.
+   *
    * @param {string} propAccessPath The accessor path to look for.
    */
-  public abstract hasDefined (propAccessPath: string): boolean
+  public abstract hasDefinedAndResolvesTo (propAccessPath: string): string | null
 
   /**
    * What is bound to this component/partial fom the outside?
@@ -200,11 +223,26 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return result
   }
 
-  // what's the difference with the two methods above?
-  public abstract getPropsBoundToView (): Iterable<string>
+  // TODO: Figure out what's the difference with the two methods above?
+  /**
+   * Returns a map that maps the view name to the actual name in the model.
+   * This enables aliases in view.
+   *
+   * @example
+   *
+   * In the following snippet, `foo` is mapped to` __wane__data` and `number` is bound to `__wane__index`.
+   *
+   * ```
+   * <w:for (foo, number) of foos>{{ number }}: {{ foo }}</w:for>
+   * ```
+   *
+   * @returns {Map<string, string>}
+   */
+  public abstract getPropsBoundToView (): Map<string, string>
 
   public getFactoriesAffectedByCalling (methodName: string): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
-    if (!this.getFirstScopeBoundaryUpwardsIncludingSelf().hasDefined(methodName)) {
+    const resolved = this.getFirstScopeBoundaryUpwardsIncludingSelf().hasDefinedAndResolvesTo(methodName)
+    if (resolved == null) {
       throw new Error(`Method named "${methodName}" is not defined on factory "${this.getFactoryName()}".`)
     }
     const result = new Set<FactoryAnalyzer<TemplateNodeValue>>()
@@ -230,7 +268,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           }
 
           const propsWhichCanBeModified = originFactory.componentAnalyzer.getPropsWhichCanBeModifiedBy(boundValueMethodName)
-          const propsWhichAffectView = originFactory.getPropsBoundToView()
+          const propsWhichAffectView = originFactory.getPropsBoundToView().keys()
 
           const intersection = new Set(getIntersection(propsWhichCanBeModified, propsWhichAffectView))
           if (intersection.size != 0) {

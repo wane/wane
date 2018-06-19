@@ -81,8 +81,8 @@ export abstract class PartialViewFactoryAnalyzer<T extends TemplateNodePartialVi
       .writeLine(`${closing} = this.__wane__factoryParent.__wane__domNodes[${indexes[1]}]`)
   }
 
-  public getPropsBoundToView (): Iterable<string> {
-    return []
+  public getPropsBoundToView (): Map<string, string> {
+    return new Map<string, string>()
   }
 
 }

@@ -939,19 +939,19 @@ describe(`FactoryAnalyzer`, () => {
   })
 
 
-  describe(`hasDefined`, () => {
+  describe(`hasDefinedAndResolvesTo`, () => {
 
     describe(`01-hello-world`, () => {
       describe(`App`, () => {
         const app = apps.helloWorld.getFactoryTree()
-        it(`returns true for "greeting" because it's defined as a class prop`, () => {
-          expect(app.hasDefined(`greeting`)).toBe(true)
+        it(`returns itself for "greeting" because it's defined as a class prop`, () => {
+          expect(app.hasDefinedAndResolvesTo(`greeting`)).toBe(`greeting`)
         })
-        it(`returns true for "someone" because it's defined as a class prop`, () => {
-          expect(app.hasDefined(`someone`)).toBe(true)
+        it(`returns itself for "someone" because it's defined as a class prop`, () => {
+          expect(app.hasDefinedAndResolvesTo(`someone`)).toBe(`someone`)
         })
-        it(`returns false for "foo" because it's not defined as anything`, () => {
-          expect(app.hasDefined(`foo`)).toBe(false)
+        it(`returns null for "foo" because it's not defined as anything`, () => {
+          expect(app.hasDefinedAndResolvesTo(`foo`)).toBe(null)
         })
       })
     })
@@ -960,40 +960,40 @@ describe(`FactoryAnalyzer`, () => {
       const app = apps.counter.getFactoryTree()
       const counter = app.getFirstChild()
       describe(`CounterCmp`, () => {
-        it(`returns true for "value" because it's defined as an input`, () => {
-          expect(counter.hasDefined(`value`)).toBe(true)
+        it(`returns itself for "value" because it's defined as an input`, () => {
+          expect(counter.hasDefinedAndResolvesTo(`value`)).toBe(`value`)
         })
-        it(`returns true for "valueChange" because it's defined as an output`, () => {
-          expect(counter.hasDefined(`valueChange`)).toBe(true)
+        it(`returns itself for "valueChange" because it's defined as an output`, () => {
+          expect(counter.hasDefinedAndResolvesTo(`valueChange`)).toBe(`valueChange`)
         })
-        it(`returns true for "inc" because it's defined as a method`, () => {
-          expect(counter.hasDefined(`inc`)).toBe(true)
+        it(`returns itself for "inc" because it's defined as a method`, () => {
+          expect(counter.hasDefinedAndResolvesTo(`inc`)).toBe(`inc`)
         })
-        it(`returns true for "dec" because it's defined as a method`, () => {
-          expect(counter.hasDefined(`dec`)).toBe(true)
+        it(`returns itself for "dec" because it's defined as a method`, () => {
+          expect(counter.hasDefinedAndResolvesTo(`dec`)).toBe(`dec`)
         })
-        it(`returns false for "count" because it's defined on the App`, () => {
-          expect(counter.hasDefined(`count`)).toBe(false)
+        it(`returns null for "count" because it's defined on the App`, () => {
+          expect(counter.hasDefinedAndResolvesTo(`count`)).toBe(null)
         })
-        it(`returns false for "onCountChange" because it's defined on App`, () => {
-          expect(counter.hasDefined(`onCountChange`)).toBe(false)
+        it(`returns null for "onCountChange" because it's defined on App`, () => {
+          expect(counter.hasDefinedAndResolvesTo(`onCountChange`)).toBe(null)
         })
-        it(`returns false for "foo" because it's random`, () => {
-          expect(counter.hasDefined(`foo`)).toBe(false)
+        it(`returns null for "foo" because it's random`, () => {
+          expect(counter.hasDefinedAndResolvesTo(`foo`)).toBe(null)
         })
       })
       describe(`App`, () => {
-        it(`returns true for "count" because it's defined as a class prop`, () => {
-          expect(app.hasDefined(`count`)).toBe(true)
+        it(`returns itself for "count" because it's defined as a class prop`, () => {
+          expect(app.hasDefinedAndResolvesTo(`count`)).toBe(`count`)
         })
-        it(`returns true for "onCountChange" because it's defined as a class method`, () => {
-          expect(app.hasDefined(`onCountChange`)).toBe(true)
+        it(`returns itself for "onCountChange" because it's defined as a class method`, () => {
+          expect(app.hasDefinedAndResolvesTo(`onCountChange`)).toBe(`onCountChange`)
         })
         it(`returns false for "value", "valueChange", "inc" and "dec" because those are defined on Counter`, () => {
-          expect(app.hasDefined(`value`)).toBe(false)
-          expect(app.hasDefined(`valueChange`)).toBe(false)
-          expect(app.hasDefined(`inc`)).toBe(false)
-          expect(app.hasDefined(`dec`)).toBe(false)
+          expect(app.hasDefinedAndResolvesTo(`value`)).toBe(null)
+          expect(app.hasDefinedAndResolvesTo(`valueChange`)).toBe(null)
+          expect(app.hasDefinedAndResolvesTo(`inc`)).toBe(null)
+          expect(app.hasDefinedAndResolvesTo(`dec`)).toBe(null)
         })
       })
     })
@@ -1002,50 +1002,50 @@ describe(`FactoryAnalyzer`, () => {
       const app = apps.toggler.getFactoryTree()
       const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
       describe(`for ToggleCmp`, () => {
-        it(`returns true for "value" because it's defined as class prop`, () => {
-          expect(toggleCmp.hasDefined(`value`)).toBe(true)
+        it(`returns itself for "value" because it's defined as class prop`, () => {
+          expect(toggleCmp.hasDefinedAndResolvesTo(`value`)).toBe(`value`)
         })
-        it(`returns true for "valueChange" because it's defined as a class method`, () => {
-          expect(toggleCmp.hasDefined(`valueChange`)).toBe(true)
+        it(`returns itself for "valueChange" because it's defined as a class method`, () => {
+          expect(toggleCmp.hasDefinedAndResolvesTo(`valueChange`)).toBe(`valueChange`)
         })
-        it(`returns true for "changeState" because it's a class method`, () => {
-          expect(toggleCmp.hasDefined(`changeState`)).toBe(true)
+        it(`returns itself for "changeState" because it's a class method`, () => {
+          expect(toggleCmp.hasDefinedAndResolvesTo(`changeState`)).toBe(`changeState`)
         })
-        it(`returns false for "bool" because that's defined on the parent`, () => {
-          expect(toggleCmp.hasDefined(`bool`)).toBe(false)
+        it(`returns null for "bool" because that's defined on the parent`, () => {
+          expect(toggleCmp.hasDefinedAndResolvesTo(`bool`)).toBe(null)
         })
       })
       describe(`for ConditionalView1`, () => {
-        it(`returns false fir isJavaScript even though that's its model, it's not defined there`, () => {
-          expect(conditionalView1.hasDefined(`isJavaScript`)).toBe(false)
+        it(`returns null for isJavaScript even though that's its model, it's not defined there`, () => {
+          expect(conditionalView1.hasDefinedAndResolvesTo(`isJavaScript`)).toBe(null)
         })
-        it(`returns false for "bool", because it's defined on the parent`, () => {
-          expect(conditionalView1.hasDefined(`bool`)).toBe(false)
+        it(`returns null for "bool", because it's defined on the parent`, () => {
+          expect(conditionalView1.hasDefinedAndResolvesTo(`bool`)).toBe(null)
         })
       })
       describe(`for ConditionalView2`, () => {
-        it(`returns false fir isTypeScript even though that's its model, it's not defined there`, () => {
-          expect(conditionalView2.hasDefined(`isTypeScript`)).toBe(false)
+        it(`returns null for isTypeScript even though that's its model, it's not defined there`, () => {
+          expect(conditionalView2.hasDefinedAndResolvesTo(`isTypeScript`)).toBe(null)
         })
-        it(`returns false for "bool", because it's defined on the parent`, () => {
-          expect(conditionalView2.hasDefined(`bool`)).toBe(false)
+        it(`returns null for "bool", because it's defined on the parent`, () => {
+          expect(conditionalView2.hasDefinedAndResolvesTo(`bool`)).toBe(null)
         })
       })
       describe(`for App`, () => {
-        it(`returns true for "bool" because it's a class prop`, () => {
-          expect(app.hasDefined(`bool`)).toBe(true)
+        it(`returns itself for "bool" because it's a class prop`, () => {
+          expect(app.hasDefinedAndResolvesTo(`bool`)).toBe(`bool`)
         })
-        it(`returns true for "onChange" because it's a class method`, () => {
-          expect(app.hasDefined(`onChange`)).toBe(true)
+        it(`returns itself for "onChange" because it's a class method`, () => {
+          expect(app.hasDefinedAndResolvesTo(`onChange`)).toBe(`onChange`)
         })
-        it(`returns true for "isJavaScript" because it's a class getter`, () => {
-          expect(app.hasDefined(`isJavaScript`)).toBe(true)
+        it(`returns itself for "isJavaScript" because it's a class getter`, () => {
+          expect(app.hasDefinedAndResolvesTo(`isJavaScript`)).toBe(`isJavaScript`)
         })
-        it(`returns true for "isTypeScript" because it's a class getter`, () => {
-          expect(app.hasDefined(`isTypeScript`)).toBe(true)
+        it(`returns itself for "isTypeScript" because it's a class getter`, () => {
+          expect(app.hasDefinedAndResolvesTo(`isTypeScript`)).toBe(`isTypeScript`)
         })
-        it(`returns false for "value" because that's defined on a child`, () => {
-          expect(app.hasDefined(`value`)).toBe(false)
+        it(`returns null for "value" because that's defined on a child`, () => {
+          expect(app.hasDefinedAndResolvesTo(`value`)).toBe(null)
         })
       })
     })
