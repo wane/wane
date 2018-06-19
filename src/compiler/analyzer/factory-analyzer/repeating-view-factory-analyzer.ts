@@ -4,11 +4,9 @@ import { TemplateNodeRepeatingViewValue } from '../../template-nodes/nodes/repea
 import { PartialViewFactoryAnalyzer } from './partial-view-factory-analyzer'
 import { RepeatingViewBinding } from '../../template-nodes/view-bindings'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
+import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
 
 export class RepeatingViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<TemplateNodeRepeatingViewValue> {
-
-  // public view!: Forest<TemplateNodeValue>
-  // public templateDefinition: Forest<TemplateNodeValue>
 
   constructor (
     uniqueId: number,
@@ -31,14 +29,6 @@ export class RepeatingViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<Tem
     return binding
   }
 
-  // public getIterativeConstantName (): string {
-  //   return this.getBinding().iterativeConstantName
-  // }
-  //
-  // public getIterativeIndexName (): string | undefined {
-  //   return this.getBinding().indexConstantName
-  // }
-
   public hasDefinedAndResolvesTo (propAccessPath: string): string | null {
     const iterativeConstantName = this.getBinding().iterativeConstantName
     const indexConstantName = this.getBinding().indexConstantName
@@ -53,7 +43,13 @@ export class RepeatingViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<Tem
   }
 
   public getFactoryName (): string {
-    return ''
+    const boundValue = this.getBinding().boundValue as ViewBoundPropertyAccess
+    const path = boundValue.getRawPath().replace(/\./g, '-')
+    return `RepeatingView_${path}_${this.uniqueId}`
+  }
+
+  public toString (): string {
+    return `ConditionalViewFactoryAnalyzer#${this.getFactoryName()}`
   }
 
 }

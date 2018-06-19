@@ -64,7 +64,7 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
     return this.boundValue.getResponsibleFactory()
   }
 
-  public getDefinitionFactory(): FactoryAnalyzer<TemplateNodeValue> {
+  public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
     return this.boundValue.getDefinitionFactory()
   }
 
@@ -289,7 +289,7 @@ export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalV
       .write(this.boundValue.resolve(from))
   }
 
-  public getRaw(): string {
+  public getRaw (): string {
     const boundValue = this.boundValue as ViewBoundPropertyAccess
     return boundValue.getRawPath()
   }

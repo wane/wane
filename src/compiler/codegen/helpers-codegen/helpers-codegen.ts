@@ -134,7 +134,7 @@ export class HelpersCodegen extends BaseCodegen {
 
   private generateGetNextNotUsed (): this {
     this.writer
-      .writeLine(`export function getNextNotUsed(keys: string[], currentIndex: number, used: {[key: string]: true}): number {`)
+      .writeLine(`export function __wane__getNextNotUsed(keys: string[], currentIndex: number, used: {[key: string]: true}): number {`)
       .indentBlock(() => {
         this.writer
           .writeLine(`while (++currentIndex < keys.length && used[keys[currentIndex]]) {}`)

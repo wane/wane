@@ -8,9 +8,6 @@ import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
 
 export class ConditionalViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<TemplateNodeConditionalViewValue> {
 
-  // public view!: Forest<TemplateNodeValue>
-  // public templateDefinition: Forest<TemplateNodeValue>
-
   constructor (
     uniqueId: number,
     parentFactory: FactoryAnalyzer<TemplateNodeValue>,
@@ -31,14 +28,6 @@ export class ConditionalViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<T
     }
     return binding
   }
-
-  // public getConditionAccessPath (): string {
-  //   return this.getBinding().boundValue
-  // }
-
-  // public isConditionNegated (): boolean {
-  //   return this.getBinding().isConditionNegated()
-  // }
 
   public hasDefinedAndResolvesTo (propAccessorPath: string): string | null {
     // A conditional view cannot be a scope for anything as it has no context

@@ -6,28 +6,14 @@ import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-valu
 
 export class ConditionalViewFactoryCodegen extends BaseFactoryCodegen {
 
-  private generateCreateViewMethodDomNodes (fa: ConditionalViewFactoryAnalyzer): this {
-    return this.printDomNodesRegistration(fa)
-  }
-
-  private generateCreateViewMethodDomProps (fa: ConditionalViewFactoryAnalyzer): this {
-    return this.printDomPropsInit(fa)
-  }
-
-  private generateCreateViewMethodTreeCreation (fa: ConditionalViewFactoryAnalyzer): this {
-    this.writer.writeLine(`// Create the DOM tree:`)
-    fa.printAssemblingDomNodes(this.writer)
-    return this
-  }
-
   private generateCreateViewMethod (fa: ConditionalViewFactoryAnalyzer): this {
     this.writer
       .writeLine(`__wane__createView() {`)
       .indentBlock(() => {
         this
-          .generateCreateViewMethodDomNodes(fa)
-          .generateCreateViewMethodDomProps(fa)
-          .generateCreateViewMethodTreeCreation(fa)
+          .printDomNodesRegistration(fa)
+          .printDomPropsInit(fa)
+          .printAssemblingDomNodes(fa)
           .printAssembleFactoryChildren(fa)
       })
       .writeLine(`},`)

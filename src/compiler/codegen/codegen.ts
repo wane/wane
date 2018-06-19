@@ -6,7 +6,7 @@ import CodeBlockWriter from 'code-block-writer'
 import { FactoryAnalyzer, ProjectAnalyzer } from '../analyzer'
 import { ComponentFactoryCodegen } from './component-factory-codegen/component-factory-codegen'
 import { ConditionalViewFactoryCodegen } from './conditional-view-factory-codegen/conditional-view-factory-codegen'
-// import { RepeatingViewFactoryCodegen } from './repeating-view-factory-codegen/repeating-view-factory-codegen'
+import { RepeatingViewFactoryCodegen } from './repeating-view-factory-codegen/repeating-view-factory-codegen'
 import { HelpersCodegen } from './helpers-codegen/helpers-codegen'
 import { BootstrapCodegen } from './bootstrap-codegen/bootstrap-codegen'
 import { Project, SyntaxKind } from 'ts-simple-ast'
@@ -33,7 +33,7 @@ export class Codegen {
       bootstrap: this.createCodegen(BootstrapCodegen),
       component: this.createCodegen(ComponentFactoryCodegen),
       conditionalView: this.createCodegen(ConditionalViewFactoryCodegen),
-      // repeatingView: this.createCodegen(RepeatingViewFactoryCodegen),
+      repeatingView: this.createCodegen(RepeatingViewFactoryCodegen),
     }
     this.distDirectory = this.waneCompilerOptions.output
   }
@@ -71,7 +71,7 @@ export class Codegen {
     bootstrap: BootstrapCodegen,
     component: ComponentFactoryCodegen,
     conditionalView: ConditionalViewFactoryCodegen,
-    // repeatingView: RepeatingViewFactoryCodegen,
+    repeatingView: RepeatingViewFactoryCodegen,
   }
 
   private createCodegen<T> (codegen: Constructor<T>): T {
@@ -92,8 +92,7 @@ export class Codegen {
     } else if (factory instanceof ConditionalViewFactoryAnalyzer) {
       writer = this.codegen.conditionalView.printCode(factory)
     } else if (factory instanceof RepeatingViewFactoryAnalyzer) {
-      throw new Error(`Unknown type of FactoryAnalyzer.`)
-      // writer = this.codegen.repeatingView.printCode(factory)
+      writer = this.codegen.repeatingView.printCode(factory)
     } else {
       throw new Error(`Unknown type of FactoryAnalyzer.`)
     }
