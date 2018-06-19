@@ -70,9 +70,6 @@ export class FormCmp {
   public close(): void {
   }
 
-  public close(): void {
-  }
-
 }
 
 @Entry()
