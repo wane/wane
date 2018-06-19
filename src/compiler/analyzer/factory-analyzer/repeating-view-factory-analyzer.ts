@@ -34,10 +34,10 @@ export class RepeatingViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<Tem
     const indexConstantName = this.getBinding().indexConstantName
     const [propName, ...rest] = propAccessPath.split('.')
     if (propName == iterativeConstantName) {
-      return `__wane__data`
+      return `item`
     }
     if (propAccessPath == indexConstantName) {
-      return `__wane__index`
+      return `index`
     }
     return null
   }

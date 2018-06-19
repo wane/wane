@@ -41,12 +41,15 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
               .writeLine(`const opening = util.__wane__createComment(\`@for-item key: \${key} index: \${index} (opening)\`)`)
               .writeLine(`const closing = util.__wane__createComment(\`@for-item key: \${key} index: \${index} (closing)\`)`)
 
-              .writeLine(`this.__wane__items[key] = SingleItem(item)`)
-              .writeLine(`this.__wane__items[key].__wane__factoryParent = this`)
-              .writeLine(`this.__wane__items[key].__wane__init()`)
+              .writeLine(`util.__wane__insertBefore(this.__wane__closingCommentOutlet, [opening, closing])`)
 
-              .writeLine(`this.__wane__items[key].__wane__openingComment = opening`)
-              .writeLine(`this.__wane__items[key].__wane__closingComment = closing`)
+              .writeLine(`this.__wane__items[key] = SingleItem()`)
+              .writeLine(`this.__wane__items[key].__wane__factoryParent = this`)
+              .writeLine(`this.__wane__items[key].__wane__openingCommentOutlet = opening`)
+              .writeLine(`this.__wane__items[key].__wane__closingCommentOutlet = closing`)
+              .writeLine(`this.__wane__items[key].__wane__data = {item, index}`)
+
+              .writeLine(`this.__wane__items[key].__wane__init()`)
           })
           .writeLine(`}`)
       })
@@ -235,12 +238,10 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
   }
 
   private generateFactory (fa: RepeatingViewFactoryAnalyzer): this {
-    this.writer.writeLine(`const SingleItem = (item) => ({`)
+    this.writer.writeLine(`const SingleItem = () => ({`)
     this.writer
       .writeLine(`__wane__init() {`)
       .indentBlock(() => {
-        this.writer
-          .writeLine(`console.log(item)`)
         this
           .printDomNodesRegistration(fa)
           .printDomPropsInit(fa)
