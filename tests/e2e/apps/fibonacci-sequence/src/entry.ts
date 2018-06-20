@@ -2,7 +2,7 @@ import { Entry, Register, Template } from 'wane'
 
 function* fibonacci (n: number) {
   let current = 1
-  let next = 1
+  let next = 2
 
   while (n-- > 0) {
     yield current;

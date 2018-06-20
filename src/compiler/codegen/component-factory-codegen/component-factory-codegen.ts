@@ -52,13 +52,14 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
               .writeLine(`factoryChild.__wane__destroy()`)
           })
           .writeLine(`}`)
+          .writeLine(`while (this.__wane__root.firstChild !== null) {`)
+          .indentBlock(() => {
+            this.writer
+              .writeLine(`this.__wane__root.removeChild(this.__wane__root.firstChild)`)
+          })
+          .writeLine(`}`)
       })
-      .writeLine(`while (this.__wane__root.firstChild !== null) {`)
-      .indentBlock(() => {
-        this.writer
-          .writeLine(`this.__wane__root.removeChild(this.__wane__root.firstChild)`)
-      })
-      .writeLine(`}`)
+      .writeLine(`},`)
     return this
   }
 

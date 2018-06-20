@@ -144,26 +144,27 @@ export class HelpersCodegen extends BaseCodegen {
     return this
   }
 
-  private recursiveDestroy (): this {
+  private recursiveDestroy (factoryVarName: string): this {
     this.writer
-      .writeLine(`this.__wane__factoryChildren.forEach(child => {`)
+      .writeLine(`${factoryVarName}.__wane__factoryChildren.forEach(child => {`)
       .indentBlock(() => {
         this.writer
           .writeLine(`child.__wane__destroy()`)
       })
+      .writeLine(`})`)
     return this
   }
 
   private generateDestroyComponent (): this {
     this.writer
-      .writeLine(`function ${this.names.destroyComponentFactory} () {`)
+      .writeLine(`function ${this.names.destroyComponentFactory} (factory) {`)
       .indentBlock(() => {
-        this.recursiveDestroy()
+        this.recursiveDestroy(`factory`)
         this.writer
-          .writeLine(`while (this.__wane__root.firstChild !== null) {`)
+          .writeLine(`while (factory.__wane__root.firstChild !== null) {`)
           .indentBlock(() => {
             this.writer
-              .writeLine(`this.root.removeChild(factory.root.firstChild)`)
+              .writeLine(`factory.__wane__root.removeChild(factory.__wane__root.firstChild)`)
           })
           .writeLine(`}`)
       })
@@ -173,12 +174,12 @@ export class HelpersCodegen extends BaseCodegen {
 
   private generateDestroyDirective (): this {
     this.writer
-      .writeLine(`function ${this.names.destroyDirectiveFactory} () {`)
+      .writeLine(`export function ${this.names.destroyDirectiveFactory} (factory) {`)
       .indentBlock(() => {
-        this.recursiveDestroy()
+        this.recursiveDestroy(`factory`)
         this.writer
-          .writeLine(`let node = this.openingCommentOutlet.nextSibling`)
-          .writeLine(`while (node != this.closingCommentOutlet) {`)
+          .writeLine(`let node = factory.__wane__openingCommentOutlet.nextSibling`)
+          .writeLine(`while (node != factory.__wane__closingCommentOutlet) {`)
           .indentBlock(() => {
             this.writer
               .writeLine(`const nextNode = node.nextSibling`)
@@ -199,6 +200,7 @@ export class HelpersCodegen extends BaseCodegen {
       .generateDomHelpers()
       .generateFactoryTreeHelpers()
       .generateGetNextNotUsed()
+      .generateDestroyDirective()
       .getWriter()
   }
 
