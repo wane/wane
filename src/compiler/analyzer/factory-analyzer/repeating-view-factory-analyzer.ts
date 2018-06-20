@@ -1,12 +1,13 @@
 import { FactoryAnalyzer } from './base-factory-analyzer'
 import { Forest, TreeNode } from '../../utils/tree'
 import { TemplateNodeRepeatingViewValue } from '../../template-nodes/nodes/repeating-view-node'
-import { PartialViewFactoryAnalyzer } from './partial-view-factory-analyzer'
+import { DirectiveFactoryAnalyzer } from './directive-factory-analyzer'
 import { RepeatingViewBinding } from '../../template-nodes/view-bindings'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
+import { printTreePath } from '../../utils/graph'
 
-export class RepeatingViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<TemplateNodeRepeatingViewValue> {
+export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<TemplateNodeRepeatingViewValue> {
 
   constructor (
     uniqueId: number,
@@ -34,12 +35,32 @@ export class RepeatingViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<Tem
     const indexConstantName = this.getBinding().indexConstantName
     const [propName, ...rest] = propAccessPath.split('.')
     if (propName == iterativeConstantName) {
-      return `item`
+      return [`item`, ...rest].join('.')
     }
     if (propAccessPath == indexConstantName) {
       return `index`
     }
     return null
+  }
+
+  public printHopToParent (isStartingHop: boolean, isEndingHop: boolean, startFromInnerRepeatingViewFA: boolean): string {
+    if (isStartingHop) {
+      return startFromInnerRepeatingViewFA ? `__wane__factoryParent.__wane__factoryParent` : `__wane__factoryParent`
+    } else {
+      return isEndingHop ? `__wane__factoryParent` : `__wane__factoryParent.__wane__factoryParent`
+    }
+  }
+
+  public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>, startFromInnerRepeatingViewFA: boolean = false): string {
+    const isHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
+      from.getParentOrUndefined() == to
+    const printHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>, isStartingHop: boolean, isEndingHop: boolean) => {
+      return from.printHopToParent(isStartingHop, isEndingHop, startFromInnerRepeatingViewFA)
+    }
+    const printHopToChild = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
+      `__wane__factoryChildren[${to.getFactoryIndexAsChild()}`
+    const path = this.getPathTo(fa)
+    return printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
   }
 
   public getFactoryName (): string {

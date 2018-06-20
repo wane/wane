@@ -160,6 +160,7 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
   constructor (protected eventName: string,
                public readonly boundValue: ViewBoundMethodCall) {
     super(boundValue)
+    boundValue.args.forEach(arg => arg.registerViewBinding(this))
   }
 
   public isNativeHtml (): boolean {

@@ -15,6 +15,7 @@ export abstract class ViewBoundValue {
 
   public getViewBinding (): ViewBinding<TemplateNodeValue> {
     if (this._viewBinding == null) {
+      console.error(this)
       throw new Error(`No ViewBinding is registered to this ViewBoundValue.`)
     }
     return this._viewBinding
@@ -130,7 +131,7 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
 export class ViewBoundMethodCall extends ViewBoundPropertyAccess {
 
   constructor (path: string,
-               protected args: ViewBoundValue[]) {
+               public args: ViewBoundValue[]) {
     super(path)
   }
 

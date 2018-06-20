@@ -1,12 +1,12 @@
 import { FactoryAnalyzer } from './base-factory-analyzer'
 import { Forest, TreeNode } from '../../utils/tree'
-import { PartialViewFactoryAnalyzer } from './partial-view-factory-analyzer'
+import { DirectiveFactoryAnalyzer } from './directive-factory-analyzer'
 import { TemplateNodeConditionalViewValue } from '../../template-nodes/nodes/conditional-view-node'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { ConditionalViewBinding } from '../../template-nodes/view-bindings'
 import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
 
-export class ConditionalViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<TemplateNodeConditionalViewValue> {
+export class ConditionalViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<TemplateNodeConditionalViewValue> {
 
   constructor (
     uniqueId: number,

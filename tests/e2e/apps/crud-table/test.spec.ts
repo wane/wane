@@ -13,7 +13,26 @@ export default async function runTests () {
     // Basic structure
     {
       const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Number of elements Update First 5 Fibonacci numbers 1 2 3 5 8`)
+      const rows = [
+        `John Doe 42 Africa Edit Remove`,
+        `Jane Doe 41 Antarctica Edit Remove`,
+        `Don Joe 40 Asia Edit Remove`,
+        `Donna Joe 39 Europe Edit Remove`,
+      ]
+      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Name Age Continent ${rows.join(' ')} Add new`)
+    }
+
+    // Remove an item in the middle
+    {
+      await page.click('table > tr:nth-child(3) > td:nth-child(5) > button')
+
+      const bodyInnerText = await page.evaluate(() => document.body.textContent)
+      const rows = [
+        `John Doe 42 Africa Edit Remove`,
+        `Don Joe 40 Asia Edit Remove`,
+        `Donna Joe 39 Europe Edit Remove`,
+      ]
+      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Name Age Continent ${rows.join(' ')} Add new`)
     }
 
   } catch (e) {

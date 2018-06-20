@@ -33,6 +33,8 @@ export class EmptyStateCmp {
         </w:for>
       </select>
     </label>
+    <button type="submit">Save</button>
+    <button type="button" (click)="close()">Cancel</button>
   </form>
 `)
 export class FormCmp {
@@ -41,11 +43,14 @@ export class FormCmp {
 
   public initialValue!: Item
 
-  private onSubmit(event: Event) {
+  private onSubmit (event: Event) {
     event.preventDefault()
   }
 
   public submit (value: any): void {
+  }
+
+  public close(): void {
   }
 
 }
@@ -58,7 +63,6 @@ export class FormCmp {
   </w:if>
   
   <w:if !isDataEmpty>
-    Table goes here
     <table>
       <tr>
         <th>Name</th>
@@ -78,12 +82,14 @@ export class FormCmp {
     </table>  
   </w:if>
   
+  <button type="button" (click)="onCreateNewClick()">Add new</button>
+  
   <w:if isNewFormOpen>
-    <form-cmp [initialValue]="itemSelectedForEdit" (submit)="add(#)"/>
+    <form-cmp [initialValue]="itemSelectedForEdit" (submit)="add(#)" (close)="closeNewForm()"/>
   </w:if>
   
   <w:if isEditFormOpen>
-    <form-cmp [initialValue]="itemSelectedForEdit" (submit)="edit(#)"/>  
+    <form-cmp [initialValue]="itemSelectedForEdit" (submit)="edit(#)" (close)="closeEditForm()"/>  
   </w:if>
 `)
 export class App {
@@ -91,7 +97,13 @@ export class App {
   private data: Item[] = [
     { name: `John Doe`, age: 42, continent: `Africa` },
     { name: `Jane Doe`, age: 41, continent: `Antarctica` },
+    { name: `Don Joe`, age: 40, continent: `Asia` },
+    { name: `Donna Joe`, age: 39, continent: `Europe` },
   ]
+
+  private get isDataEmpty (): boolean {
+    return this.data.length == 0
+  }
 
   private indexOfItemSelectedForEdit: number = -1
   private itemSelectedForEdit: Item | undefined
@@ -99,8 +111,20 @@ export class App {
   private isNewFormOpen: boolean = false
   private isEditFormOpen: boolean = false
 
-  private get isDataEmpty (): boolean {
-    return this.data.length == 0
+  private openNewForm() {
+    this.isNewFormOpen = true
+  }
+
+  private closeNewForm() {
+    this.isNewFormOpen = false
+  }
+
+  private openEditForm() {
+    this.isEditFormOpen = true
+  }
+
+  private closeEditForm() {
+    this.isEditFormOpen = false
   }
 
   private onCreateNewClick (): void {
@@ -109,22 +133,35 @@ export class App {
       age: 0,
       continent: '',
     }
+    this.openNewForm()
   }
 
   private onEditClick (index: number): void {
     this.indexOfItemSelectedForEdit = index
     this.itemSelectedForEdit = { ...this.data[index] }
+    this.openEditForm()
   }
 
-  private onRemoveClick(index: number): void {
+  private onRemoveClick (index: number): void {
+    this.remove(index)
   }
 
-  private add (item: Item) {
-    alert(`todo add ${JSON.stringify(item)}`)
+  private add (item: Item): void {
+    this.data = [...this.data, item]
+    this.closeNewForm()
   }
 
-  private edit (item: Item) {
-    alert(`todo edit ${JSON.stringify(item)}`)
+  private edit (index: number, item: Item): void {
+    const above = this.data.slice(0, index)
+    const below = this.data.slice(index + 1)
+    this.data = [...above, item, ...below]
+    this.closeEditForm()
+  }
+
+  private remove(index: number): void {
+    const above = this.data.slice(0, index)
+    const below = this.data.slice(index + 1)
+    this.data = [...above, ...below]
   }
 
 }

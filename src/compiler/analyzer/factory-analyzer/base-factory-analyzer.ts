@@ -131,10 +131,16 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     )
   }
 
+  public printHopToParent(isStartingHop: boolean, isEndingHop: boolean): string {
+    return `__wane__factoryParent`
+  }
+
   public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>): string {
     const isHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
       from.getParentOrUndefined() == to
-    const printHopToParent = () => `__wane__factoryParent`
+    const printHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>, isStartingHop: boolean, isEndingHop: boolean) => {
+      return from.printHopToParent(isStartingHop, isEndingHop)
+    }
     const printHopToChild = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
       `__wane__factoryChildren[${to.getFactoryIndexAsChild()}`
     const path = this.getPathTo(fa)
