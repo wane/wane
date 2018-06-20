@@ -6,6 +6,7 @@ import twoCounters from './apps/two-counters/test.spec'
 import palindromeChecker from './apps/palindrome-checker/test.spec'
 import userInfo from './apps/user-info/test.spec'
 import fibonacciSequence from './apps/fibonacci-sequence/test.spec'
+import crudTable from './apps/crud-table/test.spec'
 
 import * as path from 'path'
 import { readFileSync } from 'fs'
@@ -30,6 +31,7 @@ async function run () {
 
   // Basic usages of w:for
   await fibonacciSequence()
+  await crudTable()
 }
 
 async function reportSizes () {
@@ -42,6 +44,7 @@ async function reportSizes () {
     'palindrome-checker',
     'user-info',
     'fibonacci-sequence',
+    'crud-table',
   ]
 
   const table = new Table({

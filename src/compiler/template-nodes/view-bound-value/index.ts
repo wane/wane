@@ -15,7 +15,7 @@ export abstract class ViewBoundValue {
 
   public getViewBinding (): ViewBinding<TemplateNodeValue> {
     if (this._viewBinding == null) {
-      throw new Error(`No View Binding is registered to this View Bound Value.`)
+      throw new Error(`No ViewBinding is registered to this ViewBoundValue.`)
     }
     return this._viewBinding
   }
