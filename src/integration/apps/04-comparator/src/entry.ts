@@ -67,11 +67,11 @@ export class App {
     this.right = right
   }
 
-  private isRightGreater (): boolean {
+  private get isRightGreater (): boolean {
     return this.right > this.left
   }
 
-  private isLeftGreater (): boolean {
+  private get isLeftGreater (): boolean {
     return this.left > this.right
   }
 }

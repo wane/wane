@@ -3,7 +3,8 @@ import {
   ComponentInputBinding,
   ComponentOutputBinding,
   ConditionalViewBinding,
-  HtmlElementEventBinding, HtmlElementPropBinding,
+  HtmlElementEventBinding,
+  HtmlElementPropBinding,
   InterpolationBinding,
 } from '../compiler/template-nodes/view-bindings'
 import iterare from 'iterare'
@@ -1379,6 +1380,62 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+        it(`returns App for "valueChange" (CounterCmp#valueChange -> App#onLeftChange -> App#left)`, () => {
+          expect(Array.from(counterCmp1.getFactoriesAffectedByCalling(`valueChange`))).toEqual([app])
+        })
+        it(`returns App for "inc" (CounterCmp#inc -> CounterCmp#valueChange -> App#onLeftChange -> App#left)`, () => {
+          expect(Array.from(counterCmp1.getFactoriesAffectedByCalling(`inc`))).toEqual([app])
+        })
+        it(`returns App for "dec" (CounterCmp#dec -> CounterCmp#valueChange -> App#onLeftChange -> App#left)`, () => {
+          expect(Array.from(counterCmp1.getFactoriesAffectedByCalling(`dec`))).toEqual([app])
+        })
+      })
+      describe(`for CounterCmp2`, () => {
+        it(`returns App for "valueChange" (CounterCmp#valueChange -> App#onLeftChange -> App#left)`, () => {
+          expect(Array.from(counterCmp2.getFactoriesAffectedByCalling(`valueChange`))).toEqual([app])
+        })
+        it(`returns App for "inc" (CounterCmp#inc -> CounterCmp#valueChange -> App#onLeftChange -> App#left)`, () => {
+          expect(Array.from(counterCmp2.getFactoriesAffectedByCalling(`inc`))).toEqual([app])
+        })
+        it(`returns App for "dec" (CounterCmp#dec -> CounterCmp#valueChange -> App#onLeftChange -> App#left)`, () => {
+          expect(Array.from(counterCmp2.getFactoriesAffectedByCalling(`dec`))).toEqual([app])
+        })
+      })
+      describe(`for IsLeftGreater`, () => {
+        it(`throws for "xxx" since there is nothing to call`, () => {
+          expect(() => isLeftIsGreater.getFactoriesAffectedByCalling('xxx')).toThrow()
+        })
+      })
+      describe(`for IsRightGreater`, () => {
+        it(`throws for "xxx" since there is nothing to call`, () => {
+          expect(() => isRightIsGreater.getFactoriesAffectedByCalling('xxx')).toThrow()
+        })
+      })
+      describe(`for AreEqual`, () => {
+        it(`throws for "xxx" since there is nothing to call`, () => {
+          expect(() => areEqual.getFactoriesAffectedByCalling('xxx')).toThrow()
+        })
+      })
+      describe(`for InfoCmp`, () => {
+        it(`throws for "xxx" since there is nothing to call`, () => {
+          expect(() => infoCmp.getFactoriesAffectedByCalling('xxx')).toThrow()
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns App for "onLeftChange" (App#onLeftChange -> App#left)`, () => {
+          expect(Array.from(app.getFactoriesAffectedByCalling('onLeftChange'))).toEqual([app])
+        })
+        it(`returns App for "onRightChange" (App#onRightChange -> App#right)`, () => {
+          expect(Array.from(app.getFactoriesAffectedByCalling('onRightChange'))).toEqual([app])
+        })
+      })
+    })
+
   })
 
 
@@ -1423,6 +1480,39 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      describe(`for ToggleCmp`, () => {
+      })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
   })
 
 
@@ -1457,6 +1547,39 @@ describe(`FactoryAnalyzer`, () => {
       describe(`for CounterCmp`, () => {
       })
       describe(`App`, () => {
+      })
+    })
+
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      describe(`for ToggleCmp`, () => {
+      })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
       })
     })
 
@@ -1497,6 +1620,39 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      describe(`for ToggleCmp`, () => {
+      })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
   })
 
 
@@ -1519,6 +1675,39 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`App`, () => {
 
+      })
+    })
+
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      describe(`for ToggleCmp`, () => {
+      })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
       })
     })
 
@@ -1561,6 +1750,39 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      describe(`for ToggleCmp`, () => {
+      })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
   })
 
 
@@ -1584,6 +1806,39 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`App`, () => {
 
+      })
+    })
+
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      describe(`for ToggleCmp`, () => {
+      })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
       })
     })
 
@@ -1613,6 +1868,39 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      describe(`for ToggleCmp`, () => {
+      })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
   })
 
 
@@ -1635,6 +1923,39 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`App`, () => {
 
+      })
+    })
+
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      describe(`for ToggleCmp`, () => {
+      })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
       })
     })
 
@@ -1695,7 +2016,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const toggleCmp = app.getFirstChild()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
       describe(`for ToggleCmp`, () => {
         const domDiffMap = toggleCmp.getDomDiffMap()
         it(`has a single entry`, () => {
@@ -1710,11 +2031,35 @@ describe(`FactoryAnalyzer`, () => {
           expect(four).toEqual(boundValues)
         })
       })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
       describe(`for App`, () => {
         const domDiffMap = app.getDomDiffMap()
         it(`has no entries`, () => {
           expect(Array.from(domDiffMap).length).toBe(0)
         })
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
       })
     })
 
@@ -1753,8 +2098,32 @@ describe(`FactoryAnalyzer`, () => {
           expect(Array.from(toggleCmp.getFaDiffMap()).length).toBe(0)
         })
       })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
       describe(`for App`, () => {
 
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
       })
     })
 
@@ -1793,6 +2162,39 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      describe(`for ToggleCmp`, () => {
+      })
+      describe(`for ConditionalView1`, () => {
+      })
+      describe(`for ConditionalView2`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for IsLeftGreater`, () => {
+      })
+      describe(`for IsRightGreater`, () => {
+      })
+      describe(`for AreEqual`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
+      })
+    })
+
   })
 
 
@@ -1813,48 +2215,76 @@ describe(`FactoryAnalyzer`, () => {
 
   describe(`getClassName`, () => {
 
-    describe(`01-hello-world`, () => {
-      describe(`App`, () => {
-        it(`returns App`, () => {
-          expect(apps.helloWorld.getFactoryTree().getClassName()).toBe(`App`)
+    describe(`in 01-hello-world`, () => {
+      const app = apps.helloWorld.getFactoryTree()
+      describe(`for App`, () => {
+        it(`returns "App"`, () => {
+          expect(app.getClassName()).toBe(`App`)
         })
       })
     })
 
     describe(`02-counter`, () => {
+      const app = apps.counter.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const counterCmp = children[0] as ComponentFactoryAnalyzer
       describe(`CounterCmp`, () => {
-
+        it(`returns "CounterCmp"`, () => {
+          expect(counterCmp.getClassName()).toBe(`CounterCmp`)
+        })
       })
       describe(`App`, () => {
-
-      })
-    })
-
-  })
-
-
-  describe(`getNamesOfMethodsDefinedOnParentWhichCanBeCalledByCalling`, () => {
-
-    describe(`01-hello-world`, () => {
-      describe(`App`, () => {
-        it(`returns an empty set for whatever since there are not even any methods`, () => {
-          expect(apps.helloWorld.getFactoryTree().getNamesOfMethodsDefinedOnParentWhichCanBeCalledByCalling(`foo`))
-            .toEqual(new Set())
+        it(`returns "App"`, () => {
+          expect(app.getClassName()).toBe(`App`)
         })
       })
     })
 
-    describe(`02-counter`, () => {
-      describe(`CounterCmp`, () => {
-
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const toggleCmp = children[0] as ComponentFactoryAnalyzer
+      describe(`for ToggleCmp`, () => {
+        it(`returns "ToggleCmp"`, () => {
+          expect(toggleCmp.getClassName()).toBe(`ToggleCmp`)
+        })
       })
-      describe(`App`, () => {
+      describe(`for App`, () => {
+        it(`returns "App"`, () => {
+          expect(app.getClassName()).toBe(`App`)
+        })
+      })
+    })
 
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const counterCmp1 = children[0] as ComponentFactoryAnalyzer
+      const counterCmp2 = children[1] as ComponentFactoryAnalyzer
+      const infoCmp = children[2] as ComponentFactoryAnalyzer
+      describe(`for CounterCmp1`, () => {
+        it(`returns "CounterCmp"`, () => {
+          expect(counterCmp1.getClassName()).toBe(`CounterCmp`)
+        })
+      })
+      describe(`for CounterCmp2`, () => {
+        it(`returns "CounterCmp"`, () => {
+          expect(counterCmp2.getClassName()).toBe(`CounterCmp`)
+        })
+      })
+      describe(`for InfoCmp`, () => {
+        it(`returns "InfoCmp"`, () => {
+          expect(infoCmp.getClassName()).toBe(`InfoCmp`)
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns "App"`, () => {
+          expect(app.getClassName()).toBe(`App`)
+        })
       })
     })
 
   })
-
 
   describe(`canUpdatePropInThisComponentInstanceByCalling`, () => {
 
@@ -1867,11 +2297,77 @@ describe(`FactoryAnalyzer`, () => {
     })
 
     describe(`02-counter`, () => {
+      const app = apps.counter.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const counterCmp = children[0] as ComponentFactoryAnalyzer
       describe(`CounterCmp`, () => {
-
+        it(`returns false for "valueChange"`, () => {
+          expect(counterCmp.canUpdatePropInThisComponentInstanceByCalling('valueChange')).toBe(false)
+        })
+        it(`returns false for "inc (uses "value" but does not update it)`, () => {
+          expect(counterCmp.canUpdatePropInThisComponentInstanceByCalling('inc')).toBe(false)
+        })
+        it(`return false for "dec" (uses "values" but does not update it)`, () => {
+          expect(counterCmp.canUpdatePropInThisComponentInstanceByCalling('dec')).toBe(false)
+        })
+        it(`throws for "value" (it's a prop, not a method)`, () => {
+          expect(() => counterCmp.canUpdatePropInThisComponentInstanceByCalling('value')).toThrow()
+        })
       })
       describe(`App`, () => {
+        it(`returns true for "onCountChange" (updates "count")`, () => {
+          expect(app.canUpdatePropInThisComponentInstanceByCalling('onCountChange')).toBe(true)
+        })
+        it(`throws for "count" (it's a prop, not a method)`, () => {
+          expect(() => app.canUpdatePropInThisComponentInstanceByCalling('count')).toThrow()
+        })
+      })
+    })
 
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const toggleCmp = children[0] as ComponentFactoryAnalyzer
+      describe(`for ToggleCmp`, () => {
+        it(`returns false for "valueChange"`, () => {
+          expect(toggleCmp.canUpdatePropInThisComponentInstanceByCalling('valueChange')).toBe(false)
+        })
+        it(`returns false for "changeState" (uses "value" but does not change it)`, () => {
+          expect(toggleCmp.canUpdatePropInThisComponentInstanceByCalling('changeState')).toBe(false)
+        })
+        it(`returns false for "value" (it's a prop, not a method)`, () => {
+          expect(() => toggleCmp.canUpdatePropInThisComponentInstanceByCalling('value')).toThrow()
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns true for "onChange" (changes "bool")`, () => {
+          expect(app.canUpdatePropInThisComponentInstanceByCalling('onChange')).toBe(true)
+        })
+        it(`throws "bool" (it's a prop, not a method)`, () => {
+          expect(() => app.canUpdatePropInThisComponentInstanceByCalling('bool')).toThrow()
+        })
+        it(`throws for "isJavaScript" (it's a getter, not a method)`, () => {
+          expect(() => app.canUpdatePropInThisComponentInstanceByCalling('isJavaScript')).toThrow()
+        })
+        it(`throws for "isTypeScript" (it's a getter, not a method)`, () => {
+          expect(() => app.canUpdatePropInThisComponentInstanceByCalling('isTypeScript')).toThrow()
+        })
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const counterCmp1 = children[0] as ComponentFactoryAnalyzer
+      const counterCmp2 = children[1] as ComponentFactoryAnalyzer
+      const infoCmp = children[2] as ComponentFactoryAnalyzer
+      describe(`for CounterCmp1`, () => {
+      })
+      describe(`for CounterCmp2`, () => {
+      })
+      describe(`for InfoCmp`, () => {
+      })
+      describe(`for App`, () => {
       })
     })
 
@@ -1890,11 +2386,62 @@ describe(`FactoryAnalyzer`, () => {
     })
 
     describe(`02-counter`, () => {
+      const app = apps.counter.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const counterCmp = children[0] as ComponentFactoryAnalyzer
       describe(`CounterCmp`, () => {
-
+        it(`returns "value"`, () => {
+          expect(counterCmp.getPropAndGetterNames()).toEqual(new Set(['value']))
+        })
       })
       describe(`App`, () => {
+        it(`returns "count"`, () => {
+          expect(app.getPropAndGetterNames()).toEqual(new Set(['count']))
+        })
+      })
+    })
 
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const toggleCmp = children[0] as ComponentFactoryAnalyzer
+      describe(`for ToggleCmp`, () => {
+        it(`returns "value"`, () => {
+          expect(toggleCmp.getPropAndGetterNames()).toEqual(new Set(['value']))
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns "bool", "isJavaScript" and "isTypeScript"`, () => {
+          expect(app.getPropAndGetterNames()).toEqual(new Set(['bool', 'isJavaScript', 'isTypeScript']))
+        })
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const counterCmp1 = children[0] as ComponentFactoryAnalyzer
+      const counterCmp2 = children[1] as ComponentFactoryAnalyzer
+      const infoCmp = children[2] as ComponentFactoryAnalyzer
+      describe(`for CounterCmp1`, () => {
+        it(`returns "value"`, () => {
+          expect(counterCmp1.getPropAndGetterNames()).toEqual(new Set(['value']))
+        })
+      })
+      describe(`for CounterCmp2`, () => {
+        it(`returns "value"`, () => {
+          expect(counterCmp2.getPropAndGetterNames()).toEqual(new Set(['value']))
+        })
+      })
+      describe(`for InfoCmp`, () => {
+        it(`returns "isLeftGreater", "isRightGreater" and "areEqual"`, () => {
+          expect(infoCmp.getPropAndGetterNames()).toEqual(new Set(['isLeftGreater', 'isRightGreater', 'areEqual']))
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns "left", "right", "isRightGreater" and "isLeftFreater"`, () => {
+          expect(app.getPropAndGetterNames()).toEqual(new Set(['left', 'right', 'isLeftGreater', 'isRightGreater']))
+        })
       })
     })
 
@@ -1903,21 +2450,72 @@ describe(`FactoryAnalyzer`, () => {
 
   describe(`getMethodNames`, () => {
 
-    describe(`01-hello-world`, () => {
-      describe(`App`, () => {
-        const app = apps.helloWorld.getFactoryTree()
+    describe(`in 01-hello-world`, () => {
+      const app = apps.helloWorld.getFactoryTree()
+      describe(`for App`, () => {
         it(`returns nothing`, () => {
           expect(app.getMethodNames()).toEqual(new Set())
         })
       })
     })
 
-    describe(`02-counter`, () => {
-      describe(`CounterCmp`, () => {
-
+    describe(`in 02-counter`, () => {
+      const app = apps.counter.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const counterCmp = children[0] as ComponentFactoryAnalyzer
+      describe(`for CounterCmp`, () => {
+        it(`should return "valueChange", "inc" and "dec"`, () => {
+          expect(counterCmp.getMethodNames()).toEqual(new Set(['valueChange', 'inc', 'dec']))
+        })
       })
-      describe(`App`, () => {
+      describe(`for App`, () => {
+        it(`should return "onCountChange"`, () => {
+          expect(app.getMethodNames()).toEqual(new Set(['onCountChange']))
+        })
+      })
+    })
 
+    describe(`in 03-toggler`, () => {
+      const app = apps.toggler.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const toggleCmp = children[0] as ComponentFactoryAnalyzer
+      describe(`for ToggleCmp`, () => {
+        it(`returns "valueChange" and "changeState"`, () => {
+          expect(toggleCmp.getMethodNames()).toEqual(new Set(['valueChange', 'changeState']))
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns "onChange"`, () => {
+          expect(app.getMethodNames()).toEqual(new Set(['onChange']))
+        })
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const children = Array.from(app.getChildren().values())
+      const counterCmp1 = children[0] as ComponentFactoryAnalyzer
+      const counterCmp2 = children[1] as ComponentFactoryAnalyzer
+      const infoCmp = children[2] as ComponentFactoryAnalyzer
+      describe(`for CounterCmp1`, () => {
+        it(`returns "valueChange", "inc" and "dec"`, () => {
+          expect(counterCmp1.getMethodNames()).toEqual(new Set(['valueChange', 'inc', 'dec']))
+        })
+      })
+      describe(`for CounterCmp2`, () => {
+        it(`returns "valueChange", "inc" and "dec"`, () => {
+          expect(counterCmp2.getMethodNames()).toEqual(new Set(['valueChange', 'inc', 'dec']))
+        })
+      })
+      describe(`for InfoCmp`, () => {
+        it(`returns an empty set`, () => {
+          expect(infoCmp.getMethodNames()).toEqual(new Set([]))
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns "onLeftChange" and "onRightChange"`, () => {
+          expect(app.getMethodNames()).toEqual(new Set(['onLeftChange', 'onRightChange']))
+        })
       })
     })
 

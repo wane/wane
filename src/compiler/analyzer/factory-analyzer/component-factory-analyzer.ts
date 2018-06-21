@@ -1,11 +1,10 @@
 import { ComponentAnalyzer } from '../component-analyzer'
 import { FactoryAnalyzer } from './base-factory-analyzer'
 import { Forest, TreeNode } from '../../utils/tree'
-import { ComponentOutputBinding } from '../../template-nodes/view-bindings'
 import { TemplateNodeComponentValue } from '../../template-nodes/nodes/component-node'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import iterare from 'iterare'
-import { getIntersection, isInstance } from '../../utils/utils'
+import { getIntersection } from '../../utils/utils'
 import { ViewBoundValue } from '../../template-nodes/view-bound-value'
 import CodeBlockWriter from 'code-block-writer'
 
@@ -49,54 +48,6 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     const name = componentAnalyzer.getClassName()
     this.identifier = new ComponentFactoryIdentifier(path, name, uniqueId)
     this.componentAnalyzer = componentAnalyzer
-  }
-
-  public getNamesOfMethodsDefinedOnParentWhichCanBeCalledByCalling (methodName: string): Set<string> {
-    const anchorView = this.getAnchorViewNodeOrUndefined()
-
-    // cannot fire event to parent if there is no parent
-    if (anchorView == null) return new Set()
-
-    const outputs = iterare(anchorView.getValueOrThrow().viewBindings)
-      .filter(isInstance(ComponentOutputBinding))
-      .map(binding => binding as ComponentOutputBinding)
-    const outputNames = outputs.map(binding => binding.getName()).toSet()
-
-    // check if the output is called directly from the view
-    if (outputNames.has(methodName)) {
-      const outputName = methodName
-      const nameOfMethodOnParent = outputs.reduce<string | null>((acc, curr) => outputName == curr.getName()
-        ? curr.getName()
-        : null, null)
-      if (nameOfMethodOnParent == null) {
-        throw new Error(`Expect to find ${outputName} in outputs.`)
-      }
-      return new Set([nameOfMethodOnParent])
-    }
-
-    const methodsThatCanBeCalled = this.componentAnalyzer.getMethodsCalledFrom(methodName)
-
-    let intersection = new Set<string>()
-    for (const outputName of outputNames) {
-      for (const method of methodsThatCanBeCalled) {
-        if (outputName == method) {
-          intersection.add(outputName)
-        }
-      }
-    }
-
-    const result = new Set<string>()
-    for (const outputName of intersection) {
-      const nameOfMethodOnParent = outputs.reduce<string | null>((acc, curr) => outputName == curr.getName()
-        ? curr.getName()
-        : null, null)
-      if (nameOfMethodOnParent == null) {
-        throw new Error(`Expect to find ${outputName} in outputs.`)
-      }
-      result.add(nameOfMethodOnParent)
-    }
-
-    return result
   }
 
   public canUpdatePropInThisComponentInstanceByCalling (methodName: string): boolean {
