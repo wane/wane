@@ -3,11 +3,17 @@ import { TemplateNodeValue } from "../../template-nodes/nodes/template-node-valu
 import { Forest } from "../../utils/tree";
 import { DirectiveFactoryAnalyzer } from "./directive-factory-analyzer";
 import CodeBlockWriter from "code-block-writer";
+import { ConditionalViewFactoryAnalyzer } from "./conditional-view-factory-analyzer";
+import { RepeatingViewFactoryAnalyzer } from "./repeating-view-factory-analyzer";
 
 export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValue> {
 
   public get view(): Forest<TemplateNodeValue> {
     return this.getDirectiveFactoryAnalyzer().view
+  }
+
+  public getParentOrUndefined(): FactoryAnalyzer<TemplateNodeValue> | undefined {
+    return this.getDirectiveFactoryAnalyzer()
   }
 
   private directiveFactoryAnalyzer: DirectiveFactoryAnalyzer | undefined
@@ -38,10 +44,9 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
 
   constructor (
     uniqueId: number,
-    parentFactory: FactoryAnalyzer<TemplateNodeValue>,
     templateDefinition: Forest<TemplateNodeValue>,
   ) {
-    super(uniqueId, parentFactory, undefined)
+    super(uniqueId, undefined, undefined)
     this.templateDefinition = templateDefinition
   }
 
@@ -50,8 +55,28 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
   }
 
   hasDefinedAndResolvesTo (propAccessPath: string): string | null {
-    // Partial views are not scopes to anything
-    return null
+    let print = false
+    console.log(`~~~~`, propAccessPath)
+    if (propAccessPath == 'item.name') {
+      print = true
+    }
+    const directiveFa = this.getDirectiveFactoryAnalyzer()
+    if (directiveFa instanceof ConditionalViewFactoryAnalyzer) {
+      return null
+    } else if (directiveFa instanceof RepeatingViewFactoryAnalyzer) {
+      console.log('rut')
+      const iterativeConstantName = directiveFa.getBinding().iterativeConstantName
+      const indexConstantName = directiveFa.getBinding().indexConstantName
+      const [propName, ...rest] = propAccessPath.split('.')
+      if (propName == iterativeConstantName) {
+        return [`item`, ...rest].join('.')
+      }
+      if (propAccessPath == indexConstantName) {
+        return `index`
+      }
+      return null
+    }
+    throw new Error(`Uuuh`)
   }
 
   isScopeBoundary (): boolean {
@@ -71,8 +96,17 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
   }
 
   getFactoryName (): string {
-    return `PartialView_${this.uniqueId}`;
+    return `PartialView_${this.getDirectiveFactoryAnalyzer().getFactoryName()}_${this.uniqueId}`;
   }
 
+  public isHopToParent(to: FactoryAnalyzer<TemplateNodeValue>): boolean {
+    return to == this.getDirectiveFactoryAnalyzer()
+  }
+
+  public getNeighbors (): FactoryAnalyzer<TemplateNodeValue>[] {
+    const runtimeParent = this.getDirectiveFactoryAnalyzer()
+    const runtimeChildren = runtimeParent.getChildrenFactories()
+    return [runtimeParent, ...runtimeChildren]
+  }
 
 }

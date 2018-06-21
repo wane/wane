@@ -4,6 +4,7 @@ import iterare from 'iterare'
 import CodeBlockWriter from 'code-block-writer'
 import { pascal } from 'change-case'
 import * as himalaya from 'himalaya'
+import { FactoryAnalyzer } from "../../analyzer";
 
 function getSuperParam (attributeBindings: Iterable<AttributeBinding>,
                         propertyBindings: Iterable<ComponentInputBinding>,
@@ -53,7 +54,7 @@ export class TemplateNodeComponentValue extends TemplateNodeValue {
     return this.outputBindings
   }
 
-  public printDomInit (): string[] {
+  public printDomInit (from: FactoryAnalyzer<TemplateNodeValue>): string[] {
     return [
       `util.__wane__createElement('${this.tagName}')`,
     ]

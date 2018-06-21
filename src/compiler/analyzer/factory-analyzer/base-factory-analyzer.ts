@@ -149,20 +149,32 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     )
   }
 
+  public isHopToParent(to: FactoryAnalyzer<TemplateNodeValue>): boolean {
+    return this.getParentOrUndefined() == to
+  }
+
   public printHopToParent (isStartingHop: boolean, isEndingHop: boolean): string {
     return `__wane__factoryParent`
   }
 
+  public printHopToChild (to: FactoryAnalyzer<TemplateNodeValue>): string {
+    return `__wane__factoryChildren[${to.getFactoryIndexAsChild()}]`
+  }
+
   public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>): string {
+    console.log(`Path from ${this.getFactoryName()} to ${fa.getFactoryName()}`)
     const isHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
-      from.getParentOrUndefined() == to
+      from.isHopToParent(to)
     const printHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>, isStartingHop: boolean, isEndingHop: boolean) => {
       return from.printHopToParent(isStartingHop, isEndingHop)
     }
     const printHopToChild = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
-      `__wane__factoryChildren[${to.getFactoryIndexAsChild()}`
+      from.printHopToChild(to)
     const path = this.getPathTo(fa)
-    return printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
+    console.log(path.map(p => p.getFactoryName()).join(` -> `))
+    const printed = printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
+    console.log(printed)
+    return printed
   }
 
   /**

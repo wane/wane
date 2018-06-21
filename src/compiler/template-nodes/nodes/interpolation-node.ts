@@ -2,6 +2,7 @@ import { TemplateNodeValue } from './template-node-value-base'
 import CodeBlockWriter from 'code-block-writer'
 import { InterpolationBinding } from '../view-bindings'
 import * as himalaya from 'himalaya'
+import { FactoryAnalyzer } from "../../analyzer";
 
 export class TemplateNodeInterpolationValue extends TemplateNodeValue {
 
@@ -16,9 +17,9 @@ export class TemplateNodeInterpolationValue extends TemplateNodeValue {
     return this.interpolationBinding
   }
 
-  public printDomInit (): string[] {
+  public printDomInit (from: FactoryAnalyzer<TemplateNodeValue>): string[] {
     return [
-      `util.__wane__createTextNode(${this.interpolationBinding.boundValue.resolve()})`,
+      `util.__wane__createTextNode(${this.interpolationBinding.boundValue.resolve(from)})`,
     ]
   }
 

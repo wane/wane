@@ -156,7 +156,6 @@ export class ProjectAnalyzer {
           new Forest(templateNode.getChildren()),
           new PartialViewFactoryAnalyzer(
             this.counter.next().value,
-            responsibleFactory,
             new Forest(templateNode.getChildren()),
           )
         )
@@ -168,7 +167,6 @@ export class ProjectAnalyzer {
           new Forest(templateNode.getChildren()),
           new PartialViewFactoryAnalyzer(
             this.counter.next().value,
-            responsibleFactory,
             new Forest(templateNode.getChildren()),
           )
         )
@@ -195,7 +193,7 @@ export class ProjectAnalyzer {
       this._processTemplateNode(responsibleFactory, root, null, definitionFactory)
     }
     for (const node of responsibleFactory.view) {
-      node.getValueOrThrow().registerResponsibleFactory(responsibleFactory)
+      node.getValueOrThrow().registerResponsibleFactory(responsibleFactory.getPartialViewFactoryAnalyzer())
     }
   }
 

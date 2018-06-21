@@ -85,8 +85,10 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
   }
 
   public getScopeFactory (): FactoryAnalyzer<TemplateNodeValue> {
+    const debug = this.path == 'item.name'
     let current = this.getResponsibleFactory()
     while (!current.hasDefinedAndResolvesTo(this.getName())) {
+      debug && console.log(`???`, current.getFactoryName())
       const parent = current.getParentOrUndefined()
       if (parent == null) {
         throw new Error(`Cannot determine scope factory for "${this.path}".`)

@@ -19,7 +19,7 @@ export default async function runTests () {
         `Don Joe 40 Asia Edit Remove`,
         `Donna Joe 39 Europe Edit Remove`,
       ]
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Name Age Continent ${rows.join(' ')} Add new`)
+      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Name Age Continent Actions ${rows.join(' ')} Add new`)
     }
 
     // DOM details
@@ -52,9 +52,9 @@ export default async function runTests () {
         .map(({ tagName }) => tagName)
     })
 
-      expect(body).to.eql(['TABLE', 'BUTTON'])
+      expect(body).to.eql(['SCRIPT', 'TABLE', 'BUTTON'])
       expect(table).to.eql(['TR', 'TR', 'TR', 'TR', 'TR'])
-      expect(tr1).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
+      expect(tr1).to.eql(['TH', 'TH', 'TH', 'TH'])
       expect(tr2).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
       expect(tr3).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
       expect(tr4).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
@@ -71,7 +71,7 @@ export default async function runTests () {
         `Don Joe 40 Asia Edit Remove`,
         `Donna Joe 39 Europe Edit Remove`,
       ]
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Name Age Continent ${rows.join(' ')} Add new`)
+      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Name Age Continent Actions ${rows.join(' ')} Add new`)
     }
 
   } catch (e) {

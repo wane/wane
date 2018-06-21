@@ -88,7 +88,7 @@ export class FormCmp {
         <th>Name</th>
         <th>Age</th>
         <th>Continent</th>
-        <th colspan="2"></th>
+        <th [attr.colspan]="'2'">Actions</th>
       </tr>
       <w:for (item, index) of data>
         <tr>

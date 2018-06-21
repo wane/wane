@@ -34,28 +34,7 @@ export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Templ
   }
 
   public hasDefinedAndResolvesTo (propAccessPath: string): string | null {
-    const iterativeConstantName = this.getBinding().iterativeConstantName
-    const indexConstantName = this.getBinding().indexConstantName
-    const [propName, ...rest] = propAccessPath.split('.')
-    if (propName == iterativeConstantName) {
-      return [`item`, ...rest].join('.')
-    }
-    if (propAccessPath == indexConstantName) {
-      return `index`
-    }
     return null
-  }
-
-  public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>): string {
-    const isHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
-      from.getParentOrUndefined() == to
-    const printHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>, isStartingHop: boolean, isEndingHop: boolean) => {
-      return from.printHopToParent(isStartingHop, isEndingHop)
-    }
-    const printHopToChild = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
-      `__wane__factoryChildren[${to.getFactoryIndexAsChild()}`
-    const path = this.getPathTo(fa)
-    return printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
   }
 
   public getFactoryName (): string {
@@ -66,6 +45,17 @@ export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Templ
 
   public toString (): string {
     return `ConditionalViewFactoryAnalyzer#${this.getFactoryName()}`
+  }
+
+  public getNeighbors(): FactoryAnalyzer<TemplateNodeValue>[] {
+    const neighbors: FactoryAnalyzer<TemplateNodeValue>[] = []
+
+    const runtimeParent = this.getParentOrUndefined()
+    if (runtimeParent != null) neighbors.push(runtimeParent)
+
+    // cannot reach children (you need a key for that) so we do not include them here
+
+    return neighbors
   }
 
 }

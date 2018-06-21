@@ -46,12 +46,13 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
   }
 
   protected printDomNodesRegistration (fa: FactoryAnalyzer<TemplateNodeValue>): this {
+    const partialView = fa.getPartialViewFactoryAnalyzer()
     this.writer
       .writeLine(`// Create a flat array of all DOM nodes which this component controls:`)
       .writeLine(`this.__wane__domNodes = [`)
       .indentBlock(() => {
-        Array.from(new Set(fa.getPartialViewFactoryAnalyzer().getSavedNodes())).forEach(node => {
-          node.printDomInit().forEach(init => {
+        Array.from(new Set(partialView.getSavedNodes())).forEach(node => {
+          node.printDomInit(partialView).forEach(init => {
             this.writer.writeLine(`${init},`)
           })
         })
@@ -69,7 +70,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
       .filter(predicate)
       .forEach(binding => {
         for (const index of fa.getIndexesFor(binding.getTemplateNode())) {
-          binding.printInit(this.writer, `this.__wane__domNodes[${index}]`)
+          binding.printInit(this.writer, `this.__wane__domNodes[${index}]`, fa)
           this.writer.newLineIfLastNot()
           isAtLeastOneLineWritten = true
         }

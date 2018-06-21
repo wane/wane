@@ -50,7 +50,7 @@ export abstract class TemplateNodeValue {
     return this.getResponsibleFactory().getSingleIndexFor(this)
   }
 
-  public abstract printDomInit (): string[]
+  public abstract printDomInit (from: FactoryAnalyzer<TemplateNodeValue>): string[]
 
   public abstract toString (): string
 
