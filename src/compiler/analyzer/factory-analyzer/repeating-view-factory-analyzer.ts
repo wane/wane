@@ -6,6 +6,8 @@ import { RepeatingViewBinding } from '../../template-nodes/view-bindings'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
 import { printTreePath } from '../../utils/graph'
+import { PartialViewFactoryAnalyzer } from "./partial-view-factory-analyzer";
+import { TemplateNodeConditionalViewValue } from "../../template-nodes/nodes/conditional-view-node";
 
 export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<TemplateNodeRepeatingViewValue> {
 
@@ -14,8 +16,9 @@ export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Templ
     parentFactory: FactoryAnalyzer<TemplateNodeValue>,
     anchorViewNode: TreeNode<TemplateNodeRepeatingViewValue>,
     templateDefinition: Forest<TemplateNodeValue>,
+    partialViewFactoryAnalyzer: PartialViewFactoryAnalyzer,
   ) {
-    super(uniqueId, parentFactory, anchorViewNode, templateDefinition)
+    super(uniqueId, parentFactory, anchorViewNode, templateDefinition, partialViewFactoryAnalyzer)
   }
 
   public getBinding (): RepeatingViewBinding {
@@ -43,19 +46,11 @@ export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Templ
     return null
   }
 
-  public printHopToParent (isStartingHop: boolean, isEndingHop: boolean, startFromInnerRepeatingViewFA: boolean): string {
-    if (isStartingHop) {
-      return startFromInnerRepeatingViewFA ? `__wane__factoryParent.__wane__factoryParent` : `__wane__factoryParent`
-    } else {
-      return isEndingHop ? `__wane__factoryParent` : `__wane__factoryParent.__wane__factoryParent`
-    }
-  }
-
-  public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>, startFromInnerRepeatingViewFA: boolean = false): string {
+  public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>): string {
     const isHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
       from.getParentOrUndefined() == to
     const printHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>, isStartingHop: boolean, isEndingHop: boolean) => {
-      return from.printHopToParent(isStartingHop, isEndingHop, startFromInnerRepeatingViewFA)
+      return from.printHopToParent(isStartingHop, isEndingHop)
     }
     const printHopToChild = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
       `__wane__factoryChildren[${to.getFactoryIndexAsChild()}`

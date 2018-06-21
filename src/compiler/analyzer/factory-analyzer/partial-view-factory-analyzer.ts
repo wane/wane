@@ -1,40 +1,64 @@
-import { FactoryAnalyzer } from './base-factory-analyzer'
-import { TemplateNodePartialViewValue } from '../../template-nodes'
-import CodeBlockWriter from 'code-block-writer'
-import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
-import { Forest, TreeNode } from '../../utils/tree'
+import { FactoryAnalyzer } from "./base-factory-analyzer";
+import { TemplateNodeValue } from "../../template-nodes/nodes/template-node-value-base";
+import { Forest } from "../../utils/tree";
+import { DirectiveFactoryAnalyzer } from "./directive-factory-analyzer";
+import CodeBlockWriter from "code-block-writer";
 
-export class PartialViewFactoryAnalyzer<T extends TemplateNodePartialViewValue> extends FactoryAnalyzer<TemplateNodePartialViewValue> {
+export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValue> {
 
-  public templateDefinition: Forest<TemplateNodeValue>
+  public get view(): Forest<TemplateNodeValue> {
+    return this.getDirectiveFactoryAnalyzer().view
+  }
+
+  private directiveFactoryAnalyzer: DirectiveFactoryAnalyzer | undefined
+
+  public templateDefinition: Forest<TemplateNodeValue>;
+
+  public getPartialViewFactoryAnalyzer () {
+    return this
+  }
+
+  public getChildrenFactories() {
+    return this.getDirectiveFactoryAnalyzer().getChildrenFactories()
+  }
+
+  public registerDirectiveFactoryAnalyzer (directiveFactoryAnalyzer: DirectiveFactoryAnalyzer): void {
+    if (this.directiveFactoryAnalyzer != null) {
+      throw new Error(`PartialViewFactoryAnalyzer ("${this.directiveFactoryAnalyzer.getFactoryName()}") has already been registered to "${this.getFactoryName()}".`)
+    }
+    this.directiveFactoryAnalyzer = directiveFactoryAnalyzer
+  }
+
+  public getDirectiveFactoryAnalyzer (): DirectiveFactoryAnalyzer {
+    if (this.directiveFactoryAnalyzer == null) {
+      throw new Error(`PartialViewFactoryAnalyzer has not been registered for "${this.getFactoryName()}".`)
+    }
+    return this.directiveFactoryAnalyzer
+  }
 
   constructor (
     uniqueId: number,
     parentFactory: FactoryAnalyzer<TemplateNodeValue>,
-    anchorViewNode: TreeNode<T>,
     templateDefinition: Forest<TemplateNodeValue>,
   ) {
-    super(uniqueId, parentFactory, anchorViewNode)
+    super(uniqueId, parentFactory, undefined)
     this.templateDefinition = templateDefinition
   }
 
-  public getFactoryName (): string {
-    return ''
+  getPropsBoundToView (): Map<string, string> {
+    return new Map<string, string>()
   }
 
-  public getPropsBoundToView (): Map<string, string> {
-    return undefined
+  hasDefinedAndResolvesTo (propAccessPath: string): string | null {
+    // Partial views are not scopes to anything
+    return null
   }
 
-  public hasDefinedAndResolvesTo (propAccessPath: string): string | null {
-    return undefined
+  isScopeBoundary (): boolean {
+    return false;
   }
 
-  public isScopeBoundary (): boolean {
-    return false
-  }
-
-  public printAssemblingDomNodes (wr: CodeBlockWriter): CodeBlockWriter {
+  printAssemblingDomNodes (wr: CodeBlockWriter): CodeBlockWriter {
     return wr
       .newLineIfLastNot()
       .writeLine(`util.__wane__insertBefore(this.__wane__closingCommentOutlet, [`)
@@ -42,8 +66,13 @@ export class PartialViewFactoryAnalyzer<T extends TemplateNodePartialViewValue> 
       .writeLine(`])`)
   }
 
-  public printRootDomNodeAssignment (wr: CodeBlockWriter): CodeBlockWriter {
-    return undefined
+  printRootDomNodeAssignment (wr: CodeBlockWriter): CodeBlockWriter {
+    return wr
   }
+
+  getFactoryName (): string {
+    return `PartialView_${this.uniqueId}`;
+  }
+
 
 }

@@ -55,7 +55,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns App`, () => {
           expect(toggleCmp.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(toggleCmp as ComponentFactoryAnalyzer)
@@ -80,8 +80,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`returns itself`, () => {
           expect(counterCmp1.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(counterCmp1 as ComponentFactoryAnalyzer)
@@ -127,8 +127,8 @@ describe(`FactoryAnalyzer`, () => {
     describe(`01-hello-world`, () => {
       describe(`App`, () => {
         const app = apps.helloWorld.getFactoryTree()
-        it(`gets class name appended by 0`, () => {
-          expect(app.getFactoryName()).toBe(`App0`)
+        it(`gets class name appended by a number`, () => {
+          expect(app.getFactoryName()).toMatch(/App\d+/)
         })
       })
     })
@@ -136,80 +136,80 @@ describe(`FactoryAnalyzer`, () => {
     describe(`02-counter`, () => {
       describe(`CounterCmp`, () => {
         const counter = apps.counter.getFactoryTree().getFirstChild()
-        it(`gets class name appended by 1`, () => {
-          expect(counter.getFactoryName()).toBe(`CounterCmp1`)
+        it(`gets class name appended by a number`, () => {
+          expect(counter.getFactoryName()).toMatch(/CounterCmp\d+/)
         })
       })
       describe(`App`, () => {
         const app = apps.counter.getFactoryTree()
-        it(`gets class name appended by 0`, () => {
-          expect(app.getFactoryName()).toBe(`App0`)
+        it(`gets class name appended by a number`, () => {
+          expect(app.getFactoryName()).toMatch(/App\d+/)
         })
       })
     })
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
-        it(`gets class name appended by 1`, () => {
-          expect(toggleCmp.getFactoryName()).toBe(`ToggleCmp1`)
+        it(`gets class name appended by a number`, () => {
+          expect(toggleCmp.getFactoryName()).toMatch(/ToggleCmp\d+/)
         })
       })
       describe(`for ConditionalView1`, () => {
-        it(`gets type appended by isJavaScript and 2`, () => {
-          expect(conditionalView1.getFactoryName()).toBe(`ConditionalView_isJavaScript_2`)
+        it(`gets type appended by isJavaScript and a number`, () => {
+          expect(conditionalView1.getFactoryName()).toMatch(/ConditionalView_isJavaScript_\d+/)
         })
       })
       describe(`for ConditionalView2`, () => {
-        it(`gets type appended by isTypeScript and 3`, () => {
-          expect(conditionalView2.getFactoryName()).toBe(`ConditionalView_isTypeScript_3`)
+        it(`gets type appended by isTypeScript and a number`, () => {
+          expect(conditionalView2.getFactoryName()).toMatch(/ConditionalView_isTypeScript_\d+/)
         })
       })
       describe(`for App`, () => {
-        it(`gets class name appended by 0`, () => {
-          expect(app.getFactoryName()).toBe(`App0`)
+        it(`gets class name appended by a number`, () => {
+          expect(app.getFactoryName()).toMatch(/App\d+/)
         })
       })
     })
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(counterCmp1.getFactoryName()).toBe(`CounterCmp1`)
+          expect(counterCmp1.getFactoryName()).toMatch(/CounterCmp\d+/)
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(counterCmp2.getFactoryName()).toBe(`CounterCmp2`)
+          expect(counterCmp2.getFactoryName()).toMatch(/CounterCmp\d+/)
         })
       })
       describe(`for IsLeftGreater`, () => {
         it(`gets type, condition and a unique suffix`, () => {
-          expect(isLeftIsGreater.getFactoryName()).toBe(`ConditionalView_isLeftGreater_4`)
+          expect(isLeftIsGreater.getFactoryName()).toMatch(/ConditionalView_isLeftGreater_\d+/)
         })
       })
       describe(`for IsRightGreater`, () => {
         it(`gets type, condition and a unique suffix`, () => {
-          expect(isRightIsGreater.getFactoryName()).toBe(`ConditionalView_isRightGreater_5`)
+          expect(isRightIsGreater.getFactoryName()).toMatch(/ConditionalView_isRightGreater_\d+/)
         })
       })
       describe(`for AreEqual`, () => {
         it(`gets type, condition and a unique suffix`, () => {
-          expect(areEqual.getFactoryName()).toBe(`ConditionalView_areEqual_6`)
+          expect(areEqual.getFactoryName()).toMatch(/ConditionalView_areEqual_\d+/)
         })
       })
       describe(`for InfoCmp`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(infoCmp.getFactoryName()).toBe(`InfoCmp3`)
+          expect(infoCmp.getFactoryName()).toMatch(/InfoCmp\d+/)
         })
       })
       describe(`for App`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(app.getFactoryName()).toBe(`App0`)
+          expect(app.getFactoryName()).toMatch(/App\d+/)
         })
       })
     })
@@ -222,8 +222,8 @@ describe(`FactoryAnalyzer`, () => {
     describe(`01-hello-world`, () => {
       describe(`App`, () => {
         const app = apps.helloWorld.getFactoryTree()
-        it(`returns "app0"`, () => {
-          expect(app.getFactoryFilename()).toBe(`app0`)
+        it(`returns "app{N}"`, () => {
+          expect(app.getFactoryFilename()).toMatch(/app\d+/)
         })
       })
     })
@@ -231,80 +231,80 @@ describe(`FactoryAnalyzer`, () => {
     describe(`02-counter`, () => {
       describe(`CounterCmp`, () => {
         const counter = apps.counter.getFactoryTree().getFirstChild()
-        it(`returns counter-cmp1`, () => {
-          expect(counter.getFactoryFilename()).toBe(`counter-cmp1`)
+        it(`returns counter-cmp{N}`, () => {
+          expect(counter.getFactoryFilename()).toMatch(/counter-cmp\d+/)
         })
       })
       describe(`App`, () => {
         const app = apps.counter.getFactoryTree()
-        it(`returns app0`, () => {
-          expect(app.getFactoryFilename()).toBe(`app0`)
+        it(`returns app{N}`, () => {
+          expect(app.getFactoryFilename()).toMatch(/app\d+/)
         })
       })
     })
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
-        it(`returns toggle-cmp1`, () => {
-          expect(toggleCmp.getFactoryFilename()).toBe(`toggle-cmp1`)
+        it(`returns toggle-cmp{N}`, () => {
+          expect(toggleCmp.getFactoryFilename()).toMatch(/toggle-cmp\d+/)
         })
       })
       describe(`for ConditionalView1`, () => {
-        it(`returns conditional-view-is-java-script-2`, () => {
-          expect(conditionalView1.getFactoryFilename()).toBe(`conditional-view-is-java-script-2`)
+        it(`returns conditional-view-is-java-script-{N}`, () => {
+          expect(conditionalView1.getFactoryFilename()).toMatch(/conditional-view-is-java-script-\d+/)
         })
       })
       describe(`for ConditionalView2`, () => {
-        it(`returns conditional-view-is-type-script-3`, () => {
-          expect(conditionalView2.getFactoryFilename()).toBe(`conditional-view-is-type-script-3`)
+        it(`returns conditional-view-is-type-script-{N}`, () => {
+          expect(conditionalView2.getFactoryFilename()).toMatch(/conditional-view-is-type-script-\d+/)
         })
       })
       describe(`for App`, () => {
-        it(`returns app0`, () => {
-          expect(app.getFactoryFilename()).toBe(`app0`)
+        it(`returns app{N}`, () => {
+          expect(app.getFactoryFilename()).toMatch(/app\d+/)
         })
       })
     })
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`works`, () => {
-          expect(counterCmp1.getFactoryFilename()).toBe(`counter-cmp1`)
+          expect(counterCmp1.getFactoryFilename()).toMatch(/counter-cmp\d+/)
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`works`, () => {
-          expect(counterCmp2.getFactoryFilename()).toBe(`counter-cmp2`)
+          expect(counterCmp2.getFactoryFilename()).toMatch(/counter-cmp\d+/)
         })
       })
       describe(`for IsLeftGreater`, () => {
         it(`works`, () => {
-          expect(isLeftIsGreater.getFactoryFilename()).toBe(`conditional-view-is-left-greater-4`)
+          expect(isLeftIsGreater.getFactoryFilename()).toMatch(/conditional-view-is-left-greater-\d+/)
         })
       })
       describe(`for IsRightGreater`, () => {
         it(`works`, () => {
-          expect(isRightIsGreater.getFactoryFilename()).toBe(`conditional-view-is-right-greater-5`)
+          expect(isRightIsGreater.getFactoryFilename()).toMatch(/conditional-view-is-right-greater-\d+/)
         })
       })
       describe(`for AreEqual`, () => {
         it(`works`, () => {
-          expect(areEqual.getFactoryFilename()).toBe(`conditional-view-are-equal-6`)
+          expect(areEqual.getFactoryFilename()).toMatch(/conditional-view-are-equal-\d+/)
         })
       })
       describe(`for InfoCmp`, () => {
         it(`works`, () => {
-          expect(infoCmp.getFactoryFilename()).toBe(`info-cmp3`)
+          expect(infoCmp.getFactoryFilename()).toMatch(/info-cmp\d+/)
         })
       })
       describe(`for App`, () => {
         it(`works`, () => {
-          expect(app.getFactoryFilename()).toBe(`app0`)
+          expect(app.getFactoryFilename()).toMatch(/app\d+/)
         })
       })
     })
@@ -435,7 +435,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns false`, () => {
           expect(toggleCmp.isRoot()).toBe(false)
@@ -495,7 +495,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns no children`, () => {
           expect(Array.from(toggleCmp.getChildren()).length).toBe(0)
@@ -528,8 +528,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`returns no children`, () => {
           expect(Array.from(counterCmp1.getChildren()).length).toBe(0)
@@ -647,7 +647,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`worsk`, () => {
           expect(toggleCmp.getAnchorViewNode()).toEqual(app.view.findOrFail(isCmpNodeWithName('toggle-cmp')))
@@ -672,8 +672,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`works`, () => {
           expect(counterCmp1.getAnchorViewNode()).toEqual(app.view.getNthRoot(3))
@@ -780,7 +780,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns path [ToggleCmp] to itself`, () => {
           expect(toggleCmp.getPathTo(toggleCmp)).toEqual([toggleCmp])
@@ -827,8 +827,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`returns path [CounterCmp1 -> App -> InfoCmp] to InfoCmp`, () => [
           expect(counterCmp1.getPathTo(infoCmp)).toEqual([counterCmp1, app, infoCmp]),
@@ -882,7 +882,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns true because it's a component`, () => {
           expect(toggleCmp.isScopeBoundary()).toBe(true)
@@ -907,8 +907,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`returns true because it's a component`, () => {
           expect(counterCmp1.isScopeBoundary()).toBe(true)
@@ -1010,7 +1010,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns itself for "value" because it's defined as class prop`, () => {
           expect(toggleCmp.hasDefinedAndResolvesTo(`value`)).toBe(`value`)
@@ -1063,8 +1063,8 @@ describe(`FactoryAnalyzer`, () => {
     // TODO
     // describe(`in 04-comparator`, () => {
     //   const app = apps.comparator.getFactoryTree()
-    //   const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-    //   const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+    //   const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+    //   const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
     //   describe(`for CounterCmp1`, () => {
     //
     //   })
@@ -1122,7 +1122,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns two bindings (input and output)`, () => {
           const bindings = Array.from(toggleCmp.getSelfBindings())
@@ -1154,8 +1154,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`returns two bindings (input and output)`, () => {
           const bindings = Array.from(counterCmp1.getSelfBindings())
@@ -1253,7 +1253,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns an iterable of length six: ws, (click), ws, text, interpolation, text`, () => {
           const bindings = Array.from(toggleCmp.getHtmlNativeDomBindings())
@@ -1298,8 +1298,8 @@ describe(`FactoryAnalyzer`, () => {
     // TODO
     // describe(`in 04-comparator`, () => {
     //   const app = apps.comparator.getFactoryTree()
-    //   const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-    //   const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+    //   const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+    //   const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
     //   describe(`for CounterCmp1`, () => {
     //
     //   })
@@ -1363,7 +1363,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns App for "valueChange" (ToggleCmp#valueChange -> App#onChange -> App#bool)`, () => {
           expect(Array.from(toggleCmp.getFactoriesAffectedByCalling(`valueChange`))).toEqual([app])
@@ -2362,7 +2362,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`App`, () => {
         it(`returns Toggle, IsJavaScript and IsTypeScript`, () => {
           expect(new Set(app.getNeighbors())).toEqual(new Set([toggleCmp, conditionalView1, conditionalView2]))

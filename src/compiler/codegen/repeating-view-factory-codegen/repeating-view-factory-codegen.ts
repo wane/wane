@@ -11,7 +11,8 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
       .writeLine(`__wane__init() {`)
       .indentBlock(() => {
         const scopeBoundary = fa.getFirstScopeBoundaryUpwardsIncludingSelf()
-        const path = fa.printPathTo(scopeBoundary)
+        let path = fa.printPathTo(scopeBoundary)
+
         const [
           openingIndex,
           closingIndex,
@@ -19,8 +20,8 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
 
         this.writer
           .writeLine(`this.__wane__contextFactory = this${path}`)
-          .writeLine(`this.__wane__openingCommentOutlet = this.__wane__factoryParent.__wane__domNodes[${openingIndex}]`)
-          .writeLine(`this.__wane__closingCommentOutlet = this.__wane__factoryParent.__wane__domNodes[${closingIndex}]`)
+          .writeLine(`this.__wane__openingCommentOutlet = this${path}.__wane__domNodes[${openingIndex}]`)
+          .writeLine(`this.__wane__closingCommentOutlet = this${path}.__wane__domNodes[${closingIndex}]`)
           .writeLine(`this.__wane__getKey = item => item`) // TODO: let user set this
           .writeLine(`this.__wane__keys = []`)
           .writeLine(`this.__wane__commentsDict = {}`)

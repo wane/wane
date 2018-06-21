@@ -24,6 +24,10 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   public identifier: ComponentFactoryIdentifier
   public componentAnalyzer: ComponentAnalyzer
 
+  public getPartialViewFactoryAnalyzer(): this {
+    return this
+  }
+
   public getClassName (): string {
     return this.identifier.name
   }

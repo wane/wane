@@ -148,7 +148,7 @@ describe(`ProjectAnalyzer`, () => {
         expect(info.getClassName()).toBe(`InfoCmp`)
       })
       it(`has InfoCmp as third child with three w:if children and no other descendants`, () => {
-        const children = Array.from(info.getChildren().values())
+        const children = Array.from(info.getChildrenFactories())
         const conditionalViews = [0, 1, 2].map(n => children[n])
         conditionalViews.forEach(conditionalView => {
           expect(conditionalView instanceof ConditionalViewFactoryAnalyzer).toBe(true)
@@ -164,7 +164,7 @@ describe(`ProjectAnalyzer`, () => {
     describe(`for 05-deep-ifs`, () => {
       const app = apps.deepIfs
       const entry = app.getFactoryTree()
-      const entryChildren = Array.from(entry.getChildren().values())
+      const entryChildren = Array.from(entry.getChildrenFactories())
       it(`has 5 + 5 + 1 children`, () => {
         expect(entryChildren.length).toBe(11, entryChildren.map(c => c.getFactoryName()))
       })
@@ -183,20 +183,20 @@ describe(`ProjectAnalyzer`, () => {
       it(`w:if visibility.a has one child, etc a chain until visibility.e which has none`, () => {
         const [wIfA] = entryChildren.slice(-1)
         expect(Array.from(wIfA.getChildren()).length).toBe(1, `a`)
-        const [wIfB] = Array.from(wIfA.getChildren().values()).slice(-1)
+        const [wIfB] = Array.from(wIfA.getChildrenFactories()).slice(-1)
         expect(Array.from(wIfB.getChildren()).length).toBe(1, `b`)
-        const [wIfC] = Array.from(wIfB.getChildren().values()).slice(-1)
+        const [wIfC] = Array.from(wIfB.getChildrenFactories()).slice(-1)
         expect(Array.from(wIfC.getChildren()).length).toBe(1, `c`)
-        const [wIfD] = Array.from(wIfC.getChildren().values()).slice(-1)
+        const [wIfD] = Array.from(wIfC.getChildrenFactories()).slice(-1)
         expect(Array.from(wIfD.getChildren()).length).toBe(1, `d`)
-        const [wIfE] = Array.from(wIfD.getChildren().values()).slice(-1)
+        const [wIfE] = Array.from(wIfD.getChildrenFactories()).slice(-1)
         expect(Array.from(wIfE.getChildren()).length).toBe(0, `e`)
       })
     })
     describe(`for 06-hello-everyone`, () => {
       const app = apps.helloEveryone
       const entry = app.getFactoryTree()
-      const entryChildren = Array.from(entry.getChildren().values())
+      const entryChildren = Array.from(entry.getChildrenFactories())
       const child = entryChildren[0] as RepeatingViewFactoryAnalyzer
       it(`has a single child`, () => {
         expect(entryChildren.length).toBe(1)
@@ -205,9 +205,9 @@ describe(`ProjectAnalyzer`, () => {
     })
     describe(`for 07-scoreboard`, () => {
       const entry = apps.scoreboard.getFactoryTree()
-      const entryChildren = Array.from(entry.getChildren().values())
+      const entryChildren = Array.from(entry.getChildrenFactories())
       const wFor = entryChildren[0] as RepeatingViewFactoryAnalyzer
-      const wForChildren = Array.from(wFor.getChildren().values())
+      const wForChildren = Array.from(wFor.getChildrenFactories())
       const itemCmp = wForChildren[0] as ComponentFactoryAnalyzer
       it(`has a single w:for child`, () => {
         expect(entryChildren.length).toBe(1)

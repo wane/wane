@@ -15,10 +15,24 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   protected readonly parent: FactoryAnalyzer<TemplateNodeValue> | undefined
   protected readonly children = new Map<TreeNode<TemplateNodeValue>, FactoryAnalyzer<TemplateNodeValue>>()
 
-  public view!: Forest<TemplateNodeValue>
+  private _view!: Forest<TemplateNodeValue>
+
+  public set view(view: Forest<TemplateNodeValue>) {
+    this._view = view
+  }
+
+  public get view() {
+    if (this._view == null) {
+      throw new Error(`No view set for "${this.getFactoryName()}".`)
+    }
+    return this._view
+  }
+
   public abstract templateDefinition: Forest<TemplateNodeValue>
 
   protected readonly anchorViewNode: TreeNode<Anchor> | undefined
+
+  public abstract getPartialViewFactoryAnalyzer (): FactoryAnalyzer<TemplateNodeValue>
 
   public getFirstScopeBoundaryUpwardsIncludingSelf (): ComponentFactoryAnalyzer {
     let current: FactoryAnalyzer<TemplateNodeValue> = this
@@ -78,6 +92,10 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return this.children
   }
 
+  public getChildrenFactories(): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
+    return this.getChildren().values()
+  }
+
   public getFirstChild<T extends FactoryAnalyzer<TemplateNodeValue> = FactoryAnalyzer<TemplateNodeValue>> (): T {
     return Array.from(this.children.values())[0] as T
   }
@@ -131,7 +149,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     )
   }
 
-  public printHopToParent(isStartingHop: boolean, isEndingHop: boolean): string {
+  public printHopToParent (isStartingHop: boolean, isEndingHop: boolean): string {
     return `__wane__factoryParent`
   }
 
@@ -332,7 +350,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
   public getSavedNodes (): TemplateNodeValue[] {
     const flat: TemplateNodeValue[] = []
-    for (const node of this.view) {
+    for (const node of this.getPartialViewFactoryAnalyzer().view) {
       const value = node.getValueOrThrow()
       for (let i = 0; i < value.domNodesCount; i++) {
         flat.push(value)
@@ -381,12 +399,12 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           yield self
         }
 
-        const queue: FactoryAnalyzer<TemplateNodeValue>[] = [...self.getChildren().values()]
+        const queue: FactoryAnalyzer<TemplateNodeValue>[] = [...self.getChildrenFactories()]
         while (queue.length > 0) {
           const current = queue.shift()!
           yield current
           if (!current.isScopeBoundary()) {
-            queue.push(...current.getChildren().values())
+            queue.push(...current.getChildrenFactories())
           }
         }
       },
@@ -473,7 +491,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     const neighbors: FactoryAnalyzer<TemplateNodeValue>[] = []
     const parent = this.getParentOrUndefined()
     if (parent != null) neighbors.push(parent)
-    neighbors.push(...this.getChildren().values())
+    neighbors.push(...this.getChildrenFactories())
     return neighbors
   }
 

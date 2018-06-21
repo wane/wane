@@ -10,19 +10,32 @@ import { TemplateNodeRepeatingViewValue } from '../../template-nodes/nodes/repea
 import { ViewBinding } from '../../template-nodes/view-bindings'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import CodeBlockWriter from 'code-block-writer'
+import { PartialViewFactoryAnalyzer } from "./partial-view-factory-analyzer";
 
 export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialViewValue = TemplateNodePartialViewValue> extends FactoryAnalyzer<T> {
 
   public templateDefinition: Forest<TemplateNodeValue>
+
+  private partialViewFa: PartialViewFactoryAnalyzer | undefined
+
+  public getPartialViewFactoryAnalyzer (): PartialViewFactoryAnalyzer {
+    if (this.partialViewFa == null) {
+      throw new Error(`No PartialViewFactoryAnalyzer found for "${this.getFactoryName()}".`)
+    }
+    return this.partialViewFa
+  }
 
   constructor (
     uniqueId: number,
     parentFactory: FactoryAnalyzer<TemplateNodeValue>,
     anchorViewNode: TreeNode<T>,
     templateDefinition: Forest<TemplateNodeValue>,
+    partialViewFactoryAnalyzer: PartialViewFactoryAnalyzer,
   ) {
     super(uniqueId, parentFactory, anchorViewNode)
     this.templateDefinition = templateDefinition
+    this.partialViewFa = partialViewFactoryAnalyzer
+    this.partialViewFa.registerDirectiveFactoryAnalyzer(this)
   }
 
   public isScopeBoundary (): boolean {
@@ -62,6 +75,10 @@ export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialView
       result.add(domBinding)
     }
     return result
+  }
+
+  public printAssemblingDomNodes (wr: CodeBlockWriter): CodeBlockWriter {
+    return wr
   }
 
   public printRootDomNodeAssignment (wr: CodeBlockWriter): CodeBlockWriter {

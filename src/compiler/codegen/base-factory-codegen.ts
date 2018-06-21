@@ -17,7 +17,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
   protected printImports (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     this.writer
       .writeLine(`import * as util from './util.js'`)
-    for (const factory of fa.getChildren().values()) {
+    for (const factory of fa.getChildrenFactories()) {
       this.writer
         .writeLine(`import ${factory.getFactoryName()} from './${factory.getFactoryFilename()}'`)
     }
@@ -50,7 +50,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
       .writeLine(`// Create a flat array of all DOM nodes which this component controls:`)
       .writeLine(`this.__wane__domNodes = [`)
       .indentBlock(() => {
-        Array.from(new Set(fa.getSavedNodes())).forEach(node => {
+        Array.from(new Set(fa.getPartialViewFactoryAnalyzer().getSavedNodes())).forEach(node => {
           node.printDomInit().forEach(init => {
             this.writer.writeLine(`${init},`)
           })
@@ -83,13 +83,13 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
 
   protected printDomPropsInit (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     return this
-      ._printDomPropsInit(fa, binding => binding.boundValue.isConstant(), `Initializing static stuff:`)
-      ._printDomPropsInit(fa, binding => !binding.boundValue.isConstant(), `Initializing dynamic stuff:`)
+      ._printDomPropsInit(fa.getPartialViewFactoryAnalyzer(), binding => binding.boundValue.isConstant(), `Initializing static stuff:`)
+      ._printDomPropsInit(fa.getPartialViewFactoryAnalyzer(), binding => !binding.boundValue.isConstant(), `Initializing dynamic stuff:`)
   }
 
   protected printAssemblingDomNodes (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     this.writer.writeLine(`// Creating the DOM tree:`)
-    fa.printAssemblingDomNodes(this.writer)
+    fa.getPartialViewFactoryAnalyzer().printAssemblingDomNodes(this.writer)
     return this
   }
 
@@ -97,7 +97,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
     this.writer
       .writeLine(`util.__wane__createFactoryChildren(this, [`)
       .indentBlock(() => {
-        for (const factory of fa.getChildren().values()) {
+        for (const factory of fa.getPartialViewFactoryAnalyzer().getChildrenFactories()) {
           const name = factory.getFactoryName()
           this.writer.writeLine(`${name}(),`)
         }

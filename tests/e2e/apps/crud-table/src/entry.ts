@@ -1,6 +1,9 @@
 import { Entry, Register, Template } from 'wane'
 
+let id: number = 1001
+
 export interface Item {
+  id: number
   name: string
   age: number
   continent: string
@@ -45,9 +48,26 @@ export class FormCmp {
 
   private onSubmit (event: Event) {
     event.preventDefault()
+    const form = event.target as HTMLFormElement
+    const elements = form.elements
+
+    const nameEl = elements.namedItem('name') as HTMLInputElement
+    const name = nameEl.value
+
+    const ageEl = elements.namedItem('age') as HTMLInputElement
+    const age = Number.parseFloat(ageEl.value)
+
+    const continentEl = elements.namedItem('continent') as HTMLInputElement
+    const continent = continentEl.value
+
+    const newItem: Item = {id: this.initialValue.id, name, age, continent}
+    this.submit(newItem)
   }
 
-  public submit (value: any): void {
+  public submit (value: Item): void {
+  }
+
+  public close(): void {
   }
 
   public close(): void {
@@ -95,10 +115,10 @@ export class FormCmp {
 export class App {
 
   private data: Item[] = [
-    { name: `John Doe`, age: 42, continent: `Africa` },
-    { name: `Jane Doe`, age: 41, continent: `Antarctica` },
-    { name: `Don Joe`, age: 40, continent: `Asia` },
-    { name: `Donna Joe`, age: 39, continent: `Europe` },
+    { id: id++, name: `John Doe`, age: 42, continent: `Africa` },
+    { id: id++, name: `Jane Doe`, age: 41, continent: `Antarctica` },
+    { id: id++, name: `Don Joe`, age: 40, continent: `Asia` },
+    { id: id++, name: `Donna Joe`, age: 39, continent: `Europe` },
   ]
 
   private get isDataEmpty (): boolean {
@@ -129,6 +149,7 @@ export class App {
 
   private onCreateNewClick (): void {
     this.itemSelectedForEdit = {
+      id: id++,
       name: ``,
       age: 0,
       continent: '',

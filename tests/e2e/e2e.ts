@@ -29,7 +29,7 @@ async function run () {
   await palindromeChecker()
   await userInfo()
 
-  // Basic usages of w:for
+  // // Basic usages of w:for
   await fibonacciSequence()
   await crudTable()
 }

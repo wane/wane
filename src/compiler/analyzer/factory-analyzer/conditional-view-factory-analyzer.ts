@@ -5,6 +5,7 @@ import { TemplateNodeConditionalViewValue } from '../../template-nodes/nodes/con
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { ConditionalViewBinding } from '../../template-nodes/view-bindings'
 import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
+import { PartialViewFactoryAnalyzer } from "./partial-view-factory-analyzer";
 
 export class ConditionalViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<TemplateNodeConditionalViewValue> {
 
@@ -13,8 +14,9 @@ export class ConditionalViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Tem
     parentFactory: FactoryAnalyzer<TemplateNodeValue>,
     anchorViewNode: TreeNode<TemplateNodeConditionalViewValue>,
     templateDefinition: Forest<TemplateNodeValue>,
+    partialViewFactoryAnalyzer: PartialViewFactoryAnalyzer,
   ) {
-    super(uniqueId, parentFactory, anchorViewNode, templateDefinition)
+    super(uniqueId, parentFactory, anchorViewNode, templateDefinition, partialViewFactoryAnalyzer)
   }
 
   public getBinding (): ConditionalViewBinding {

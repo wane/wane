@@ -12,6 +12,7 @@ import { TemplateNodeComponentValue } from '../template-nodes/nodes/component-no
 import { TemplateNodeConditionalViewValue } from '../template-nodes/nodes/conditional-view-node'
 import { TemplateNodeRepeatingViewValue } from '../template-nodes/nodes/repeating-view-node'
 import { WaneCompilerOptions } from '../compile'
+import { PartialViewFactoryAnalyzer } from "./factory-analyzer/partial-view-factory-analyzer";
 
 
 export class ProjectAnalyzer {
@@ -115,7 +116,7 @@ export class ProjectAnalyzer {
     return result
   }
 
-  private level = 0
+  private indentationLevelForDebugging = 0
 
   private _processTemplateNode (
     responsibleFactory: FactoryAnalyzer<TemplateNodeValue>,
@@ -123,7 +124,7 @@ export class ProjectAnalyzer {
     parentViewNode: TreeNode<TemplateNodeValue> | null,
     definitionFactory: ComponentFactoryAnalyzer,
   ): void {
-    this.level++
+    this.indentationLevelForDebugging++
 
     const value = templateNode.getValueOrThrow()
     const viewNode = new TreeNode(value)
@@ -153,6 +154,11 @@ export class ProjectAnalyzer {
           responsibleFactory,
           viewNode as TreeNode<TemplateNodeConditionalViewValue>,
           new Forest(templateNode.getChildren()),
+          new PartialViewFactoryAnalyzer(
+            this.counter.next().value,
+            responsibleFactory,
+            new Forest(templateNode.getChildren()),
+          )
         )
       } else if (isInstance(TemplateNodeRepeatingViewValue)(value)) {
         childFactory = new RepeatingViewFactoryAnalyzer(
@@ -160,7 +166,11 @@ export class ProjectAnalyzer {
           responsibleFactory,
           viewNode as TreeNode<TemplateNodeRepeatingViewValue>,
           new Forest(templateNode.getChildren()),
-          // new Forest(log(templateNode.getChildren(), `======`, templateNode.getChildren().map(n => n.toString()))),
+          new PartialViewFactoryAnalyzer(
+            this.counter.next().value,
+            responsibleFactory,
+            new Forest(templateNode.getChildren()),
+          )
         )
       } else {
         throw new Error(`Unsupported type of TemplateNodeValue.`)
@@ -169,7 +179,7 @@ export class ProjectAnalyzer {
       this._generateFactoryTree(childFactory, definitionFactory)
     }
 
-    this.level--
+    this.indentationLevelForDebugging--
   }
 
   private _generateFactoryTree (
@@ -216,11 +226,11 @@ export class ProjectAnalyzer {
     return {
       * [Symbol.iterator] () {
         yield rootFa
-        const queue = Array.from(rootFa.getChildren().values())
+        const queue = Array.from(rootFa.getChildrenFactories())
         while (queue.length > 0) {
           const current = queue.shift()!
           yield current
-          for (const child of current.getChildren().values()) {
+          for (const child of current.getChildrenFactories()) {
             queue.push(child)
           }
         }
