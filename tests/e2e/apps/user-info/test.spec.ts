@@ -245,7 +245,7 @@ export default async function runTests () {
       expect(inputValue).to.eql(`43`)
     }
 
-    // This also removes the spam from the dom and adds a button
+    // This also removes the span from the dom and adds a button
     {
       await page.click(`dl > dd:last-of-type > button`)
       const bodyInnerText = await page.evaluate(() => document.body.textContent)

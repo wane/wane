@@ -24,6 +24,10 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   public identifier: ComponentFactoryIdentifier
   public componentAnalyzer: ComponentAnalyzer
 
+  public getPartialViewFactoryAnalyzer(): this {
+    return this
+  }
+
   public getClassName (): string {
     return this.identifier.name
   }
@@ -80,7 +84,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
       const templateNodeValue = node.getValueOrThrow()
       for (const binding of templateNodeValue.viewBindings) {
         const boundValue = binding.boundValue
-        if (!boundValue.isConstant() && boundValue.getScopeFactory() == scopeFactory) {
+        if (!boundValue.isConstant() && boundValue.getDefinitionFactory() == scopeFactory) {
           result.add(boundValue)
         }
       }

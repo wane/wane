@@ -3,6 +3,7 @@ import { AttributeBinding, HtmlElementEventBinding, HtmlElementPropBinding, View
 import iterare from 'iterare'
 import CodeBlockWriter from 'code-block-writer'
 import * as himalaya from 'himalaya'
+import { FactoryAnalyzer } from "../../analyzer";
 
 function getSuperParam (attributeBindings: Iterable<AttributeBinding>,
                         propertyBindings: Iterable<HtmlElementPropBinding>,
@@ -22,7 +23,7 @@ export class TemplateNodeHtmlValue extends TemplateNodeValue {
     super(getSuperParam(attributeBindings, propertyBindings, eventBinding), originalTemplateNode)
   }
 
-  public printDomInit (): string[] {
+  public printDomInit (fa: FactoryAnalyzer<TemplateNodeValue>): string[] {
     return [
       `util.__wane__createElement('${this.tagName}')`,
     ]

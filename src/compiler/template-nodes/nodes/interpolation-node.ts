@@ -2,6 +2,8 @@ import { TemplateNodeValue } from './template-node-value-base'
 import CodeBlockWriter from 'code-block-writer'
 import { InterpolationBinding } from '../view-bindings'
 import * as himalaya from 'himalaya'
+import { FactoryAnalyzer } from "../../analyzer";
+import {ViewBoundPropertyAccess} from '../view-bound-value'
 
 export class TemplateNodeInterpolationValue extends TemplateNodeValue {
 
@@ -16,21 +18,25 @@ export class TemplateNodeInterpolationValue extends TemplateNodeValue {
     return this.interpolationBinding
   }
 
-  public printDomInit (): string[] {
+  public printDomInit (from: FactoryAnalyzer<TemplateNodeValue>): string[] {
     return [
-      `util.__wane__createTextNode(${this.interpolationBinding.boundValue.resolve()})`,
+      `util.__wane__createTextNode(${this.interpolationBinding.boundValue.resolve(from)})`,
     ]
   }
 
   public domNodesCount = 1
 
   public toString (): string {
-    return `[Text] ${this.rawProp()}`
+    return `[Text] ${this.rawContent()}`
   }
 
-  public rawProp (): string {
-    const html = this.originalTemplateNode as himalaya.Text
-    return html.content.replace(/\n/g, `\\n`)
+  public rawContent (): string {
+    const boundValue = this.interpolationBinding.boundValue
+    if (boundValue.isConstant()) {
+      return boundValue.resolve()
+    } else {
+      return (boundValue as ViewBoundPropertyAccess).getRawPath()
+    }
   }
 
 }

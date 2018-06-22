@@ -52,9 +52,11 @@ export function createOrAddToSet<T> (item: T, set: Set<T> | undefined | null): S
 }
 
 export function getIntersection<T> (it1: Iterable<T>, it2: Iterable<T>): Iterable<T> {
+  const arr1 = [...it1]
+  const arr2 = [...it2]
   const result = new Set<T>()
-  for (const item1 of it1) {
-    for (const item2 of it2) {
+  for (const item1 of arr1) {
+    for (const item2 of arr2) {
       if (item1 == item2) {
         result.add(item1)
       }

@@ -33,8 +33,8 @@ export function getPath<T> (getNeighbors: (t: T) => Iterable<T>, start: T, end: 
 }
 
 export function printTreePath<T> (isHopToParent: (from: T, to: T) => boolean,
-                                  printHopToParent: (from: T, to: T) => string,
-                                  printHopToChild: (from: T, to: T) => string,
+                                  printHopToParent: (from: T, to: T, isStartingHop: boolean, isEndingHop: boolean) => string,
+                                  printHopToChild: (from: T, to: T, isStartingHop: boolean, isEndingHop: boolean) => string,
                                   path: T[]): string {
   if (path.length == 1) {
     return ''
@@ -45,10 +45,12 @@ export function printTreePath<T> (isHopToParent: (from: T, to: T) => boolean,
   for (let i = 0; i < path.length - 1; i++) {
     const from = path[i]
     const to = path[i + 1]
+    const isStartingHop: boolean = i == 0
+    const isEndingHop: boolean = i == path.length - 2
     if (isHopToParent(from, to)) {
-      result.push(printHopToParent(from, to))
+      result.push(printHopToParent(from, to, isStartingHop, isEndingHop))
     } else {
-      result.push(printHopToChild(from, to))
+      result.push(printHopToChild(from, to, isStartingHop, isEndingHop))
     }
   }
 

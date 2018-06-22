@@ -134,7 +134,7 @@ export class HelpersCodegen extends BaseCodegen {
 
   private generateGetNextNotUsed (): this {
     this.writer
-      .writeLine(`export function getNextNotUsed(keys: string[], currentIndex: number, used: {[key: string]: true}): number {`)
+      .writeLine(`export function __wane__getNextNotUsed(keys: string[], currentIndex: number, used: {[key: string]: true}): number {`)
       .indentBlock(() => {
         this.writer
           .writeLine(`while (++currentIndex < keys.length && used[keys[currentIndex]]) {}`)
@@ -144,26 +144,27 @@ export class HelpersCodegen extends BaseCodegen {
     return this
   }
 
-  private recursiveDestroy (): this {
+  private destroyFactoryChildrenArray (factoryVarName: string): this {
     this.writer
-      .writeLine(`this.__wane__factoryChildren.forEach(child => {`)
+      .writeLine(`${factoryVarName}.__wane__factoryChildren.forEach(child => {`)
       .indentBlock(() => {
         this.writer
           .writeLine(`child.__wane__destroy()`)
       })
+      .writeLine(`})`)
     return this
   }
 
   private generateDestroyComponent (): this {
     this.writer
-      .writeLine(`function ${this.names.destroyComponentFactory} () {`)
+      .writeLine(`function ${this.names.destroyComponentFactory} (factory) {`)
       .indentBlock(() => {
-        this.recursiveDestroy()
+        this.destroyFactoryChildrenArray(`factory`)
         this.writer
-          .writeLine(`while (this.__wane__root.firstChild !== null) {`)
+          .writeLine(`while (factory.__wane__root.firstChild !== null) {`)
           .indentBlock(() => {
             this.writer
-              .writeLine(`this.root.removeChild(factory.root.firstChild)`)
+              .writeLine(`factory.__wane__root.removeChild(factory.__wane__root.firstChild)`)
           })
           .writeLine(`}`)
       })
@@ -171,14 +172,15 @@ export class HelpersCodegen extends BaseCodegen {
     return this
   }
 
-  private generateDestroyDirective (): this {
+  private generateDestroyDirective (generateDestroyChildren: () => void): this {
     this.writer
-      .writeLine(`function ${this.names.destroyDirectiveFactory} () {`)
+      .writeLine(`export function ${this.names.destroyDirectiveFactory} (factory) {`)
       .indentBlock(() => {
-        this.recursiveDestroy()
+        generateDestroyChildren()
+        this.destroyFactoryChildrenArray(`factory`)
         this.writer
-          .writeLine(`let node = this.openingCommentOutlet.nextSibling`)
-          .writeLine(`while (node != this.closingCommentOutlet) {`)
+          .writeLine(`let node = factory.__wane__openingCommentOutlet.nextSibling`)
+          .writeLine(`while (node != factory.__wane__closingCommentOutlet) {`)
           .indentBlock(() => {
             this.writer
               .writeLine(`const nextNode = node.nextSibling`)
@@ -191,6 +193,12 @@ export class HelpersCodegen extends BaseCodegen {
     return this
   }
 
+  private generateDestroyConditionalDirective (): this {
+    return this.generateDestroyDirective(() => {
+      this.destroyFactoryChildrenArray(`factory`)
+    })
+  }
+
   public printCode (): CodeBlockWriter {
     return this
       .resetWriter()
@@ -199,6 +207,7 @@ export class HelpersCodegen extends BaseCodegen {
       .generateDomHelpers()
       .generateFactoryTreeHelpers()
       .generateGetNextNotUsed()
+      .generateDestroyConditionalDirective()
       .getWriter()
   }
 

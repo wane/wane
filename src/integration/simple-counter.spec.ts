@@ -29,7 +29,7 @@
 //     })
 //
 //     it(`should have one child`, () => {
-//       expect(Array.from(entryFa.getChildren().values()).length).toBe(1)
+//       expect(Array.from(entryFa.getChildrenFactories()).length).toBe(1)
 //     })
 //
 //     describe(`View`, () => {
@@ -97,7 +97,7 @@
 //           })
 //
 //           it(`should have EntryCmp as scope factory`, () => {
-//             expect(boundValue.getScopeFactory()).toBe(entryFa)
+//             expect(boundValue.getDefinitionFactory()).toBe(entryFa)
 //           })
 //
 //           it(`should resolve to the text it contains (some whitespace)`, () => {
@@ -283,7 +283,7 @@
 //     })
 //
 //     it(`should have no children`, () => {
-//       expect(Array.from(counterFa.getChildren().values()).length).toBe(0)
+//       expect(Array.from(counterFa.getChildrenFactories()).length).toBe(0)
 //     })
 //
 //     it(`should correctly conclude the structure of the view`, () => {

@@ -30,9 +30,9 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
         this
           .printTakeValuesFromAncestors(fa)
           .printDomNodesRegistration(fa)
-          .printDomPropsInit(fa)
           .printAssemblingDomNodes(fa)
           .printAssembleFactoryChildren(fa)
+          .printDomPropsInit(fa)
         this.writer
           .writeLine(`this.${this.names.diff}() // to populate the previous state`)
       })
@@ -52,13 +52,14 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
               .writeLine(`factoryChild.__wane__destroy()`)
           })
           .writeLine(`}`)
+          .writeLine(`while (this.__wane__root.firstChild !== null) {`)
+          .indentBlock(() => {
+            this.writer
+              .writeLine(`this.__wane__root.removeChild(this.__wane__root.firstChild)`)
+          })
+          .writeLine(`}`)
       })
-      .writeLine(`while (this.__wane__root.firstChild !== null) {`)
-      .indentBlock(() => {
-        this.writer
-          .writeLine(`this.__wane__root.removeChild(this.__wane__root.firstChild)`)
-      })
-      .writeLine(`}`)
+      .writeLine(`},`)
     return this
   }
 

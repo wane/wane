@@ -1,23 +1,22 @@
 import { FactoryAnalyzer } from './base-factory-analyzer'
 import { Forest, TreeNode } from '../../utils/tree'
-import { PartialViewFactoryAnalyzer } from './partial-view-factory-analyzer'
+import { DirectiveFactoryAnalyzer } from './directive-factory-analyzer'
 import { TemplateNodeConditionalViewValue } from '../../template-nodes/nodes/conditional-view-node'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { ConditionalViewBinding } from '../../template-nodes/view-bindings'
 import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
+import { PartialViewFactoryAnalyzer } from "./partial-view-factory-analyzer";
 
-export class ConditionalViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<TemplateNodeConditionalViewValue> {
-
-  // public view!: Forest<TemplateNodeValue>
-  // public templateDefinition: Forest<TemplateNodeValue>
+export class ConditionalViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<TemplateNodeConditionalViewValue> {
 
   constructor (
     uniqueId: number,
     parentFactory: FactoryAnalyzer<TemplateNodeValue>,
     anchorViewNode: TreeNode<TemplateNodeConditionalViewValue>,
     templateDefinition: Forest<TemplateNodeValue>,
+    partialViewFactoryAnalyzer: PartialViewFactoryAnalyzer,
   ) {
-    super(uniqueId, parentFactory, anchorViewNode, templateDefinition)
+    super(uniqueId, parentFactory, anchorViewNode, templateDefinition, partialViewFactoryAnalyzer)
   }
 
   public getBinding (): ConditionalViewBinding {
@@ -31,14 +30,6 @@ export class ConditionalViewFactoryAnalyzer extends PartialViewFactoryAnalyzer<T
     }
     return binding
   }
-
-  // public getConditionAccessPath (): string {
-  //   return this.getBinding().boundValue
-  // }
-
-  // public isConditionNegated (): boolean {
-  //   return this.getBinding().isConditionNegated()
-  // }
 
   public hasDefinedAndResolvesTo (propAccessorPath: string): string | null {
     // A conditional view cannot be a scope for anything as it has no context

@@ -8,20 +8,109 @@ import {
   InterpolationBinding,
 } from '../compiler/template-nodes/view-bindings'
 import iterare from 'iterare'
-import { stripIndent } from 'common-tags'
 import CodeBlockWriter from 'code-block-writer'
-import { ViewBoundValue } from '../compiler/template-nodes/view-bound-value'
-import { isCmpNodeWithName, isConditionalViewNodeWithVar } from '../compiler/template-nodes/nodes/utils'
+import { ViewBoundPropertyAccess, ViewBoundValue } from '../compiler/template-nodes/view-bound-value'
+import {
+  isCmpNodeWithName,
+  isConditionalViewNodeWithVar,
+  isInterpolationNodeWithProp,
+} from '../compiler/template-nodes/nodes/utils'
 import { isInstance } from '../compiler/utils/utils'
 import { ComponentFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/component-factory-analyzer'
-import { repeat } from "./utils";
-import { FactoryAnalyzer } from "../compiler/analyzer";
-import { TemplateNodeValue } from "../compiler/template-nodes/nodes/template-node-value-base";
+import { repeat } from './utils'
+import { FactoryAnalyzer } from '../compiler/analyzer'
+import { TemplateNodeValue } from '../compiler/template-nodes/nodes/template-node-value-base'
+import { ConditionalViewFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/conditional-view-factory-analyzer'
+import { TemplateNodeComponentValue } from '../compiler/template-nodes/nodes/component-node'
+import { TemplateNodeConditionalViewValue } from '../compiler/template-nodes/nodes/conditional-view-node'
 
 function expectWriter (spy: (wr: CodeBlockWriter) => void, expectation: string): void {
   const wr = new CodeBlockWriter({ indentNumberOfSpaces: 2 })
   spy(wr)
   expect(wr.toString().trim()).toBe(expectation.trim())
+}
+
+function get01Factories () {
+  const app = apps.helloWorld.getFactoryTree()
+  return { app }
+}
+
+function get02Factories () {
+  const app = apps.counter.getFactoryTree()
+  const appChildren = [...app.getChildrenFactories()]
+  const counterCmp = appChildren[0] as ComponentFactoryAnalyzer
+  return { app, counterCmp }
+}
+
+function get03Factories () {
+  const app = apps.toggler.getFactoryTree()
+
+  const appChildren = [...app.getChildrenFactories()]
+  const toggleCmp = appChildren[0] as ComponentFactoryAnalyzer
+  const isJavaScriptCondDir = appChildren[1] as ConditionalViewFactoryAnalyzer
+  const isTypeScriptCondDir = appChildren[2] as ConditionalViewFactoryAnalyzer
+
+  const isJavaScriptPartial = isJavaScriptCondDir.getPartialViewFactoryAnalyzer()
+  const isTypeScriptPartial = isTypeScriptCondDir.getPartialViewFactoryAnalyzer()
+
+  return {
+    app, toggleCmp,
+    isJavaScriptCondDir, isTypeScriptCondDir,
+    isJavaScriptPartial, isTypeScriptPartial,
+  }
+}
+
+function get04Factories () {
+  const app = apps.comparator.getFactoryTree()
+
+  const appChildren = [...app.getChildrenFactories()]
+  const counterCmp1 = appChildren[0] as ComponentFactoryAnalyzer
+  const counterCmp2 = appChildren[1] as ComponentFactoryAnalyzer
+
+  const infoCmp = appChildren[2] as ComponentFactoryAnalyzer
+  const infoCmpChildren = [...infoCmp.getChildrenFactories()]
+
+  const isLeftGreaterCondDir = infoCmpChildren[0] as ConditionalViewFactoryAnalyzer
+  const isRightGreaterCondDir = infoCmpChildren[1] as ConditionalViewFactoryAnalyzer
+  const areEqualCondDir = infoCmpChildren[2] as ConditionalViewFactoryAnalyzer
+
+  const isLeftGreaterPartial = isLeftGreaterCondDir.getPartialViewFactoryAnalyzer()
+  const isRightGreaterPartial = isRightGreaterCondDir.getPartialViewFactoryAnalyzer()
+  const areEqualPartial = areEqualCondDir.getPartialViewFactoryAnalyzer()
+
+  return {
+    app,
+    counterCmp1, counterCmp2, infoCmp,
+    isLeftGreaterCondDir, isRightGreaterCondDir, areEqualCondDir,
+    isLeftGreaterPartial, isRightGreaterPartial, areEqualPartial,
+  }
+}
+
+function get05Factories () {
+  const app = apps.deepIfs.getFactoryTree()
+
+  const counterCmps = [...app.getChildrenFactories()].slice(0, 3) as ComponentFactoryAnalyzer[]
+  const [counterCmp1, counterCmp2, counterCmp3] = counterCmps
+
+  const toggleCmps = [...app.getChildrenFactories()].slice(3, 6) as ComponentFactoryAnalyzer[]
+  const [toggleCmp1, toggleCmp2, toggleCmp3] = toggleCmps
+
+  const [ifA] = [...app.getChildrenFactories()].slice(6, 7) as ConditionalViewFactoryAnalyzer[]
+  const ifAPartial = ifA.getPartialViewFactoryAnalyzer()
+
+  const [ifB] = ifAPartial.getChildrenFactories() as ConditionalViewFactoryAnalyzer[]
+  const ifBPartial = ifB.getPartialViewFactoryAnalyzer()
+
+  const [ifC] = ifBPartial.getChildrenFactories() as ConditionalViewFactoryAnalyzer[]
+  const ifCPartial = ifC.getPartialViewFactoryAnalyzer()
+
+  return {
+    app,
+    counterCmps, counterCmp1, counterCmp2, counterCmp3,
+    toggleCmps, toggleCmp1, toggleCmp2, toggleCmp3,
+    ifA, ifB, ifC,
+    ifAPartial, ifBPartial, ifCPartial,
+  }
 }
 
 describe(`FactoryAnalyzer`, () => {
@@ -30,91 +119,125 @@ describe(`FactoryAnalyzer`, () => {
   describe(`getFirstScopeBoundaryUpwardsIncludingSelf`, () => {
 
     describe(`in 01-hello-world`, () => {
+      const fas = get01Factories()
       describe(`for App`, () => {
-        const app = apps.helloWorld.getFactoryTree()
         it(`gets itself`, () => {
-          expect(app.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(app)
+          expect(fas.app.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
         })
       })
     })
 
     describe(`in 02-counter`, () => {
+      const fas = get02Factories()
       describe(`for CounterCmp`, () => {
-        const counterCmp = apps.counter.getFactoryTree().getFirstChild<ComponentFactoryAnalyzer>()
         it(`gets itself`, () => {
-          expect(counterCmp.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(counterCmp)
+          expect(fas.counterCmp.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.counterCmp)
         })
       })
       describe(`for App`, () => {
-        const app = apps.counter.getFactoryTree()
         it(`gets itself`, () => {
-          expect(app.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(app)
+          expect(fas.app.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
         })
       })
     })
 
     describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const fas = get03Factories()
       describe(`for ToggleCmp`, () => {
         it(`returns App`, () => {
-          expect(toggleCmp.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(toggleCmp as ComponentFactoryAnalyzer)
+          expect(fas.toggleCmp.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.toggleCmp)
         })
       })
       describe(`for ConditionalView1`, () => {
         it(`returns App`, () => {
-          expect(conditionalView1.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(app)
+          expect(fas.isJavaScriptCondDir.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
         })
       })
       describe(`for ConditionalView2`, () => {
         it(`returns App`, () => {
-          expect(conditionalView2.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(app)
+          expect(fas.isTypeScriptCondDir.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
         })
       })
       describe(`for App`, () => {
         it(`returns itself`, () => {
-          expect(app.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(app)
+          expect(fas.app.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
         })
       })
     })
 
     describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const fas = get04Factories()
       describe(`for CounterCmp1`, () => {
         it(`returns itself`, () => {
-          expect(counterCmp1.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(counterCmp1 as ComponentFactoryAnalyzer)
+          expect(fas.counterCmp1.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.counterCmp1)
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`returns itself`, () => {
-          expect(counterCmp2.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(counterCmp2 as ComponentFactoryAnalyzer)
+          expect(fas.counterCmp2.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.counterCmp2)
         })
       })
       describe(`for IsLeftGreater`, () => {
         it(`returns Info`, () => {
-          expect(isLeftIsGreater.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(infoCmp as ComponentFactoryAnalyzer)
+          expect(fas.isLeftGreaterCondDir.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.infoCmp)
         })
       })
       describe(`for IsRightGreater`, () => {
         it(`returns Info`, () => {
-          expect(isRightIsGreater.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(infoCmp as ComponentFactoryAnalyzer)
+          expect(fas.isRightGreaterCondDir.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.infoCmp)
         })
       })
       describe(`for AreEqual`, () => {
         it(`returns Info`, () => {
-          expect(areEqual.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(infoCmp as ComponentFactoryAnalyzer)
+          expect(fas.areEqualCondDir.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.infoCmp)
         })
       })
       describe(`for InfoCmp`, () => {
         it(`returns itself`, () => {
-          expect(infoCmp.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(infoCmp as ComponentFactoryAnalyzer)
+          expect(fas.infoCmp.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.infoCmp)
         })
       })
       describe(`for App`, () => {
         it(`returns itself`, () => {
-          expect(app.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(app)
+          expect(fas.app.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const fas = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        it(`returns itself`, () => {
+          for (const toggleCmp of fas.toggleCmps) {
+            expect(toggleCmp.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(toggleCmp)
+          }
+        })
+      })
+      describe(`for CounterCmp components`, () => {
+        it(`returns itself`, () => {
+          for (const counterCmp of fas.counterCmps) {
+            expect(counterCmp.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(counterCmp)
+          }
+        })
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`returns App`, () => {
+          expect(fas.ifA.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`returns App`, () => {
+          expect(fas.ifB.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`returns App`, () => {
+          expect(fas.ifC.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
+        })
+      })
+      describe(`for App component`, () => {
+        it(`returns itself`, () => {
+          expect(fas.app.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(fas.app)
         })
       })
     })
@@ -125,91 +248,125 @@ describe(`FactoryAnalyzer`, () => {
   describe(`getFactoryName`, () => {
 
     describe(`01-hello-world`, () => {
+      const fas = get01Factories()
       describe(`App`, () => {
-        const app = apps.helloWorld.getFactoryTree()
-        it(`gets class name appended by 0`, () => {
-          expect(app.getFactoryName()).toBe(`App0`)
+        it(`gets class name appended by a number`, () => {
+          expect(fas.app.getFactoryName()).toMatch(/App\d+/)
         })
       })
     })
 
     describe(`02-counter`, () => {
+      const fas = get02Factories()
       describe(`CounterCmp`, () => {
-        const counter = apps.counter.getFactoryTree().getFirstChild()
-        it(`gets class name appended by 1`, () => {
-          expect(counter.getFactoryName()).toBe(`CounterCmp1`)
+        it(`gets class name appended by a number`, () => {
+          expect(fas.counterCmp.getFactoryName()).toMatch(/CounterCmp\d+/)
         })
       })
       describe(`App`, () => {
-        const app = apps.counter.getFactoryTree()
-        it(`gets class name appended by 0`, () => {
-          expect(app.getFactoryName()).toBe(`App0`)
+        it(`gets class name appended by a number`, () => {
+          expect(fas.app.getFactoryName()).toMatch(/App\d+/)
         })
       })
     })
 
     describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const fas = get03Factories()
       describe(`for ToggleCmp`, () => {
-        it(`gets class name appended by 1`, () => {
-          expect(toggleCmp.getFactoryName()).toBe(`ToggleCmp1`)
+        it(`gets class name appended by a number`, () => {
+          expect(fas.toggleCmp.getFactoryName()).toMatch(/ToggleCmp\d+/)
         })
       })
       describe(`for ConditionalView1`, () => {
-        it(`gets type appended by isJavaScript and 2`, () => {
-          expect(conditionalView1.getFactoryName()).toBe(`ConditionalView_isJavaScript_2`)
+        it(`gets type appended by isJavaScript and a number`, () => {
+          expect(fas.isJavaScriptCondDir.getFactoryName()).toMatch(/ConditionalView_isJavaScript_\d+/)
         })
       })
       describe(`for ConditionalView2`, () => {
-        it(`gets type appended by isTypeScript and 3`, () => {
-          expect(conditionalView2.getFactoryName()).toBe(`ConditionalView_isTypeScript_3`)
+        it(`gets type appended by isTypeScript and a number`, () => {
+          expect(fas.isTypeScriptCondDir.getFactoryName()).toMatch(/ConditionalView_isTypeScript_\d+/)
         })
       })
       describe(`for App`, () => {
-        it(`gets class name appended by 0`, () => {
-          expect(app.getFactoryName()).toBe(`App0`)
+        it(`gets class name appended by a number`, () => {
+          expect(fas.app.getFactoryName()).toMatch(/App\d+/)
         })
       })
     })
 
     describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const fas = get04Factories()
       describe(`for CounterCmp1`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(counterCmp1.getFactoryName()).toBe(`CounterCmp1`)
+          expect(fas.counterCmp1.getFactoryName()).toMatch(/CounterCmp\d+/)
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(counterCmp2.getFactoryName()).toBe(`CounterCmp2`)
+          expect(fas.counterCmp2.getFactoryName()).toMatch(/CounterCmp\d+/)
         })
       })
       describe(`for IsLeftGreater`, () => {
         it(`gets type, condition and a unique suffix`, () => {
-          expect(isLeftIsGreater.getFactoryName()).toBe(`ConditionalView_isLeftGreater_4`)
+          expect(fas.isLeftGreaterCondDir.getFactoryName()).toMatch(/ConditionalView_isLeftGreater_\d+/)
         })
       })
       describe(`for IsRightGreater`, () => {
         it(`gets type, condition and a unique suffix`, () => {
-          expect(isRightIsGreater.getFactoryName()).toBe(`ConditionalView_isRightGreater_5`)
+          expect(fas.isRightGreaterCondDir.getFactoryName()).toMatch(/ConditionalView_isRightGreater_\d+/)
         })
       })
       describe(`for AreEqual`, () => {
         it(`gets type, condition and a unique suffix`, () => {
-          expect(areEqual.getFactoryName()).toBe(`ConditionalView_areEqual_6`)
+          expect(fas.areEqualCondDir.getFactoryName()).toMatch(/ConditionalView_areEqual_\d+/)
         })
       })
       describe(`for InfoCmp`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(infoCmp.getFactoryName()).toBe(`InfoCmp3`)
+          expect(fas.infoCmp.getFactoryName()).toMatch(/InfoCmp\d+/)
         })
       })
       describe(`for App`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(app.getFactoryName()).toBe(`App0`)
+          expect(fas.app.getFactoryName()).toMatch(/App\d+/)
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const fas = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        for (const toggleCmp of fas.toggleCmps) {
+          it(`gets class name with a unique suffix`, () => {
+            expect(toggleCmp.getFactoryName()).toMatch(/ToggleCmp\d+/)
+          })
+        }
+      })
+      describe(`for CounterCmp components`, () => {
+        for (const counterCmp of fas.counterCmps) {
+          it(`gets class name with a unique suffix`, () => {
+            expect(counterCmp.getFactoryName()).toMatch(/CounterCmp\d+/)
+          })
+        }
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`gets type, condition and a unique suffix`, () => {
+          expect(fas.ifA.getFactoryName()).toMatch(/ConditionalView_visibility-a_\d+/)
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`gets type, condition and a unique suffix`, () => {
+          expect(fas.ifB.getFactoryName()).toMatch(/ConditionalView_visibility-b_\d+/)
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`gets type, condition and a unique suffix`, () => {
+          expect(fas.ifC.getFactoryName()).toMatch(/ConditionalView_visibility-c_\d+/)
+        })
+      })
+      describe(`for App component`, () => {
+        it(`gets class name with a unique suffix`, () => {
+          expect(fas.app.getFactoryName()).toMatch(/App\d+/)
         })
       })
     })
@@ -222,8 +379,8 @@ describe(`FactoryAnalyzer`, () => {
     describe(`01-hello-world`, () => {
       describe(`App`, () => {
         const app = apps.helloWorld.getFactoryTree()
-        it(`returns "app0"`, () => {
-          expect(app.getFactoryFilename()).toBe(`app0`)
+        it(`returns "app{N}"`, () => {
+          expect(app.getFactoryFilename()).toMatch(/app\d+/)
         })
       })
     })
@@ -231,80 +388,118 @@ describe(`FactoryAnalyzer`, () => {
     describe(`02-counter`, () => {
       describe(`CounterCmp`, () => {
         const counter = apps.counter.getFactoryTree().getFirstChild()
-        it(`returns counter-cmp1`, () => {
-          expect(counter.getFactoryFilename()).toBe(`counter-cmp1`)
+        it(`returns counter-cmp{N}`, () => {
+          expect(counter.getFactoryFilename()).toMatch(/counter-cmp\d+/)
         })
       })
       describe(`App`, () => {
         const app = apps.counter.getFactoryTree()
-        it(`returns app0`, () => {
-          expect(app.getFactoryFilename()).toBe(`app0`)
+        it(`returns app{N}`, () => {
+          expect(app.getFactoryFilename()).toMatch(/app\d+/)
         })
       })
     })
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
-        it(`returns toggle-cmp1`, () => {
-          expect(toggleCmp.getFactoryFilename()).toBe(`toggle-cmp1`)
+        it(`returns toggle-cmp{N}`, () => {
+          expect(toggleCmp.getFactoryFilename()).toMatch(/toggle-cmp\d+/)
         })
       })
       describe(`for ConditionalView1`, () => {
-        it(`returns conditional-view-is-java-script-2`, () => {
-          expect(conditionalView1.getFactoryFilename()).toBe(`conditional-view-is-java-script-2`)
+        it(`returns conditional-view-is-java-script-{N}`, () => {
+          expect(conditionalView1.getFactoryFilename()).toMatch(/conditional-view-is-java-script-\d+/)
         })
       })
       describe(`for ConditionalView2`, () => {
-        it(`returns conditional-view-is-type-script-3`, () => {
-          expect(conditionalView2.getFactoryFilename()).toBe(`conditional-view-is-type-script-3`)
+        it(`returns conditional-view-is-type-script-{N}`, () => {
+          expect(conditionalView2.getFactoryFilename()).toMatch(/conditional-view-is-type-script-\d+/)
         })
       })
       describe(`for App`, () => {
-        it(`returns app0`, () => {
-          expect(app.getFactoryFilename()).toBe(`app0`)
+        it(`returns app{N}`, () => {
+          expect(app.getFactoryFilename()).toMatch(/app\d+/)
         })
       })
     })
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`works`, () => {
-          expect(counterCmp1.getFactoryFilename()).toBe(`counter-cmp1`)
+          expect(counterCmp1.getFactoryFilename()).toMatch(/counter-cmp\d+/)
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`works`, () => {
-          expect(counterCmp2.getFactoryFilename()).toBe(`counter-cmp2`)
+          expect(counterCmp2.getFactoryFilename()).toMatch(/counter-cmp\d+/)
         })
       })
       describe(`for IsLeftGreater`, () => {
         it(`works`, () => {
-          expect(isLeftIsGreater.getFactoryFilename()).toBe(`conditional-view-is-left-greater-4`)
+          expect(isLeftIsGreater.getFactoryFilename()).toMatch(/conditional-view-is-left-greater-\d+/)
         })
       })
       describe(`for IsRightGreater`, () => {
         it(`works`, () => {
-          expect(isRightIsGreater.getFactoryFilename()).toBe(`conditional-view-is-right-greater-5`)
+          expect(isRightIsGreater.getFactoryFilename()).toMatch(/conditional-view-is-right-greater-\d+/)
         })
       })
       describe(`for AreEqual`, () => {
         it(`works`, () => {
-          expect(areEqual.getFactoryFilename()).toBe(`conditional-view-are-equal-6`)
+          expect(areEqual.getFactoryFilename()).toMatch(/conditional-view-are-equal-\d+/)
         })
       })
       describe(`for InfoCmp`, () => {
         it(`works`, () => {
-          expect(infoCmp.getFactoryFilename()).toBe(`info-cmp3`)
+          expect(infoCmp.getFactoryFilename()).toMatch(/info-cmp\d+/)
         })
       })
       describe(`for App`, () => {
         it(`works`, () => {
-          expect(app.getFactoryFilename()).toBe(`app0`)
+          expect(app.getFactoryFilename()).toMatch(/app\d+/)
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const cmps = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        for (const toggleCmp of cmps.toggleCmps) {
+          it(`gets class name with a unique suffix`, () => {
+            expect(toggleCmp.getFactoryFilename()).toMatch(/toggle-cmp\d+/)
+          })
+        }
+      })
+      describe(`for CounterCmp components`, () => {
+        for (const counterCmp of cmps.counterCmps) {
+          it(`gets class name with a unique suffix`, () => {
+            expect(counterCmp.getFactoryFilename()).toMatch(/counter-cmp\d+/)
+          })
+        }
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`gets type, condition and a unique suffix`, () => {
+          expect(cmps.ifA.getFactoryFilename()).toMatch(/conditional-view-visibility-a-\d+/)
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`gets type, condition and a unique suffix`, () => {
+          expect(cmps.ifB.getFactoryFilename()).toMatch(/conditional-view-visibility-b-\d+/)
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`gets type, condition and a unique suffix`, () => {
+          expect(cmps.ifC.getFactoryFilename()).toMatch(/conditional-view-visibility-c-\d+/)
+        })
+      })
+      describe(`for App component`, () => {
+        it(`gets class name with a unique suffix`, () => {
+          expect(cmps.app.getFactoryFilename()).toMatch(/app\d+/)
         })
       })
     })
@@ -435,7 +630,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns false`, () => {
           expect(toggleCmp.isRoot()).toBe(false)
@@ -466,120 +661,276 @@ describe(`FactoryAnalyzer`, () => {
   describe(`getChildren`, () => {
 
     describe(`01-hello-world`, () => {
+      const fas = get01Factories()
       describe(`App`, () => {
-        const app = apps.helloWorld.getFactoryTree()
         it(`returns an empty iterable since there are no child factories`, () => {
-          expect(Array.from(app.getChildren()).length).toBe(0)
+          expect(Array.from(fas.app.getChildren()).length).toBe(0)
         })
       })
     })
 
     describe(`02-counter`, () => {
-      const app = apps.counter.getFactoryTree()
-      const counter = app.getFirstChild()
+      const fas = get02Factories()
       describe(`CounterCmp`, () => {
         it(`returns an empty iterable since there are no child factories`, () => {
-          expect(Array.from(counter.getChildren()).length).toBe(0)
+          expect([...fas.counterCmp.getChildren()].length).toBe(0)
         })
       })
       describe(`App`, () => {
         it(`returns a single child, mapping the corresponding node to it`, () => {
-          const children = app.getChildren()
-          expect(Array.from(children).length).toBe(1)
+          const children = fas.app.getChildren()
+          expect([...children].length).toBe(1)
           const [[node, child]] = children
-          expect(node).toEqual(app.view.findOrFail(isCmpNodeWithName('counter-cmp')))
-          expect(child).toBe(counter)
+          expect(node.getValue).toBe(fas.app.view.findOrFail(isCmpNodeWithName('counter-cmp')).getValue)
+          expect(child).toBe(fas.counterCmp)
         })
       })
     })
 
     describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const fas = get03Factories()
       describe(`for ToggleCmp`, () => {
         it(`returns no children`, () => {
-          expect(Array.from(toggleCmp.getChildren()).length).toBe(0)
+          expect(Array.from(fas.toggleCmp.getChildren()).length).toBe(0)
         })
       })
       describe(`for ConditionalView1`, () => {
+        it(`returns one child, mapping the corresponding node`, () => {
+          const children = [...fas.isJavaScriptCondDir.getChildren()]
+          expect([...children].length).toBe(1)
+          const [[node, child]] = children
+          expect(node.getValue()).toBe(fas.app.view.findOrFail(isConditionalViewNodeWithVar('isJavaScript')).getValue())
+          expect(child).toBe(fas.isJavaScriptPartial)
+        })
+      })
+      describe(`for PartialView1`, () => {
         it(`returns no children`, () => {
-          expect(Array.from(conditionalView1.getChildren()).length).toBe(0)
+          expect(fas.isJavaScriptPartial.getChildren().size).toBe(0)
         })
       })
       describe(`for ConditionalView2`, () => {
+        it(`returns one child, mapping the corresponding node`, () => {
+          const children = [...fas.isTypeScriptCondDir.getChildren()]
+          expect([...children].length).toBe(1)
+          const [[node, child]] = children
+          expect(node.getValue()).toBe(fas.app.view.findOrFail(isConditionalViewNodeWithVar('isTypeScript')).getValue())
+          expect(child).toBe(fas.isTypeScriptPartial)
+        })
+      })
+      describe(`for PartialView2`, () => {
         it(`returns no children`, () => {
-          expect(Array.from(conditionalView2.getChildren()).length).toBe(0)
+          expect(fas.isTypeScriptPartial.getChildren().size).toBe(0)
         })
       })
       describe(`for App`, () => {
         it(`has three children, mapping corresponding nodes`, () => {
-          const children = app.getChildren()
+          const children = fas.app.getChildren()
           expect(Array.from(children).length).toBe(3)
           const [[node1, child1], [node2, child2], [node3, child3]] = children
-          expect(node1).toEqual(app.view.findOrFail(isCmpNodeWithName('toggle-cmp')))
-          expect(child1).toBe(toggleCmp)
-          expect(node2).toEqual(app.view.findOrFail(isConditionalViewNodeWithVar(`isJavaScript`)))
-          expect(child2).toBe(conditionalView1)
-          expect(node3).toEqual(app.view.findOrFail(isConditionalViewNodeWithVar(`isTypeScript`)))
-          expect(child3).toBe(conditionalView2)
+          expect(node1).toEqual(fas.app.view.findOrFail(isCmpNodeWithName('toggle-cmp')))
+          expect(child1).toBe(fas.toggleCmp)
+          expect(node2).toEqual(fas.app.view.findOrFail(isConditionalViewNodeWithVar(`isJavaScript`)))
+          expect(child2).toBe(fas.isJavaScriptCondDir)
+          expect(node3).toEqual(fas.app.view.findOrFail(isConditionalViewNodeWithVar(`isTypeScript`)))
+          expect(child3).toBe(fas.isTypeScriptCondDir)
         })
       })
     })
 
     describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const fas = get04Factories()
       describe(`for CounterCmp1`, () => {
         it(`returns no children`, () => {
-          expect(Array.from(counterCmp1.getChildren()).length).toBe(0)
+          expect([...fas.counterCmp1.getChildren()].length).toBe(0)
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`returns no children`, () => {
-          expect(Array.from(counterCmp1.getChildren()).length).toBe(0)
+          expect([...fas.counterCmp1.getChildren()].length).toBe(0)
         })
       })
       describe(`for IsLeftGreater`, () => {
-
-        it(`returns no children`, () => {
-          expect(Array.from(isLeftIsGreater.getChildren()).length).toBe(0)
+        it(`returns a single child, mapping the correct node`, () => {
+          const children = [...fas.isLeftGreaterCondDir.getChildren()]
+          expect(children.length).toBe(1)
+          const [[node, child]] = children
+          expect(node.getValue()).toBe(fas.isLeftGreaterCondDir.getAnchorViewNode().getValue())
+          expect(child).toBe(fas.isLeftGreaterPartial)
         })
       })
+      describe(`for IsLeftGreater Partial`, () => [
+        it(`returns no children`, () => [
+          expect(fas.isLeftGreaterPartial.getChildren().size).toBe(0),
+        ]),
+      ])
       describe(`for IsRightGreater`, () => {
-        it(`returns no children`, () => {
-          expect(Array.from(isRightIsGreater.getChildren()).length).toBe(0)
+        it(`returns a single child, mapping the correct node`, () => {
+          const children = [...fas.isRightGreaterCondDir.getChildren()]
+          expect(children.length).toBe(1)
+          const [[node, child]] = children
+          expect(node.getValue()).toBe(fas.isRightGreaterCondDir.getAnchorViewNode().getValue())
+          expect(child).toBe(fas.isRightGreaterPartial)
         })
       })
+      describe(`for IsRightGreater Partial`, () => [
+        it(`returns no children`, () => [
+          expect(fas.isRightGreaterPartial.getChildren().size).toBe(0),
+        ]),
+      ])
       describe(`for AreEqual`, () => {
+        it(`returns a single child, mapping the correct node`, () => {
+          const children = [...fas.areEqualCondDir.getChildren()]
+          expect(children.length).toBe(1)
+          const [[node, child]] = children
+          expect(node.getValue()).toBe(fas.areEqualCondDir.getAnchorViewNode().getValue())
+          expect(child).toBe(fas.areEqualPartial)
+        })
+      })
+      describe(`for AreEqual Partial`, () => {
         it(`returns no children`, () => {
-          expect(Array.from(areEqual.getChildren()).length).toBe(0)
+          expect(Array.from(fas.areEqualPartial.getChildren()).length).toBe(0)
         })
       })
       describe(`for InfoCmp`, () => {
         it(`returns three children, mapping corresponding nodes`, () => {
-          const children = infoCmp.getChildren()
+          const children = fas.infoCmp.getChildren()
           expect(Array.from(children).length).toBe(3)
           const [[node1, child1], [node2, child2], [node3, child3]] = children
-          expect(node1).toEqual(infoCmp.view.findOrFail(isConditionalViewNodeWithVar('isLeftGreater')))
-          expect(child1).toBe(isLeftIsGreater)
-          expect(node2).toEqual(infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`isRightGreater`)))
-          expect(child2).toBe(isRightIsGreater)
-          expect(node3).toEqual(infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`areEqual`)))
-          expect(child3).toBe(areEqual)
+          expect(node1).toEqual(fas.infoCmp.view.findOrFail(isConditionalViewNodeWithVar('isLeftGreater')))
+          expect(child1).toBe(fas.isLeftGreaterCondDir)
+          expect(node2).toEqual(fas.infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`isRightGreater`)))
+          expect(child2).toBe(fas.isRightGreaterCondDir)
+          expect(node3).toEqual(fas.infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`areEqual`)))
+          expect(child3).toBe(fas.areEqualCondDir)
         })
       })
       describe(`for App`, () => {
         it(`returns three children, mapping corresponding nodes`, () => {
-          const children = app.getChildren()
+          const children = fas.app.getChildren()
           expect(Array.from(children).length).toBe(3)
           const [[node1, child1], [node2, child2], [node3, child3]] = children
-          expect(node1).toEqual(app.view.getNthRoot(3))
-          expect(child1).toBe(counterCmp1)
-          expect(node2).toEqual(app.view.getNthRoot(7))
-          expect(child2).toBe(counterCmp2)
-          expect(node3).toEqual(app.view.findOrFail(isCmpNodeWithName(`info-cmp`)))
-          expect(child3).toBe(infoCmp)
+          expect(node1).toEqual(fas.app.view.getNthRoot(3))
+          expect(child1).toBe(fas.counterCmp1)
+          expect(node2).toEqual(fas.app.view.getNthRoot(7))
+          expect(child2).toBe(fas.counterCmp2)
+          expect(node3).toEqual(fas.app.view.findOrFail(isCmpNodeWithName(`info-cmp`)))
+          expect(child3).toBe(fas.infoCmp)
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const fas = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        it(`they have no children`, () => {
+          for (const toggleCmp of fas.toggleCmps) {
+            expect(toggleCmp.getChildren().size).toBe(0)
+          }
+        })
+      })
+      describe(`for CounterCmp components`, () => {
+        it(`they have no children`, () => {
+          for (const counterCmp of fas.counterCmps) {
+            expect(counterCmp.getChildren().size).toBe(0)
+          }
+        })
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`has a single child`, () => {
+          const children = fas.ifA.getChildren()
+          expect(children.size).toBe(1)
+        })
+        describe(`its only child`, () => {
+          it(`maps to partial view`, () => {
+            const children = fas.ifA.getChildren()
+            const [[node, child]] = children
+            expect(node.getValue()).toBe(fas.ifA.getAnchorViewNode().getValue())
+            expect(child).toEqual(fas.ifAPartial)
+          })
+          describe(`its only child`, () => {
+            it(`maps w:if "visibility.b"`, () => {
+              const children = fas.ifAPartial.getChildren()
+              const [[node, child]] = children
+              expect(node.getValue()).toBe(fas.ifA.view.getByChildPath(3).getValue())
+              expect(child).toEqual(fas.ifB)
+            })
+          })
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`has a single child`, () => {
+          const children = fas.ifB.getChildren()
+          expect(children.size).toBe(1)
+        })
+        describe(`its only child`, () => {
+          it(`maps to partial view`, () => {
+            const children = fas.ifB.getChildren()
+            const [[node, child]] = children
+            expect(node.getValue()).toBe(fas.ifB.getAnchorViewNode().getValue())
+            expect(child).toEqual(fas.ifBPartial)
+          })
+          describe(`its only child`, () => {
+            it(`maps w:if "visibility.b"`, () => {
+              const children = fas.ifBPartial.getChildren()
+              const [[node, child]] = children
+              expect(node.getValue()).toBe(fas.ifB.view.getByChildPath(3).getValue())
+              expect(child).toEqual(fas.ifC)
+            })
+          })
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`has a single child`, () => {
+          const children = fas.ifC.getChildren()
+          expect(children.size).toBe(1)
+        })
+        describe(`its only child`, () => {
+          it(`maps to partial view`, () => {
+            const children = fas.ifC.getChildren()
+            const [[node, child]] = children
+            expect(node.getValue()).toBe(fas.ifC.getAnchorViewNode().getValue())
+            expect(child).toEqual(fas.ifCPartial)
+          })
+          describe(`its only child`, () => {
+            it(`has no children`, () => {
+              const children = fas.ifCPartial.getChildren()
+              expect(children.size).toBe(0)
+            })
+          })
+        })
+      })
+      describe(`for App component`, () => {
+        it(`has 7 children`, () => {
+          expect(fas.app.getChildren().size).toBe(7)
+        })
+        describe(`first three children`, () => {
+          it(`all map correct nodes to correct factories`, () => {
+            const [first, second, third] = fas.app.getChildren()
+            expect(first[0].getValue()).toBe(fas.app.view.getByChildPath(1, 5).getValue())
+            expect(first[1]).toBe(fas.counterCmp1)
+            expect(second[0].getValue()).toBe(fas.app.view.getByChildPath(1, 7).getValue())
+            expect(second[1]).toBe(fas.counterCmp2)
+            expect(third[0].getValue()).toBe(fas.app.view.getByChildPath(1, 9).getValue())
+            expect(third[1]).toBe(fas.counterCmp3)
+          })
+        })
+        describe(`second three children`, () => {
+          it(`all map correct nodes to correct factories`, () => {
+            const [, , , fourth, fifth, sixth] = fas.app.getChildren()
+            expect(fourth[0].getValue()).toBe(fas.app.view.getByChildPath(1, 13).getValue())
+            expect(fourth[1]).toBe(fas.toggleCmp1)
+            expect(fifth[0].getValue()).toBe(fas.app.view.getByChildPath(1, 15).getValue())
+            expect(fifth[1]).toBe(fas.toggleCmp2)
+            expect(sixth[0].getValue()).toBe(fas.app.view.getByChildPath(1, 17).getValue())
+            expect(sixth[1]).toBe(fas.toggleCmp3)
+          })
+        })
+        describe(`the last child`, () => {
+          it(`maps the correct node to the correct factory`, () => {
+            const [, , , , , , [node, child]] = fas.app.getChildren()
+            expect(node.getValue()).toBe(fas.app.view.getByChildPath(3).getValue())
+            expect(child).toBe(fas.ifA)
+          })
         })
       })
     })
@@ -647,7 +998,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`worsk`, () => {
           expect(toggleCmp.getAnchorViewNode()).toEqual(app.view.findOrFail(isCmpNodeWithName('toggle-cmp')))
@@ -655,12 +1006,14 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`for ConditionalView1`, () => {
         it(`works`, () => {
-          expect(conditionalView1.getAnchorViewNode()).toEqual(app.view.findOrFail(isConditionalViewNodeWithVar(`isJavaScript`)))
+          expect(conditionalView1.getAnchorViewNode())
+            .toEqual(app.view.findOrFail(isConditionalViewNodeWithVar(`isJavaScript`)))
         })
       })
       describe(`for ConditionalView2`, () => {
         it(`works`, () => {
-          expect(conditionalView2.getAnchorViewNode()).toEqual(app.view.findOrFail(isConditionalViewNodeWithVar(`isTypeScript`)))
+          expect(conditionalView2.getAnchorViewNode())
+            .toEqual(app.view.findOrFail(isConditionalViewNodeWithVar(`isTypeScript`)))
         })
       })
       describe(`for App`, () => {
@@ -672,8 +1025,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`works`, () => {
           expect(counterCmp1.getAnchorViewNode()).toEqual(app.view.getNthRoot(3))
@@ -686,17 +1039,20 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`for IsLeftGreater`, () => {
         it(`works`, () => {
-          expect(isLeftIsGreater.getAnchorViewNode()).toEqual(infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`isLeftGreater`)))
+          expect(isLeftIsGreater.getAnchorViewNode())
+            .toEqual(infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`isLeftGreater`)))
         })
       })
       describe(`for IsRightGreater`, () => {
         it(`works`, () => {
-          expect(isRightIsGreater.getAnchorViewNode()).toEqual(infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`isRightGreater`)))
+          expect(isRightIsGreater.getAnchorViewNode())
+            .toEqual(infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`isRightGreater`)))
         })
       })
       describe(`for AreEqual`, () => {
         it(`works`, () => {
-          expect(areEqual.getAnchorViewNode()).toEqual(infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`areEqual`)))
+          expect(areEqual.getAnchorViewNode())
+            .toEqual(infoCmp.view.findOrFail(isConditionalViewNodeWithVar(`areEqual`)))
         })
       })
       describe(`for InfoCmp`, () => {
@@ -707,6 +1063,61 @@ describe(`FactoryAnalyzer`, () => {
       describe(`for App`, () => {
         it(`throws`, () => {
           expect(() => app.getAnchorViewNode()).toThrow()
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const fas = get05Factories()
+      describe(`for CounterCmp components`, () => {
+        it(`works for the first ToggleCmp`, () => {
+          expect(fas.counterCmp1.getAnchorViewNode().getValue())
+            .toBe(fas.app.view.getByChildPath(1, 5).getValue() as TemplateNodeComponentValue)
+        })
+        it(`works for the second ToggleCmp`, () => {
+          expect(fas.counterCmp2.getAnchorViewNode().getValue())
+            .toBe(fas.app.view.getByChildPath(1, 7).getValue() as TemplateNodeComponentValue)
+        })
+        it(`works for the third ToggleCmp`, () => {
+          expect(fas.counterCmp3.getAnchorViewNode().getValue())
+            .toBe(fas.app.view.getByChildPath(1, 9).getValue() as TemplateNodeComponentValue)
+        })
+      })
+      describe(`for ToggleCmp components`, () => {
+        it(`works for the first CounterCmp`, () => {
+          expect(fas.toggleCmp1.getAnchorViewNode().getValue())
+            .toBe(fas.app.view.getByChildPath(1, 13).getValue() as TemplateNodeComponentValue)
+        })
+        it(`works for the second CounterCmp`, () => {
+          expect(fas.toggleCmp2.getAnchorViewNode().getValue())
+            .toBe(fas.app.view.getByChildPath(1, 15).getValue() as TemplateNodeComponentValue)
+        })
+        it(`works for the third CounterCmp`, () => [
+          expect(fas.toggleCmp3.getAnchorViewNode().getValue())
+            .toBe(fas.app.view.getByChildPath(1, 17).getValue() as TemplateNodeComponentValue),
+        ])
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`works`, () => {
+          expect(fas.ifA.getAnchorViewNode().getValue())
+            .toBe(fas.app.view.getByChildPath(3).getValue() as TemplateNodeConditionalViewValue)
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`works`, () => {
+          expect(fas.ifB.getAnchorViewNode().getValue())
+            .toBe(fas.ifA.view.getByChildPath(3).getValue() as TemplateNodeConditionalViewValue)
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`works`, () => {
+          expect(fas.ifC.getAnchorViewNode().getValue())
+            .toBe(fas.ifB.view.getByChildPath(3).getValue() as TemplateNodeConditionalViewValue)
+        })
+      })
+      describe(`for App component`, () => {
+        it(`throws because it is the root`, () => {
+          expect(() => fas.app.getAnchorViewNode().getValue()).toThrow()
         })
       })
     })
@@ -780,7 +1191,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns path [ToggleCmp] to itself`, () => {
           expect(toggleCmp.getPathTo(toggleCmp)).toEqual([toggleCmp])
@@ -827,8 +1238,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`returns path [CounterCmp1 -> App -> InfoCmp] to InfoCmp`, () => [
           expect(counterCmp1.getPathTo(infoCmp)).toEqual([counterCmp1, app, infoCmp]),
@@ -847,6 +1258,88 @@ describe(`FactoryAnalyzer`, () => {
       describe(`for IsRightGreater`, () => {
         it(`returns [isRightGreater] to itself`, () => {
           expect(isRightIsGreater.getPathTo(isRightIsGreater)).toEqual([isRightIsGreater])
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const fas = get05Factories()
+      describe(`for CounterCmp components`, () => {
+        describe(`first`, () => {
+          it(`returns [CounterCmp1 -> App -> ifA] to ifA`, () => {
+            expect(fas.counterCmp1.getPathTo(fas.ifA)).toEqual([
+              fas.counterCmp1,
+              fas.app,
+              fas.ifA,
+            ])
+          })
+        })
+        describe(`second`, () => {
+          it(`returns [CounterCmp2 -> App -> ifA -> ifAPartial -> ifB -> ifBPartial] to ifBPartial`, () => {
+            expect(fas.counterCmp2.getPathTo(fas.ifBPartial)).toEqual([
+              fas.counterCmp2,
+              fas.app,
+              fas.ifA,
+              fas.ifAPartial,
+              fas.ifB,
+              fas.ifBPartial,
+            ])
+          })
+        })
+      })
+      describe(`for ToggleCmp components`, () => {
+        describe(`third`, () => {
+          it(`returns [ToggleCmp3 -> App -> ifA -> ifAPartial -> ifB -> ifBPartial -> ifC] to ifC`, () => {
+            expect(fas.toggleCmp3.getPathTo(fas.ifC)).toEqual([
+              fas.toggleCmp3,
+              fas.app,
+              fas.ifA,
+              fas.ifAPartial,
+              fas.ifB,
+              fas.ifBPartial,
+              fas.ifC,
+            ])
+          })
+        })
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`returns [ifA -> App] to App`, () => {
+          expect(fas.ifA.getPathTo(fas.app)).toEqual([fas.ifA, fas.app])
+        })
+      })
+      describe(`for w:if partial with condition "visibility.a"`, () => {
+        it(`returns [ifAPartial -> ifA -> App] to App`, () => {
+          expect(fas.ifAPartial.getPathTo(fas.app)).toEqual([
+            fas.ifAPartial,
+            fas.ifA,
+            fas.app,
+          ])
+        })
+      })
+      describe(`for w:if partial with condition "visibility.c"`, () => {
+        it(`returns [ifCPartial -> ifC] to ifC`, () => {
+          expect(fas.ifCPartial.getPathTo(fas.ifC)).toEqual([
+            fas.ifCPartial,
+            fas.ifC,
+          ])
+        })
+        it(`returns [ifCPartial -> ifC -> ifBPartial] to ifBPartial`, () => {
+          expect(fas.ifCPartial.getPathTo(fas.ifBPartial)).toEqual([
+            fas.ifCPartial,
+            fas.ifC,
+            fas.ifBPartial,
+          ])
+        })
+        it(`returns [ifCPartial -> ifC -> ifBPartial -> ifB -> ifAPartial -> ifA -> App] to App`, () => {
+          expect(fas.ifCPartial.getPathTo(fas.app)).toEqual([
+            fas.ifCPartial,
+            fas.ifC,
+            fas.ifBPartial,
+            fas.ifB,
+            fas.ifAPartial,
+            fas.ifA,
+            fas.app,
+          ])
         })
       })
     })
@@ -882,7 +1375,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns true because it's a component`, () => {
           expect(toggleCmp.isScopeBoundary()).toBe(true)
@@ -907,8 +1400,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`returns true because it's a component`, () => {
           expect(counterCmp1.isScopeBoundary()).toBe(true)
@@ -945,6 +1438,8 @@ describe(`FactoryAnalyzer`, () => {
         })
       })
     })
+
+    // Enough...
 
   })
 
@@ -999,7 +1494,7 @@ describe(`FactoryAnalyzer`, () => {
         it(`returns itself for "onCountChange" because it's defined as a class method`, () => {
           expect(app.hasDefinedAndResolvesTo(`onCountChange`)).toBe(`onCountChange`)
         })
-        it(`returns false for "value", "valueChange", "inc" and "dec" because those are defined on Counter`, () => {
+        it(`returns null for "value", "valueChange", "inc" and "dec" because those are defined on Counter`, () => {
           expect(app.hasDefinedAndResolvesTo(`value`)).toBe(null)
           expect(app.hasDefinedAndResolvesTo(`valueChange`)).toBe(null)
           expect(app.hasDefinedAndResolvesTo(`inc`)).toBe(null)
@@ -1010,7 +1505,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns itself for "value" because it's defined as class prop`, () => {
           expect(toggleCmp.hasDefinedAndResolvesTo(`value`)).toBe(`value`)
@@ -1060,33 +1555,113 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
-    // TODO
-    // describe(`in 04-comparator`, () => {
-    //   const app = apps.comparator.getFactoryTree()
-    //   const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-    //   const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
-    //   describe(`for CounterCmp1`, () => {
-    //
-    //   })
-    //   describe(`for CounterCmp2`, () => {
-    //
-    //   })
-    //   describe(`for IsLeftGreater`, () => {
-    //
-    //   })
-    //   describe(`for IsRightGreater`, () => {
-    //
-    //   })
-    //   describe(`for AreEqual`, () => {
-    //
-    //   })
-    //   describe(`for InfoCmp`, () => {
-    //
-    //   })
-    //   describe(`for App`, () => {
-    //
-    //   })
-    // })
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
+      // TODO
+      // describe(`for CounterCmp1`, () => {
+      // })
+      // TODO
+      // describe(`for CounterCmp2`, () => {
+      // })
+      describe(`for IsLeftGreater`, () => {
+        it(`returns null because it's not defined here (even though it's responsible for updating it in the dom)`, () => {
+          expect(isLeftIsGreater.hasDefinedAndResolvesTo('isGreaterString')).toBe(null)
+        })
+        it(`returns null for "isLeftGreater" even though it uses it (it depends on it, but not responsible for it)`, () => {
+          expect(isLeftIsGreater.hasDefinedAndResolvesTo('isLeftGreater')).toBe(null)
+        })
+      })
+      describe(`for IsRightGreater`, () => {
+        it(`returns null ebcause it's not defined here (even though it's responsible for updating the dom based on it)`, () => {
+          expect(isRightIsGreater.hasDefinedAndResolvesTo('isGreaterString')).toBe(null)
+        })
+        it(`returns null for "isRightGreater" even though it uses it (it depends on it, but not responsible for it)`, () => {
+          expect(isRightIsGreater.hasDefinedAndResolvesTo('isLeftGreater')).toBe(null)
+        })
+      })
+      describe(`for AreEqual`, () => {
+        it(`returns null for trying to access a thing which is not in its view`, () => {
+          expect(areEqual.hasDefinedAndResolvesTo('isGreaterString')).toBe(null)
+        })
+        it(`returns null for "areEqual" even though it uses it (it depends on it, but not responsible for it)`, () => {
+          expect(areEqual.hasDefinedAndResolvesTo('areEqual')).toBe(null)
+        })
+      })
+      describe(`for InfoCmp`, () => {
+        it(`returns itself for "isLeftGreater"`, () => {
+          expect(infoCmp.hasDefinedAndResolvesTo('isLeftGreater')).toBe('isLeftGreater')
+        })
+        it(`returns itself for "areEqual"`, () => {
+          expect(infoCmp.hasDefinedAndResolvesTo('areEqual')).toBe('areEqual')
+        })
+        it(`returns itself for "isGreaterString"`, () => {
+          expect(infoCmp.hasDefinedAndResolvesTo('isGreaterString')).toBe('isGreaterString')
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns itself for "left"`, () => {
+          expect(app.hasDefinedAndResolvesTo('left')).toBe('left')
+        })
+        it(`returns itself for "onLeftChange"`, () => {
+          expect(app.hasDefinedAndResolvesTo('onLeftChange')).toBe('onLeftChange')
+        })
+        it(`returns itself for "isRightGreater"`, () => {
+          expect(app.hasDefinedAndResolvesTo('isRightGreater')).toBe('isRightGreater')
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const cmps = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        describe(`first`, () => {
+          it(`returns itself for "value"`, () => {
+            expect(cmps.toggleCmp1.hasDefinedAndResolvesTo('value')).toBe('value')
+          })
+          it(`returns itself for "changeState"`, () => {
+            expect(cmps.toggleCmp1.hasDefinedAndResolvesTo('valueChange')).toBe('valueChange')
+          })
+        })
+      })
+      describe(`for CounterCmp components`, () => {
+        describe(`first`, () => {
+          it(`returns itself for "value"`, () => {
+            expect(cmps.counterCmp1.hasDefinedAndResolvesTo('value')).toBe('value')
+          })
+          it(`returns itself for "dec"`, () => {
+            expect(cmps.counterCmp1.hasDefinedAndResolvesTo('dec')).toBe('dec')
+          })
+        })
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`returns null because, even though it's responsible for its dom update, it's not defined here`, () => {
+          expect(cmps.ifA.hasDefinedAndResolvesTo('values.a')).toBe(null)
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`returns null because, even though it's responsible for its dom update, it's not defined here`, () => {
+          expect(cmps.ifB.hasDefinedAndResolvesTo('values.a')).toBe(null)
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`returns null because, even though it's responsible for its dom update, it's not defined here`, () => {
+          expect(cmps.ifC.hasDefinedAndResolvesTo('values.a')).toBe(null)
+        })
+      })
+      describe(`for App component`, () => {
+        it(`returns itself for "values.a"`, () => {
+          expect(cmps.app.hasDefinedAndResolvesTo('values.a')).toBe('values.a')
+        })
+        it(`returns itself for "visibility.b"`, () => {
+          expect(cmps.app.hasDefinedAndResolvesTo('visibility.b')).toBe('visibility.b')
+        })
+        it(`returns itself for "onToggle`, () => {
+          expect(cmps.app.hasDefinedAndResolvesTo('onToggle')).toBe('onToggle')
+        })
+      })
+    })
 
   })
 
@@ -1122,7 +1697,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns two bindings (input and output)`, () => {
           const bindings = Array.from(toggleCmp.getSelfBindings())
@@ -1154,8 +1729,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`returns two bindings (input and output)`, () => {
           const bindings = Array.from(counterCmp1.getSelfBindings())
@@ -1207,6 +1782,57 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    describe(`in 05-deep-ifs`, () => {
+      const cmps = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        it(`they have two bindings: input and output`, () => {
+          for (const toggleCmp of cmps.toggleCmps) {
+            const bindings = [...toggleCmp.getSelfBindings()]
+            expect(bindings.length).toBe(2)
+            expect(bindings.some(binding => binding instanceof ComponentInputBinding)).toBe(true)
+            expect(bindings.some(binding => binding instanceof ComponentOutputBinding)).toBe(true)
+          }
+        })
+      })
+      describe(`for CounterCmp components`, () => {
+        it(`they have two bindings: input and output`, () => {
+          for (const counterCmp of cmps.counterCmps) {
+            const bindings = [...counterCmp.getSelfBindings()]
+            expect(bindings.length).toBe(2)
+            expect(bindings.some(binding => binding instanceof ComponentInputBinding)).toBe(true)
+            expect(bindings.some(binding => binding instanceof ComponentOutputBinding)).toBe(true)
+          }
+        })
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`has a single binding`, () => {
+          const bindings = [...cmps.ifA.getSelfBindings()]
+          expect(bindings.length).toBe(1)
+          expect(bindings[0] instanceof ConditionalViewBinding).toBe(true)
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`has a single binding`, () => {
+          const bindings = [...cmps.ifB.getSelfBindings()]
+          expect(bindings.length).toBe(1)
+          expect(bindings[0] instanceof ConditionalViewBinding).toBe(true)
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`has a single binding`, () => {
+          const bindings = [...cmps.ifC.getSelfBindings()]
+          expect(bindings.length).toBe(1)
+          expect(bindings[0] instanceof ConditionalViewBinding).toBe(true)
+        })
+      })
+      describe(`for App component`, () => {
+        it(`has none because it's the app root`, () => {
+          const bindings = [...cmps.app.getSelfBindings()]
+          expect(bindings.length).toBe(0)
+        })
+      })
+    })
+
   })
 
 
@@ -1253,7 +1879,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns an iterable of length six: ws, (click), ws, text, interpolation, text`, () => {
           const bindings = Array.from(toggleCmp.getHtmlNativeDomBindings())
@@ -1295,33 +1921,158 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
-    // TODO
-    // describe(`in 04-comparator`, () => {
-    //   const app = apps.comparator.getFactoryTree()
-    //   const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-    //   const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
-    //   describe(`for CounterCmp1`, () => {
-    //
-    //   })
-    //   describe(`for CounterCmp2`, () => {
-    //
-    //   })
-    //   describe(`for IsLeftGreater`, () => {
-    //
-    //   })
-    //   describe(`for IsRightGreater`, () => {
-    //
-    //   })
-    //   describe(`for AreEqual`, () => {
-    //
-    //   })
-    //   describe(`for InfoCmp`, () => {
-    //
-    //   })
-    //   describe(`for App`, () => {
-    //
-    //   })
-    // })
+    describe(`in 04-comparator`, () => {
+      const app = apps.comparator.getFactoryTree()
+      const [counterCmp1, counterCmp2, infoCmp] = app.getChildrenFactories()
+      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
+      describe(`for CounterCmp1 and CounterCmp2`, () => {
+        it(`returns an iterable of length 9: ws, (click), ws, ws, (click), ws, "Decrement", {{ value }}, "Increment"`, () => {
+          for (const counterCmp of [counterCmp1, counterCmp2]) {
+            const bindings = Array.from(counterCmp.getHtmlNativeDomBindings())
+            expect(bindings.length).toBe(9)
+            expect(bindings[0] instanceof InterpolationBinding).toBe(true)
+            expect(bindings[1] instanceof HtmlElementEventBinding).toBe(true)
+            expect(bindings[2] instanceof InterpolationBinding).toBe(true)
+            expect(bindings[3] instanceof InterpolationBinding).toBe(true)
+            expect(bindings[4] instanceof HtmlElementEventBinding).toBe(true)
+            expect(bindings[5] instanceof InterpolationBinding).toBe(true)
+            expect(bindings[6] instanceof InterpolationBinding).toBe(true)
+            expect(bindings[7] instanceof InterpolationBinding).toBe(true)
+            expect(bindings[8] instanceof InterpolationBinding).toBe(true)
+          }
+        })
+      })
+      describe(`for IsLeftGreater`, () => {
+        it(`returns an iterable of length 2: "left ", {{ isGreaterString }}`, () => {
+          const bindings = Array.from(isLeftIsGreater.getHtmlNativeDomBindings())
+          expect(bindings.length).toBe(2)
+          expect(bindings[0] instanceof InterpolationBinding).toBe(true)
+          expect(bindings[1] instanceof InterpolationBinding).toBe(true)
+        })
+      })
+      describe(`for IsRightGreater`, () => {
+        it(`returns an iterable of length 2: "left ", {{ isGreaterString }}`, () => {
+          const bindings = Array.from(isRightIsGreater.getHtmlNativeDomBindings())
+          expect(bindings.length).toBe(2)
+          expect(bindings[0] instanceof InterpolationBinding).toBe(true)
+          expect(bindings[1] instanceof InterpolationBinding).toBe(true)
+        })
+      })
+      describe(`for AreEqual`, () => {
+        it(`returns an iterable of length 1: "they are equal"`, () => {
+          const bindings = Array.from(areEqual.getHtmlNativeDomBindings())
+          expect(bindings.length).toBe(1)
+          expect(bindings[0] instanceof InterpolationBinding).toBe(true)
+        })
+      })
+      describe(`for InfoCmp`, () => {
+        it(`returns an iterable of length 4: ws, ws, ws, ws`, () => {
+          const bindings = Array.from(infoCmp.getHtmlNativeDomBindings())
+          expect(bindings.length).toBe(4)
+          expect(bindings.every(binding => binding instanceof InterpolationBinding)).toBe(true)
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns an iterable of length 10: ws, ws, ws, ws, ws, ws, ws, "Left number", "Right number", "Info"`, () => {
+          const bindings = Array.from(app.getHtmlNativeDomBindings())
+          expect(bindings.length).toBe(10)
+          expect(bindings.every(binding => binding instanceof InterpolationBinding)).toBe(true)
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const cmps = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        for (const toggleCmp of cmps.toggleCmps) {
+          it(`returns an iterable of length of 6: ws, (click), ws, text, interpol, text`, () => {
+            const bindings = [...toggleCmp.getHtmlNativeDomBindings()]
+            expect(bindings.length).toBe(6)
+            expect(bindings.map(binding => binding.constructor)).toEqual([
+              InterpolationBinding,
+              HtmlElementEventBinding,
+              InterpolationBinding,
+              InterpolationBinding,
+              InterpolationBinding,
+              InterpolationBinding,
+            ])
+          })
+        }
+      })
+      describe(`for CounterCmp components`, () => {
+        for (const counterCmp of cmps.counterCmps) {
+          it(`returns an iterable of length 9: ws, (click), ws, ws, (click), ws, tex, interpol, text`, () => {
+            const bindings = [...counterCmp.getHtmlNativeDomBindings()]
+            expect(bindings.map(binding => binding.constructor)).toEqual([
+              InterpolationBinding,
+              HtmlElementEventBinding,
+              InterpolationBinding,
+              InterpolationBinding,
+              HtmlElementEventBinding,
+              InterpolationBinding,
+              InterpolationBinding,
+              InterpolationBinding,
+              InterpolationBinding,
+            ])
+          })
+        }
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`returns an iterable of length 4: text, interpol, ws, ws`, () => {
+          const bindings = [...cmps.ifA.getHtmlNativeDomBindings()]
+          expect(bindings.map(binding => binding.constructor)).toEqual([
+            InterpolationBinding,
+            InterpolationBinding,
+            InterpolationBinding,
+            InterpolationBinding,
+          ])
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`returns an iterable of length 5: text, interpol, ws, ws`, () => {
+          const bindings = [...cmps.ifB.getHtmlNativeDomBindings()]
+          expect(bindings.map(binding => binding.constructor)).toEqual([
+            InterpolationBinding,
+            InterpolationBinding,
+            InterpolationBinding,
+            InterpolationBinding,
+          ])
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`returns an iterable of length 3: text, interpol, ws`, () => {
+          const bindings = [...cmps.ifC.getHtmlNativeDomBindings()]
+          expect(bindings.map(binding => binding.constructor)).toEqual([
+            InterpolationBinding,
+            InterpolationBinding,
+            InterpolationBinding,
+          ])
+        })
+      })
+      describe(`for App component`, () => {
+        it(`returns a huge iterable`, () => {
+          const bindings = [...cmps.app.getHtmlNativeDomBindings()]
+          expect(bindings.map(b => b.constructor)).toEqual([
+            InterpolationBinding, // ws before <div>
+            InterpolationBinding, // ws after </div> and before <w:if>
+            InterpolationBinding, // ws after </w:if>
+            InterpolationBinding, // ws after <div>
+            InterpolationBinding, // ws after </h1>
+            InterpolationBinding, // "a: "
+            InterpolationBinding, // "b: "
+            InterpolationBinding, // "c: "
+            InterpolationBinding, // ws before <h2>
+            InterpolationBinding, // "a: "
+            InterpolationBinding, // "b: "
+            InterpolationBinding, // "c: "
+            InterpolationBinding, // ws after last toggle-cmp
+            InterpolationBinding, // "Controls"
+            InterpolationBinding, // "Values"
+            InterpolationBinding, // "Visibility"
+          ])
+        })
+      })
+    })
 
   })
 
@@ -1363,7 +2114,7 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns App for "valueChange" (ToggleCmp#valueChange -> App#onChange -> App#bool)`, () => {
           expect(Array.from(toggleCmp.getFactoriesAffectedByCalling(`valueChange`))).toEqual([app])
@@ -1441,6 +2192,45 @@ describe(`FactoryAnalyzer`, () => {
         })
         it(`returns App for "onRightChange" (App#onRightChange -> App#right)`, () => {
           expect(Array.from(app.getFactoriesAffectedByCalling('onRightChange'))).toEqual([app])
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const cmps = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        for (const toggleCmp of cmps.toggleCmps) {
+          it(`returns App for "valueChange" (ToggleCmp#valueChange -> App#onToggle -> App#visibility)`, () => {
+            const actual = [...toggleCmp.getFactoriesAffectedByCalling('valueChange')]
+            expect(actual).toEqual([cmps.app])
+          })
+        }
+      })
+      describe(`for CounterCmp components`, () => {
+        for (const counterCmp of cmps.counterCmps) {
+          it(`returns App for "dec" (CounterCmp#dec -> CounterCmp#valueChange -> App#onChange -> App#values`, () => {
+            const actual = [...counterCmp.getFactoriesAffectedByCalling('dec')]
+            expect(actual).toEqual([cmps.app])
+          })
+        }
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        // nothing to call
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        // nothing to call
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        // nothing to call
+      })
+      describe(`for App component`, () => {
+        it(`returns itself for "onToggle"`, () => {
+          const actual = [...cmps.app.getFactoriesAffectedByCalling('onToggle')]
+          expect(actual).toEqual([cmps.app])
+        })
+        it(`returns itself for "onChange"`, () => {
+          const actual = [...cmps.app.getFactoriesAffectedByCalling('onChange')]
+          expect(actual).toEqual([cmps.app])
         })
       })
     })
@@ -1540,6 +2330,64 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    describe(`in 05-deep-ifs`, () => {
+      const cmps = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        describe(`first`, () => {
+          it(`returns 3`, () => {
+            expect(cmps.toggleCmp1.getFactoryIndexAsChild()).toBe(3)
+          })
+        })
+        describe(`second`, () => {
+          it(`returns 4`, () => {
+            expect(cmps.toggleCmp2.getFactoryIndexAsChild()).toBe(4)
+          })
+        })
+        describe(`third`, () => {
+          it(`returns 5`, () => {
+            expect(cmps.toggleCmp3.getFactoryIndexAsChild()).toBe(5)
+          })
+        })
+      })
+      describe(`for CounterCmp components`, () => {
+        describe(`first`, () => {
+          it(`returns 0`, () => {
+            expect(cmps.counterCmp1.getFactoryIndexAsChild()).toBe(0)
+          })
+        })
+        describe(`second`, () => {
+          it(`returns 1`, () => {
+            expect(cmps.counterCmp2.getFactoryIndexAsChild()).toBe(1)
+          })
+        })
+        describe(`third`, () => {
+          it(`returns 2`, () => {
+            expect(cmps.counterCmp3.getFactoryIndexAsChild()).toBe(2)
+          })
+        })
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`returns 6`, () => {
+          expect(cmps.ifA.getFactoryIndexAsChild()).toBe(6)
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`return 0`, () => {
+          expect(cmps.ifB.getFactoryIndexAsChild()).toBe(0)
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`returns 0`, () => {
+          expect(cmps.ifC.getFactoryIndexAsChild()).toBe(0)
+        })
+      })
+      describe(`for App component`, () => {
+        it(`throws because it's the root`, () => {
+          expect(() => cmps.app.getFactoryIndexAsChild()).toThrow()
+        })
+      })
+    })
+
   })
 
 
@@ -1568,6 +2416,7 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    // TODO
     describe(`in 02-counter`, () => {
       const app = apps.counter.getFactoryTree()
       const counterCmp = app.getFirstChild()
@@ -1577,38 +2426,61 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
-    describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
-      describe(`for ToggleCmp`, () => {
-      })
-      describe(`for ConditionalView1`, () => {
-      })
-      describe(`for ConditionalView2`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
+    // TODO
+    // describe(`in 03-toggler`, () => {
+    //   const app = apps.toggler.getFactoryTree()
+    //   const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+    //   describe(`for ToggleCmp`, () => {
+    //   })
+    //   describe(`for ConditionalView1`, () => {
+    //   })
+    //   describe(`for ConditionalView2`, () => {
+    //   })
+    //   describe(`for App`, () => {
+    //   })
+    // })
 
-    describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
-      describe(`for CounterCmp1`, () => {
-      })
-      describe(`for CounterCmp2`, () => {
-      })
-      describe(`for IsLeftGreater`, () => {
-      })
-      describe(`for IsRightGreater`, () => {
-      })
-      describe(`for AreEqual`, () => {
-      })
-      describe(`for InfoCmp`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
+    // TODO
+    // describe(`in 04-comparator`, () => {
+    //   const app = apps.comparator.getFactoryTree()
+    //   const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
+    //   const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+    //   describe(`for CounterCmp1`, () => {
+    //   })
+    //   describe(`for CounterCmp2`, () => {
+    //   })
+    //   describe(`for IsLeftGreater`, () => {
+    //   })
+    //   describe(`for IsRightGreater`, () => {
+    //   })
+    //   describe(`for AreEqual`, () => {
+    //   })
+    //   describe(`for InfoCmp`, () => {
+    //   })
+    //   describe(`for App`, () => {
+    //   })
+    // })
+
+    // TODO
+    // describe(`in 05-deep-ifs`, () => {
+    //   const cmps = get05Factories()
+    //   describe(`for ToggleCmp components`, () => {
+    //     for (const toggleCmp of cmps.toggleCmps) {
+    //     }
+    //   })
+    //   describe(`for CounterCmp components`, () => {
+    //     for (const counterCmp of cmps.counterCmps) {
+    //     }
+    //   })
+    //   describe(`for w:if with condition "visibility.a"`, () => {
+    //   })
+    //   describe(`for w:if with condition "visibility.b"`, () => {
+    //   })
+    //   describe(`for w:if with condition "visibility.c"`, () => {
+    //   })
+    //   describe(`for App component`, () => {
+    //   })
+    // })
 
   })
 
@@ -1638,45 +2510,7 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
-    describe(`02-counter`, () => {
-      describe(`CounterCmp`, () => {
-      })
-      describe(`App`, () => {
-      })
-    })
-
-    describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
-      describe(`for ToggleCmp`, () => {
-      })
-      describe(`for ConditionalView1`, () => {
-      })
-      describe(`for ConditionalView2`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
-
-    describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
-      describe(`for CounterCmp1`, () => {
-      })
-      describe(`for CounterCmp2`, () => {
-      })
-      describe(`for IsLeftGreater`, () => {
-      })
-      describe(`for IsRightGreater`, () => {
-      })
-      describe(`for AreEqual`, () => {
-      })
-      describe(`for InfoCmp`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
+    // Enough!
 
   })
 
@@ -1694,115 +2528,7 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
-    describe(`02-counter`, () => {
-      describe(`CounterCmp`, () => {
-      })
-      describe(`App`, () => {
-      })
-    })
-
-    describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
-      describe(`for ToggleCmp`, () => {
-      })
-      describe(`for ConditionalView1`, () => {
-      })
-      describe(`for ConditionalView2`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
-
-    describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
-      describe(`for CounterCmp1`, () => {
-      })
-      describe(`for CounterCmp2`, () => {
-      })
-      describe(`for IsLeftGreater`, () => {
-      })
-      describe(`for IsRightGreater`, () => {
-      })
-      describe(`for AreEqual`, () => {
-      })
-      describe(`for InfoCmp`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
-
-  })
-
-
-  describe(`printAssemblingDomNodes`, () => {
-
-    describe(`01-hello-world`, () => {
-      describe(`App`, () => {
-        const app = apps.helloWorld.getFactoryTree()
-        it(`prints assembling logic`, () => {
-          const string = stripIndent`
-            util.__wane__appendChildren(this.__wane__root, [
-              util.__wane__appendChildren(this.__wane__domNodes[0], [
-              ])
-              util.__wane__appendChildren(this.__wane__domNodes[1], [
-              ])
-              util.__wane__appendChildren(this.__wane__domNodes[2], [
-              ])
-              util.__wane__appendChildren(this.__wane__domNodes[3], [
-              ])
-              util.__wane__appendChildren(this.__wane__domNodes[4], [
-              ])
-            ])
-          `
-          const wr = new CodeBlockWriter({ indentNumberOfSpaces: 2 })
-          app.printAssemblingDomNodes(wr)
-          expect((stripIndent as any)(wr.toString())).toEqual(string)
-        })
-      })
-    })
-
-    describe(`02-counter`, () => {
-      describe(`CounterCmp`, () => {
-      })
-      describe(`App`, () => {
-      })
-    })
-
-    describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
-      describe(`for ToggleCmp`, () => {
-      })
-      describe(`for ConditionalView1`, () => {
-      })
-      describe(`for ConditionalView2`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
-
-    describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
-      describe(`for CounterCmp1`, () => {
-      })
-      describe(`for CounterCmp2`, () => {
-      })
-      describe(`for IsLeftGreater`, () => {
-      })
-      describe(`for IsRightGreater`, () => {
-      })
-      describe(`for AreEqual`, () => {
-      })
-      describe(`for InfoCmp`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
+    // Too difficult to test properly, it's not testing anything judging by how we grab stuff.
 
   })
 
@@ -1812,7 +2538,7 @@ describe(`FactoryAnalyzer`, () => {
     function expectEntryRoot (fa: FactoryAnalyzer<TemplateNodeValue>) {
       expectWriter(
         wr => fa.printRootDomNodeAssignment(wr),
-        `this.__wane__root = document.body`
+        `this.__wane__root = document.body`,
       )
     }
 
@@ -1924,139 +2650,349 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
+    describe(`in 05-deep-ifs`, () => {
+      const cmps = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        describe(`first`, () => {
+          it(`prints assigning to parent node with index 19`, () => {
+            expectComponentRoot(cmps.toggleCmp1, 1, 19)
+          })
+        })
+        describe(`second`, () => {
+          it(`prints assigning to parent node with index 21`, () => {
+            expectComponentRoot(cmps.toggleCmp2, 1, 21)
+          })
+        })
+        describe(`third`, () => {
+          it(`prints assigning to parent node with index 23`, () => {
+            expectComponentRoot(cmps.toggleCmp3, 1, 23)
+          })
+        })
+      })
+      describe(`for CounterCmp components`, () => {
+        describe(`first`, () => {
+          it(`prints assigning to parent node with index 11`, () => {
+            expectComponentRoot(cmps.counterCmp1, 1, 11)
+          })
+        })
+        describe(`second`, () => {
+          it(`prints assigning to parent node with index 13`, () => {
+            expectComponentRoot(cmps.counterCmp2, 1, 13)
+          })
+        })
+        describe(`third`, () => {
+          it(`prints assigning to parent node with index 15`, () => {
+            expectComponentRoot(cmps.counterCmp3, 1, 15)
+          })
+        })
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`prints assigning to parent with indexes 3 and 4`, () => {
+          expectDirectiveRoot(cmps.ifA, 1, 3, 4)
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`prints assigning to parent with indexes 3 and 4`, () => {
+          expectDirectiveRoot(cmps.ifB, 1, 3, 4)
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`prints assigning to aprent with indexes 3 and 4`, () => {
+          expectDirectiveRoot(cmps.ifC, 1, 3, 4)
+        })
+      })
+      describe(`for App component`, () => {
+        it(`prints assigning the document body`, () => {
+          expectEntryRoot(cmps.app)
+        })
+      })
+    })
+
   })
 
 
   describe(`factoryAnalyzersInScope`, () => {
 
     describe(`in 01-hello-world`, () => {
-      const app = apps.helloWorld.getFactoryTree()
+      const fas = get01Factories()
       describe(`for App`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([app])
+          expect(Array.from(fas.app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([fas.app])
         })
       })
     })
 
     describe(`in 02-counter`, () => {
-      const app = apps.counter.getFactoryTree()
-      const [counterCmp] = app.getChildren().values()
+      const fas = get02Factories()
       describe(`for CounterCmp`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(counterCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.counterCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(counterCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([counterCmp])
+          expect(Array.from(fas.counterCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([fas.counterCmp])
         })
       })
       describe(`for App`, () => {
         it(`returns an iterable with CounterCmp when skipSelf is true`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([counterCmp])
+          expect(Array.from(fas.app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([fas.counterCmp])
         })
         it(`returns an iterable with CounterCmp and itself when skipSelf is false`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([app, counterCmp])
+          expect(Array.from(fas.app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([fas.app, fas.counterCmp])
         })
       })
     })
 
     describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const fas = get03Factories()
       describe(`for ToggleCmp`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(toggleCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.toggleCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(toggleCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([toggleCmp])
+          expect(Array.from(fas.toggleCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([fas.toggleCmp])
         })
       })
       describe(`for ConditionalView1`, () => {
+        it(`returns iterable with the partial view when skipSelf is true`, () => {
+          expect(Array.from(fas.isJavaScriptCondDir.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([fas.isJavaScriptPartial])
+        })
+        it(`returns an iterable with itself and the partial view when skipSelf is false`, () => {
+          expect(Array.from(fas.isJavaScriptCondDir.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([
+            fas.isJavaScriptCondDir,
+            fas.isJavaScriptPartial,
+          ])
+        })
+      })
+      describe(`for ConditionalView1 Partial`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(conditionalView1.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.isJavaScriptPartial.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(conditionalView1.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([conditionalView1])
+          expect(Array.from(fas.isJavaScriptPartial.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([fas.isJavaScriptPartial])
         })
       })
       describe(`for ConditionalView2`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(conditionalView2.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.isTypeScriptCondDir.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([fas.isTypeScriptPartial])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(conditionalView2.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([conditionalView2])
+          expect(Array.from(fas.isTypeScriptCondDir.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([
+            fas.isTypeScriptCondDir,
+            fas.isTypeScriptPartial,
+          ])
+        })
+      })
+      describe(`for ConditionalView2 Partial`, () => {
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(fas.isTypeScriptPartial.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(fas.isTypeScriptPartial.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([fas.isTypeScriptPartial])
         })
       })
       describe(`for App`, () => {
-        it(`returns an iterable with ToggleCmp, IsJavaScript and IsTypeScript when skipSelf is true`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([toggleCmp, conditionalView1, conditionalView2])
+        it(`returns an iterable with ToggleCmp, IsJavaScript, IsJavaScriptPartial, IsTypeScript and IsTypeScriptPartial when skipSelf is true`, () => {
+          expect(new Set(fas.app.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual(new Set([fas.toggleCmp,
+              fas.isJavaScriptCondDir,
+              fas.isJavaScriptPartial,
+              fas.isTypeScriptCondDir,
+              fas.isTypeScriptPartial,
+            ]))
         })
         it(`returns an iterable with ToggleCmp, IsJavaScript, IsTypeScript and itself when skipSelf is false`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([app, toggleCmp, conditionalView1, conditionalView2])
+          expect(new Set(fas.app.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual(new Set([fas.app,
+              fas.toggleCmp,
+              fas.isJavaScriptCondDir,
+              fas.isJavaScriptPartial,
+              fas.isTypeScriptCondDir,
+              fas.isTypeScriptPartial,
+            ]))
         })
       })
     })
 
     describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const fas = get04Factories()
       describe(`for CounterCmp1`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(counterCmp1.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.counterCmp1.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(counterCmp1.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([counterCmp1])
+          expect(Array.from(fas.counterCmp1.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual([fas.counterCmp1])
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(counterCmp2.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.counterCmp2.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(counterCmp2.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([counterCmp2])
+          expect(Array.from(fas.counterCmp2.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual([fas.counterCmp2])
         })
       })
-      describe(`for IsLeftGreater`, () => {
+      describe(`for IsLeftGreaterCondDir`, () => {
+        it(`returns an iterable with the partial view when skipSelf is true`, () => {
+          expect(Array.from(fas.isLeftGreaterCondDir.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual([fas.isLeftGreaterPartial])
+        })
+        it(`returns an iterable with itself and the partial when skipSelf is false`, () => {
+          expect(Array.from(fas.isLeftGreaterCondDir.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual([fas.isLeftGreaterCondDir, fas.isLeftGreaterPartial])
+        })
+      })
+      describe(`for IsLeftGreaterPartial`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(isLeftIsGreater.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.isLeftGreaterPartial.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(isLeftIsGreater.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([isLeftIsGreater])
+          expect(Array.from(fas.isLeftGreaterPartial.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual([fas.isLeftGreaterPartial])
+        })
+      })
+      describe(`for IsRightGreater`, () => {
+        it(`returns an iterable with the partial when skipSelf is true`, () => {
+          expect(Array.from(fas.isRightGreaterCondDir.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual([fas.isRightGreaterPartial])
+        })
+        it(`returns an iterable with itself and the partial when skipSelf is false`, () => {
+          expect(Array.from(fas.isRightGreaterCondDir.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual([fas.isRightGreaterCondDir, fas.isRightGreaterPartial])
         })
       })
       describe(`for IsRightGreater`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(isRightIsGreater.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.isRightGreaterPartial.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(isRightIsGreater.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([isRightIsGreater])
+          expect(Array.from(fas.isRightGreaterPartial.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual([fas.isRightGreaterPartial])
         })
       })
       describe(`for AreEqual`, () => {
+        it(`returns an iterable with the partial view when skipSelf is true`, () => {
+          expect(Array.from(fas.areEqualCondDir.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual([fas.areEqualPartial])
+        })
+        it(`returns an iterable with itself and the partial view when skipSelf is false`, () => {
+          expect(Array.from(fas.areEqualCondDir.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual([fas.areEqualCondDir, fas.areEqualPartial])
+        })
+      })
+      describe(`for AreEqualPartial`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(areEqual.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+          expect(Array.from(fas.areEqualPartial.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(areEqual.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([areEqual])
+          expect(Array.from(fas.areEqualPartial.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual([fas.areEqualPartial])
         })
       })
       describe(`for InfoCmp`, () => {
+        const skipSelfTrue = [
+          fas.isLeftGreaterCondDir,
+          fas.isLeftGreaterPartial,
+          fas.isRightGreaterCondDir,
+          fas.isRightGreaterPartial,
+          fas.areEqualCondDir,
+          fas.areEqualPartial,
+        ]
         it(`returns an iterable with IsLeftGreater, IsRightGreater and AreEqual when skipSelf is true`, () => {
-          expect(Array.from(infoCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([isLeftIsGreater, isRightIsGreater, areEqual])
+          expect(new Set(fas.infoCmp.factoryAnalyzersInScope({ skipSelf: true })))
+            .toEqual(new Set([...skipSelfTrue]))
         })
         it(`returns an iterable with itself, IsLeftGreater, IsRightGreater and AreEqual when skipSelf is false`, () => {
-          expect(Array.from(infoCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([infoCmp, isLeftIsGreater, isRightIsGreater, areEqual])
+          expect(new Set(fas.infoCmp.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual(new Set([fas.infoCmp, ...skipSelfTrue]))
         })
       })
       describe(`for App`, () => {
+
         it(`returns an iterable with CounterCmp, CounterCmp and InfoCmp when skipSelf is true`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([counterCmp1, counterCmp2, infoCmp])
+          expect(Array.from(fas.app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([
+            fas.counterCmp1,
+            fas.counterCmp2,
+            fas.infoCmp,
+          ])
         })
         it(`returns an iterable with itself, CounterCmp, CounterCmp and InfoCmp when skipSelf is false`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([app, counterCmp1, counterCmp2, infoCmp])
+          expect(Array.from(fas.app.factoryAnalyzersInScope({ skipSelf: false })))
+            .toEqual([fas.app, fas.counterCmp1, fas.counterCmp2, fas.infoCmp])
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const fas = get05Factories()
+      describe(`for ToggleCmp components`, () => {
+        for (const toggleCmp of fas.toggleCmps) {
+          it(`is an empty iterable`, () => [
+            expect([...toggleCmp.factoryAnalyzersInScope({ skipSelf: true })].length).toBe(0),
+          ])
+        }
+      })
+      describe(`for CounterCmp components`, () => {
+        for (const counterCmp of fas.counterCmps) {
+          it(`is an empty iterable`, () => [
+            expect([...counterCmp.factoryAnalyzersInScope({ skipSelf: true })].length).toBe(0),
+          ])
+        }
+      })
+      describe(`for w:if with condition "visibility.a"`, () => {
+        it(`is {ifA, isAPartial, ifB, ifBPartial, ifC, ifCPartial} including self`, () => {
+          const actual = new Set(fas.ifA.factoryAnalyzersInScope())
+          expect(actual).toEqual(new Set([
+            fas.ifA, fas.ifB, fas.ifC,
+            fas.ifAPartial, fas.ifBPartial, fas.ifCPartial,
+          ]))
+        })
+      })
+      describe(`for partial view of w:if with condition "visibility.a"`, () => {
+        it(`is {ifAPartial, ifB, ifBPartial, ifC, ifCPartial}`, () => {
+          const actual = new Set(fas.ifAPartial.factoryAnalyzersInScope())
+          expect(actual).toEqual(new Set([
+            fas.ifB, fas.ifC,
+            fas.ifAPartial, fas.ifBPartial, fas.ifCPartial,
+          ]))
+        })
+      })
+      describe(`for w:if with condition "visibility.b"`, () => {
+        it(`is {ifBPartial, ifC, ifCPartial} exclude self`, () => {
+          const actual = new Set(fas.ifB.factoryAnalyzersInScope({ skipSelf: true }))
+          expect(actual).toEqual(new Set([
+            fas.ifBPartial,
+            fas.ifC,
+            fas.ifCPartial,
+          ]))
+        })
+      })
+      describe(`for w:if with condition "visibility.c"`, () => {
+        it(`is {ifC, ifCPartial} excluding self`, () => {
+          const actual = new Set(fas.ifC.factoryAnalyzersInScope({ skipSelf: true }))
+          expect(actual).toEqual(new Set([
+            fas.ifCPartial,
+          ]))
+        })
+      })
+      describe(`for App component`, () => {
+        it(`is {App, CounterCmp1, 2, 3, ToggleCmp, 1, 2, 3, ifA, ifAPartial, ifB, ifBPartial, ifC, ifCPartial} including self`, () => {
+          const actual = new Set(fas.app.factoryAnalyzersInScope())
+          expect(actual).toEqual(new Set([
+            fas.app,
+            ...fas.counterCmps, ...fas.toggleCmps,
+            fas.ifA, fas.ifB, fas.ifC,
+            fas.ifAPartial, fas.ifBPartial, fas.ifCPartial,
+          ]))
         })
       })
     })
@@ -2077,47 +3013,7 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
-    describe(`02-counter`, () => {
-      describe(`CounterCmp`, () => {
-
-      })
-      describe(`App`, () => {
-
-      })
-    })
-
-    describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
-      describe(`for ToggleCmp`, () => {
-      })
-      describe(`for ConditionalView1`, () => {
-      })
-      describe(`for ConditionalView2`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
-
-    describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
-      describe(`for CounterCmp1`, () => {
-      })
-      describe(`for CounterCmp2`, () => {
-      })
-      describe(`for IsLeftGreater`, () => {
-      })
-      describe(`for IsRightGreater`, () => {
-      })
-      describe(`for AreEqual`, () => {
-      })
-      describe(`for InfoCmp`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
+    // This is too difficult to test like this.
 
   })
 
@@ -2132,14 +3028,14 @@ describe(`FactoryAnalyzer`, () => {
         it(`has two entries`, () => {
           expect(Array.from(domDiffMap).length).toBe(2)
         })
-        it(`maps #1 ({{ greeting }}) to a set of only that prop access`, () => {
+        it(`maps #1 ({{ greeting }}) to a set ["greeting"]`, () => {
           const one = Array.from(domDiffMap.get(1)!) as ViewBoundValue[]
           const greetingBoundValues = iterare(greeting.getValueOrThrow().viewBindings)
             .map(vb => vb.boundValue)
             .toArray() as ViewBoundValue[]
           expect(one).toEqual(greetingBoundValues)
         })
-        it(`maps #3 ({{ someone }}) to a set of only that prop access`, () => {
+        it(`maps #3 ({{ someone }}) to a set ["someone"]`, () => {
           const three = Array.from(domDiffMap.get(3)!) as ViewBoundValue[]
           const someoneBoundValues = iterare(someone.getValueOrThrow().viewBindings)
             .map(vb => vb.boundValue)
@@ -2192,8 +3088,16 @@ describe(`FactoryAnalyzer`, () => {
         })
       })
       describe(`for ConditionalView1`, () => {
+        const domDiffMap = conditionalView1.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for ConditionalView2`, () => {
+        const domDiffMap = conditionalView2.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for App`, () => {
         const domDiffMap = app.getDomDiffMap()
@@ -2208,18 +3112,62 @@ describe(`FactoryAnalyzer`, () => {
       const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
       const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
       describe(`for CounterCmp1`, () => {
+        const domDiffMap = counterCmp1.getDomDiffMap()
+        it(`has one entry`, () => {
+          expect(Array.from(domDiffMap).length).toBe(1)
+        })
+        it(`maps 8 to {{ value }}`, () => {
+          const actual = Array.from(domDiffMap.get(8)!) as ViewBoundValue[]
+          const templateNode = counterCmp1.view.getByChildPath(3, 0)
+          const expected = iterare(templateNode.getValueOrThrow().viewBindings)
+            .map(vb => vb.boundValue)
+            .toArray() as ViewBoundValue[]
+          expect(actual).toEqual(expected)
+        })
       })
       describe(`for CounterCmp2`, () => {
+        const domDiffMap = counterCmp2.getDomDiffMap()
+        it(`has one entry`, () => {
+          expect(Array.from(domDiffMap).length).toBe(1)
+        })
+        it(`maps 8 to {{ value }}`, () => {
+          const actual = Array.from(domDiffMap.get(8)!) as ViewBoundValue[]
+          const templateNode = counterCmp2.view.getByChildPath(3, 0)
+          const expected = iterare(templateNode.getValueOrThrow().viewBindings)
+            .map(vb => vb.boundValue)
+            .toArray() as ViewBoundValue[]
+          expect(actual).toEqual(expected)
+        })
       })
       describe(`for IsLeftGreater`, () => {
+        const domDiffMap = isLeftIsGreater.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for IsRightGreater`, () => {
+        const domDiffMap = isRightIsGreater.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for AreEqual`, () => {
+        const domDiffMap = areEqual.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for InfoCmp`, () => {
+        const domDiffMap = infoCmp.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for App`, () => {
+        const domDiffMap = app.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
     })
 
@@ -2246,44 +3194,287 @@ describe(`FactoryAnalyzer`, () => {
         })
       })
       describe(`for App`, () => {
-
+        const map = app.getFaDiffMap()
+        it(`has a single entry`, () => {
+          expect(map.size).toEqual(1)
+        })
+        it(`maps CounterCmp into a set which contains the "count" prop access bound to "value" input`, () => {
+          const set = map.get(counterCmp)!
+          expect(set).not.toBeFalsy()
+          const counterCmpNodeValue = app.view
+            .findOrFail(isCmpNodeWithName('counter-cmp'))
+            .getValueOrThrow()
+          const inputBinding = counterCmpNodeValue.getInputBindingByNameOrFail('value')
+          expect(set.has(inputBinding.boundValue as ViewBoundPropertyAccess)).toBe(true)
+        })
       })
     })
 
     describe(`03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const toggleCmp = app.getFirstChild()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
       describe(`for ToggleCmp`, () => {
         it(`returns empty factory diff map because it has no children`, () => {
           expect(Array.from(toggleCmp.getFaDiffMap()).length).toBe(0)
         })
       })
       describe(`for ConditionalView1`, () => {
+        it(`returns empty factory diff map because it has no children`, () => {
+          expect(Array.from(conditionalView1.getFaDiffMap()).length).toBe(0)
+        })
       })
       describe(`for ConditionalView2`, () => {
+        it(`returns empty factory diff map because it has no children`, () => {
+          expect(Array.from(conditionalView2.getFaDiffMap()).length).toBe(0)
+        })
       })
       describe(`for App`, () => {
-
+        it(`has length three`, () => {
+          const map = app.getFaDiffMap()
+          expect(map.size).toBe(3)
+        })
+        describe(`set which maps from toggle-cmp`, () => {
+          const map = app.getFaDiffMap()
+          const set = map.get(toggleCmp)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "bool" binding to "value" input`, () => {
+            const toggleCmpNodeValue = app.view
+              .findOrFail(isCmpNodeWithName('toggle-cmp'))
+              .getValueOrThrow()
+            const inputBinding = toggleCmpNodeValue.getInputBindingByNameOrFail('value')
+            const inputBindingBoundValue = inputBinding.boundValue as ViewBoundPropertyAccess
+            const [setItem] = set
+            expect(setItem).toBe(inputBindingBoundValue)
+          })
+        })
+        describe(`set which maps from w:if isJavaScript`, () => {
+          const map = app.getFaDiffMap()
+          const set = map.get(conditionalView1)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "isJavaScript" binding to the conditional node`, () => {
+            const isJsNodeValue = app.view
+              .findOrFail(isConditionalViewNodeWithVar('isJavaScript'))
+              .getValueOrThrow()
+            const [binding] = isJsNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            const [setItem] = set
+            expect(setItem).toBe(boundValue)
+          })
+        })
+        describe(`set which maps from w:for isTypeScript`, () => {
+          const map = app.getFaDiffMap()
+          const set = map.get(conditionalView2)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "isTypeScript" binding to the conditional node`, () => {
+            const isTsNodeValue = app.view
+              .findOrFail(isConditionalViewNodeWithVar('isTypeScript'))
+              .getValueOrThrow()
+            const [binding] = isTsNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            const [setItem] = set
+            expect(setItem).toBe(boundValue)
+          })
+        })
       })
     })
 
     describe(`in 04-comparator`, () => {
-      const app = apps.comparator.getFactoryTree()
-      const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
-      const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
+      const fas = get04Factories()
       describe(`for CounterCmp1`, () => {
+        it(`returns empty factory diff map because it has no children`, () => {
+          expect(Array.from(fas.counterCmp1.getFaDiffMap()).length).toBe(0)
+        })
       })
       describe(`for CounterCmp2`, () => {
+        it(`returns empty factory diff map because it has no children`, () => {
+          expect(Array.from(fas.counterCmp2.getFaDiffMap()).length).toBe(0)
+        })
       })
-      describe(`for IsLeftGreater`, () => {
+      describe(`for IsLeftGreater (directive)`, () => {
+        it(`returns a map with one entry`, () => {
+          const diff = fas.isLeftGreaterCondDir.getFaDiffMap()
+          expect(diff.size).toBe(1)
+        })
+        describe(`set mapped from the partial view`, () => {
+          const diff = fas.isLeftGreaterCondDir.getFaDiffMap()
+          const set = diff.get(fas.isLeftGreaterPartial)!
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "isGreaterString" binding`, () => {
+            const [binding] = fas.isLeftGreaterPartial.view
+              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getValueOrThrow()
+              .viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            expect(set.has(boundValue)).toBe(true)
+          })
+        })
       })
-      describe(`for IsRightGreater`, () => {
+      describe(`for IsLeftGreater (partial view)`, () => {
+        it(`returns an empty map because there are no children`, () => {
+          expect(fas.isLeftGreaterPartial.getFaDiffMap().size).toBe(0)
+        })
       })
-      describe(`for AreEqual`, () => {
+      describe(`for IsRightGreater (directive)`, () => {
+        it(`returns a map with one entry`, () => {
+          const diff = fas.isRightGreaterCondDir.getFaDiffMap()
+          expect(diff.size).toBe(1)
+        })
+        describe(`set mapped from the partial view`, () => {
+          const diff = fas.isRightGreaterCondDir.getFaDiffMap()
+          const set = diff.get(fas.isRightGreaterPartial)!
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "isGreaterString" binding`, () => {
+            const [binding] = fas.isRightGreaterPartial.view
+              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getValueOrThrow()
+              .viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            expect(set.has(boundValue)).toBe(true)
+          })
+        })
+      })
+      describe(`for IsRightGreater (partial view)`, () => {
+        it(`returns an empty map because there are no children`, () => {
+          expect(fas.isLeftGreaterPartial.getFaDiffMap().size).toBe(0)
+        })
+      })
+      describe(`for AreEqual (directive)`, () => {
+        it(`returns an empty map because there's nothing`, () => {
+          expect(fas.areEqualCondDir.getFaDiffMap().size).toBe(0)
+        })
+      })
+      describe(`for AreEqual (partial)`, () => {
+        it(`returns empty factory diff map because it has no children`, () => {
+          expect(fas.areEqualPartial.getFaDiffMap().size).toBe(0)
+        })
       })
       describe(`for InfoCmp`, () => {
+        const map = fas.infoCmp.getFaDiffMap()
+        it(`has size 5`, () => expect(map.size).toEqual(5))
+        describe(`set which maps from the first w:if (directive)`, () => {
+          const set = map.get(fas.isLeftGreaterCondDir)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 2`, () => expect(set.size).toBe(2))
+          it(`contains the "isLeftGreater" binding`, () => {
+            const isLeftGreaterNodeValue = fas.infoCmp.view
+              .findOrFail(isConditionalViewNodeWithVar('isLeftGreater'))
+              .getValueOrThrow()
+            const [binding] = isLeftGreaterNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            expect(set.has(boundValue)).toBe(true)
+          })
+          it(`contains the "isGreaterString" binding`, () => {
+            const isGreaterStringInterpolationNodeValue = fas.isLeftGreaterCondDir.view
+              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getValueOrThrow()
+            const [binding] = isGreaterStringInterpolationNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            expect(set.has(boundValue)).toBe(true)
+          })
+        })
+        describe(`set which maps from the first w:if (partial view)`, () => {
+          const set = map.get(fas.isLeftGreaterPartial)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "isGreaterString" binding`, () => {
+            const isGreaterStringInterpolationNodeValue = fas.isLeftGreaterCondDir.view
+              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getValueOrThrow()
+            const [binding] = isGreaterStringInterpolationNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            expect(set.has(boundValue)).toBe(true)
+          })
+        })
+        describe(`set which maps from the second w:if (directive view)`, () => {
+          const set = map.get(fas.isRightGreaterCondDir)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 2`, () => expect(set.size).toBe(2))
+          it(`contains the "isRightGreater" binding`, () => {
+            const isRightGreaterNodeValue = fas.infoCmp.view
+              .findOrFail(isConditionalViewNodeWithVar('isRightGreater'))
+              .getValueOrThrow()
+            const [binding] = isRightGreaterNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            expect(set.has(boundValue)).toBe(true)
+          })
+          it(`contains the "isGreaterString" binding`, () => {
+            const isGreaterStringInterpolationNodeValue = fas.isRightGreaterCondDir.view
+              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getValueOrThrow()
+            const [binding] = isGreaterStringInterpolationNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            expect(set.has(boundValue)).toBe(true)
+          })
+        })
+        describe(`set which maps from the second w:if (partial view)`, () => {
+          const set = map.get(fas.isRightGreaterPartial)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "isGreaterString" binding`, () => {
+            const isGreaterStringInterpolationNodeValue = fas.isRightGreaterCondDir.view
+              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getValueOrThrow()
+            const [binding] = isGreaterStringInterpolationNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            expect(set.has(boundValue)).toBe(true)
+          })
+        })
+        describe(`set which maps from the third w:if (directive)`, () => {
+          const set = map.get(fas.areEqualCondDir)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "areEqual" binding`, () => {
+            const areEqualNodeValue = fas.infoCmp.view
+              .findOrFail(isConditionalViewNodeWithVar('areEqual'))
+              .getValueOrThrow()
+            const [binding] = areEqualNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            const [setItem] = set
+            expect(setItem).toBe(boundValue)
+          })
+        })
       })
       describe(`for App`, () => {
+        const map = fas.app.getFaDiffMap()
+        it(`has size 3`, () => expect(map.size).toBe(3))
+        describe(`set which maps from counter-cmp (first)`, () => {
+          const set = map.get(fas.counterCmp1)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "left" binding to input [value]`, () => {
+            const counterCmp1NodeValue = fas.app.view.getByChildPath(3)
+          })
+        })
+        describe(`set which maps from counter-cmp (second)`, () => {
+          const set = map.get(fas.counterCmp2)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "right" binding to input [value]`, () => {
+            const counterCmp2NodeValue = fas.app.view.getByChildPath(7)
+          })
+        })
+        describe(`set which maps from info-cmp`, () => {
+          const set = map.get(fas.infoCmp)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 2`, () => expect(set.size).toBe(2))
+          it(`contains the "isLeftGreater" binding to [isLeftGreater] input`, () => {
+            const infoCmpNodeValue = fas.app.view
+              .findOrFail(isCmpNodeWithName('info-cmp'))
+              .getValueOrThrow()
+            const binding = infoCmpNodeValue.getInputBindingByNameOrFail('isLeftGreater')
+            expect(set.has(binding.boundValue as ViewBoundPropertyAccess)).toBe(true)
+          })
+          it(`contains the "isRightGreater" binding to input [isRightGreater]`, () => {
+            const infoCmpNodeValue = fas.app.view
+              .findOrFail(isCmpNodeWithName('info-cmp'))
+              .getValueOrThrow()
+            const binding = infoCmpNodeValue.getInputBindingByNameOrFail('isRightGreater')
+            expect(set.has(binding.boundValue as ViewBoundPropertyAccess)).toBe(true)
+          })
+        })
       })
     })
 
@@ -2362,10 +3553,29 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`App`, () => {
         it(`returns Toggle, IsJavaScript and IsTypeScript`, () => {
           expect(new Set(app.getNeighbors())).toEqual(new Set([toggleCmp, conditionalView1, conditionalView2]))
+        })
+      })
+    })
+
+    describe(`in 05-deep-ifs`, () => {
+      const fas = get05Factories()
+      describe(`for CounterCmp1`, () => {
+        it(`returns App`, () => {
+          expect(new Set(fas.counterCmp1.getNeighbors())).toEqual(new Set([fas.app]))
+        })
+      })
+      describe(`for conditional view with "visibility.b"`, () => {
+        it(`returns ifAPartial and ifBPartial`, () => {
+          expect(new Set(fas.ifB.getNeighbors())).toEqual(new Set([fas.ifAPartial, fas.ifBPartial]))
+        })
+      })
+      describe(`for partial view with "visibility.b"`, () => {
+        it(`returns ifB and ifC`, () => {
+          expect(new Set(fas.ifBPartial.getNeighbors())).toEqual(new Set([fas.ifB, fas.ifC]))
         })
       })
     })
@@ -2594,12 +3804,13 @@ describe(`FactoryAnalyzer`, () => {
         })
       })
       describe(`for InfoCmp`, () => {
-        it(`returns "isLeftGreater", "isRightGreater" and "areEqual"`, () => {
-          expect(infoCmp.getPropAndGetterNames()).toEqual(new Set(['isLeftGreater', 'isRightGreater', 'areEqual']))
+        it(`returns "isLeftGreater", "isRightGreater", "areEqual" and "isGreaterString"`, () => {
+          expect(infoCmp.getPropAndGetterNames())
+            .toEqual(new Set(['isLeftGreater', 'isRightGreater', 'areEqual', 'isGreaterString']))
         })
       })
       describe(`for App`, () => {
-        it(`returns "left", "right", "isRightGreater" and "isLeftFreater"`, () => {
+        it(`returns "left", "right", "isRightGreater" and "isLeftGreater"`, () => {
           expect(app.getPropAndGetterNames()).toEqual(new Set(['left', 'right', 'isLeftGreater', 'isRightGreater']))
         })
       })

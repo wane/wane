@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Entry, Template } from 'wane'
 
 @Entry()

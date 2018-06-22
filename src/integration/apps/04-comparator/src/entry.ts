@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Entry, Template, Register } from 'wane'
 
 @Template(`
@@ -21,8 +22,8 @@ export class CounterCmp {
 }
 
 @Template(`
-  <w:if isLeftGreater>left is greater</w:if>
-  <w:if isRightGreater>right is greater</w:if>
+  <w:if isLeftGreater>left {{ isGreaterString }}</w:if>
+  <w:if isRightGreater>right {{ isGreaterString }}</w:if>
   <w:if areEqual>they are equal</w:if> 
 `)
 export class InfoCmp {
@@ -32,6 +33,8 @@ export class InfoCmp {
   private get areEqual (): boolean {
     return !this.isLeftGreater && !this.isRightGreater
   }
+
+  private isGreaterString = `is greater`
 }
 
 @Entry()

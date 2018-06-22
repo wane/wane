@@ -57,8 +57,17 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
    * <w:if bar>{{ foo }} is a nice number</w:if>
    * ```
    *
+   * The example above:
    * For the outer foo interpolation, Cmp is both a **responsible factory** and a **definition factory**.
    * For the inner foo interpolation, Cmp only a **definition** factory. Its **responsible factory** is w:if.
+   *
+   * ```
+   * <span>{{ foo }}
+   * <w:for foo of foos>{{ foo }}</w:for>
+   *
+   * The example above:
+   * For the outer foo interpolation, Cmp is both a **responsible factory** and a **definition factory**.
+   * For the inner foo interpolation, w:for is both **responsible** and **definition**.
    */
   public getResponsibleFactory (): FactoryAnalyzer<TemplateNodeValue> {
     return this.boundValue.getResponsibleFactory()
@@ -66,6 +75,10 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
 
   public getDefinitionFactory(): FactoryAnalyzer<TemplateNodeValue> {
     return this.boundValue.getDefinitionFactory()
+  }
+
+  public getFirstScopeBoundaryUpwardsIncludingSelf (): FactoryAnalyzer<TemplateNodeValue> {
+    return this.boundValue.getFirstScopeBoundaryUpwardsIncludingSelf()
   }
 
 }
@@ -103,6 +116,10 @@ export class AttributeBinding extends ViewBinding<TemplateNodeHtmlValue> {
   constructor (protected attributeName: string,
                boundValue: ViewBoundValue) {
     super(boundValue)
+  }
+
+  public getName() {
+    return this.attributeName
   }
 
   public isNativeHtml (): boolean {
@@ -160,6 +177,7 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
   constructor (protected eventName: string,
                public readonly boundValue: ViewBoundMethodCall) {
     super(boundValue)
+    boundValue.args.forEach(arg => arg.registerViewBinding(this))
   }
 
   public isNativeHtml (): boolean {
@@ -170,6 +188,7 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
                     instance: string,
                     from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory(),
   ): CodeBlockWriter {
+    // console.log(`start === === ===`)
     return wr
       .write(`util.__wane__addEventListener(${instance}, '${this.eventName}', (`)
       .conditionalWrite(this.boundValue.usesPlaceholder(), `__wane__placeholder`)
@@ -177,13 +196,16 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
       .newLine()
       .indentBlock(() => {
         wr.writeLine(this.boundValue.resolve(from))
-        const factories = this.boundValue.getScopeFactory()
+        const factories = this.boundValue.getDefinitionFactory()
           .getFactoriesAffectedByCalling(this.boundValue.getName())
         for (const factory of factories) {
           const pathToAncestor: string = from.printPathTo(factory)
           wr.writeLine(`this${pathToAncestor}.__wane__update()`)
         }
       })
+      // .indentBlock(() => {
+        // console.log(`end === === ===`)
+      // })
       .write(`})`)
   }
 
@@ -201,6 +223,10 @@ export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValu
   constructor (protected inputName: string,
                boundValue: ViewBoundValue) {
     super(boundValue)
+  }
+
+  public getName(): string {
+    return this.inputName
   }
 
   public isNativeHtml (): boolean {
@@ -289,7 +315,7 @@ export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalV
       .write(this.boundValue.resolve(from))
   }
 
-  public getRaw(): string {
+  public getRaw (): string {
     const boundValue = this.boundValue as ViewBoundPropertyAccess
     return boundValue.getRawPath()
   }
@@ -320,7 +346,11 @@ export class RepeatingViewBinding extends ViewBinding<TemplateNodeRepeatingViewV
                       instance: string,
                       from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory(),
   ): CodeBlockWriter {
-    return wr.write(`${instance}.__wane__data = ${this.boundValue.resolve(from)}`)
+    return wr.write(`${instance} = ${this.boundValue.resolve(from)}`)
+  }
+
+  public getKeyFunction (): string {
+    return this.keyAccessorPath == null ? `item => item` : `item => item.${this.keyAccessorPath}`
   }
 
 }

@@ -4,6 +4,8 @@ import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-b
 import { ViewBinding } from '../template-nodes/view-bindings'
 import iterare from 'iterare'
 import { ViewBoundPropertyAccess } from '../template-nodes/view-bound-value'
+import { getIntersection } from '../utils/utils'
+import { PartialViewFactoryAnalyzer } from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
 
 export abstract class BaseFactoryCodegen extends BaseCodegen {
 
@@ -13,11 +15,10 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
 
   public abstract getFactoryFileNameWithoutExtension (fa: FactoryAnalyzer<TemplateNodeValue>): string
 
-  // final (ffs typescript)
   protected printImports (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     this.writer
       .writeLine(`import * as util from './util.js'`)
-    for (const factory of fa.getChildren().values()) {
+    for (const factory of fa.getChildrenFactories()) {
       this.writer
         .writeLine(`import ${factory.getFactoryName()} from './${factory.getFactoryFilename()}'`)
     }
@@ -46,13 +47,15 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
   }
 
   protected printDomNodesRegistration (fa: FactoryAnalyzer<TemplateNodeValue>): this {
+    const partialView = fa.getPartialViewFactoryAnalyzer()
     this.writer
       .writeLine(`// Create a flat array of all DOM nodes which this component controls:`)
       .writeLine(`this.__wane__domNodes = [`)
       .indentBlock(() => {
-        Array.from(new Set(fa.getSavedNodes())).forEach(node => {
-          node.printDomInit().forEach(init => {
-            this.writer.writeLine(`${init},`)
+        let index = 0
+        Array.from(new Set(partialView.getSavedNodes())).forEach(node => {
+          node.printDomInit(partialView).forEach(init => {
+            this.writer.writeLine(`/*${index++}*/ ${init},`)
           })
         })
       })
@@ -69,7 +72,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
       .filter(predicate)
       .forEach(binding => {
         for (const index of fa.getIndexesFor(binding.getTemplateNode())) {
-          binding.printInit(this.writer, `this.__wane__domNodes[${index}]`)
+          binding.printInit(this.writer, `this.__wane__domNodes[${index}]`, fa)
           this.writer.newLineIfLastNot()
           isAtLeastOneLineWritten = true
         }
@@ -83,13 +86,13 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
 
   protected printDomPropsInit (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     return this
-      ._printDomPropsInit(fa, binding => binding.boundValue.isConstant(), `Initializing static stuff:`)
-      ._printDomPropsInit(fa, binding => !binding.boundValue.isConstant(), `Initializing dynamic stuff:`)
+      ._printDomPropsInit(fa.getPartialViewFactoryAnalyzer(), binding => binding.boundValue.isConstant(), `Initializing static stuff:`)
+      ._printDomPropsInit(fa.getPartialViewFactoryAnalyzer(), binding => !binding.boundValue.isConstant(), `Initializing dynamic stuff:`)
   }
 
   protected printAssemblingDomNodes (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     this.writer.writeLine(`// Creating the DOM tree:`)
-    fa.printAssemblingDomNodes(this.writer)
+    fa.getPartialViewFactoryAnalyzer().printAssemblingDomNodes(this.writer)
     return this
   }
 
@@ -97,7 +100,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
     this.writer
       .writeLine(`util.__wane__createFactoryChildren(this, [`)
       .indentBlock(() => {
-        for (const factory of fa.getChildren().values()) {
+        for (const factory of fa.getPartialViewFactoryAnalyzer().getChildrenFactories()) {
           const name = factory.getFactoryName()
           this.writer.writeLine(`${name}(),`)
         }
@@ -106,6 +109,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
     return this
   }
 
+  // TODO: This will always be empty for PartialView_ConditionalView
   protected generateDiffMethod (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     this.writer
       .writeLine(`__wane__diff() {`)
@@ -114,15 +118,13 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
           .writeLine(`return {`)
           .indentBlock(() => {
             for (const boundValue of fa.responsibleFor()) {
-              const name = boundValue.getName()
+              const path = fa.hasDefinedAndResolvesTo(boundValue.getRawPath())
+              if (path == null) continue
+              const [name] = path.split('.')
               this.writer
                 .write(`${name}: this.__wane__prevData.${name}`)
                 .write(` !== `)
-                .write(`(`)
-                .write(`this.__wane__prevData.${name}`)
-                .write(` = `)
-                .write(`this.__wane__data.${name}`)
-                .write(`),`)
+                .write(`(this.__wane__prevData.${name} = this.__wane__data.${name}),`)
                 .newLine()
             }
           })
@@ -134,14 +136,18 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
 
   protected generateUpdateViewMethod (fa: FactoryAnalyzer<TemplateNodeValue>,
                                       name: string = `__wane__update`,
-                                      callDiffAtStart: boolean = true): this {
+                                      callDiffAtStart: boolean = true,
+                                      mergeDiffs: boolean = false): this {
     this.writer
       .writeLine(callDiffAtStart ? `${name}() {` : `${name}(diff) {`)
       .indentBlock(() => {
-        this.writer.conditionalWriteLine(callDiffAtStart, `const diff = this.__wane__diff()`)
+        this.writer
+          .conditionalWriteLine(callDiffAtStart && !mergeDiffs, `const diff = this.__wane__diff()`)
+          .conditionalWriteLine(mergeDiffs, `Object.assign(diff, this.__wane__diff())`)
 
         this.writer.writeLine(`// Dom nodes...`)
-        for (const [domNodeIndex, boundValues] of fa.getDomDiffMap()) {
+        const map = fa.getDomDiffMap()
+        for (const [domNodeIndex, boundValues] of map) {
           const condition = ViewBoundPropertyAccess.printCondition(boundValues)
           this.writer
             .writeLine(`if (${condition}) {`)
@@ -157,18 +163,59 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
         this.writer.writeLine(`// ...Dom nodes end.`)
 
         this.writer.writeLine(`// Factory children...`)
-        for (const [factoryChild, boundValues] of fa.getFaDiffMap()) {
+
+        const faDiffMap = fa.getFaDiffMap()
+        for (const [factoryDescendant, boundValues] of fa.getFaDiffMap()) {
           const condition = ViewBoundPropertyAccess.printCondition(boundValues)
           this.writer
             .writeLine(`if (${condition}) {`)
             .indentBlock(() => {
+
               for (const boundValue of boundValues) {
                 const binding = boundValue.getViewBinding()
-                const factoryChildIndex = factoryChild.getFactoryIndexAsChild()
-                const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex}]`
-                const factoryChildDataAccess = `${factoryChildAccess}.__wane__data`
-                binding.printUpdate(this.writer, factoryChildDataAccess, fa)
-                this.writer.writeLine(`${factoryChildAccess}.__wane__update()`)
+                const definitionFactory = boundValue.getFirstScopeBoundaryUpwardsIncludingSelf()
+                const path = factoryDescendant.getPathTo(definitionFactory)
+
+                // if (boundValue instanceof ViewBoundPropertyAccess && boundValue.getRawPath().startsWith('item.')) {
+                //   console.log(path.map(x => x.getFactoryName()))
+                // }
+
+                /**
+                 * Assignment in "updated" is printed if the resolved factory is
+                 * the first scope boundary upwards (for components, this is self,
+                 * for  directives, this is the context they are placed in),
+                 * and if the path to the factoryDescendant (which is being updated)
+                 * is a direct descendant of `this`.
+                 */
+                if (definitionFactory == fa.getFirstScopeBoundaryUpwardsIncludingSelf() && factoryDescendant.isChildOf(fa)) {
+                  const factoryChild = factoryDescendant // just for semantics
+                  const factoryChildIndex = factoryChild.getFactoryIndexAsChild()
+                  const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex} /*${factoryChild.getFactoryName()}*/]`
+                  const factoryChildDataAccess = `${factoryChildAccess}.__wane__data`
+                  try {
+                    binding.printUpdate(this.writer, factoryChildDataAccess, fa)
+                  } catch (e) {
+                    this.writer.writeLine(`/** ${e} */`)
+                  }
+                }
+
+                /**
+                 * `update` call is being made if `this` is included in the path
+                 * to the resolved factory. This should be a sub-case of the case
+                 * above, meaning update should be printed whenever
+                 */
+                if (path.includes(fa)) {
+                  const [factoryChildInThePath] = getIntersection(
+                    fa.getChildrenFactories(),
+                    path,
+                  )
+                  if (factoryChildInThePath == null) {
+                    throw new Error(`The intersection between the path and factory children should exist.`)
+                  }
+                  const factoryChildIndex = factoryChildInThePath.getFactoryIndexAsChild()
+                  const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex} /*${factoryChildInThePath.getFactoryName()}*/]`
+                  this.writer.writeLine(`${factoryChildAccess}.__wane__update(diff)`)
+                }
               }
             })
             .writeLine(`}`)

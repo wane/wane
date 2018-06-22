@@ -15,15 +15,29 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   protected readonly parent: FactoryAnalyzer<TemplateNodeValue> | undefined
   protected readonly children = new Map<TreeNode<TemplateNodeValue>, FactoryAnalyzer<TemplateNodeValue>>()
 
-  public view!: Forest<TemplateNodeValue>
+  private _view!: Forest<TemplateNodeValue>
+
+  public set view (view: Forest<TemplateNodeValue>) {
+    this._view = view
+  }
+
+  public get view (): Forest<TemplateNodeValue> {
+    if (this._view == null) {
+      throw new Error(`No view set for "${this.getFactoryName()}".`)
+    }
+    return this._view
+  }
+
   public abstract templateDefinition: Forest<TemplateNodeValue>
 
   protected readonly anchorViewNode: TreeNode<Anchor> | undefined
 
+  public abstract getPartialViewFactoryAnalyzer (): FactoryAnalyzer<TemplateNodeValue>
+
   public getFirstScopeBoundaryUpwardsIncludingSelf (): ComponentFactoryAnalyzer {
     let current: FactoryAnalyzer<TemplateNodeValue> = this
     while (!current.isScopeBoundary()) {
-      const parent = current.parent
+      const parent = current.getParentOrUndefined()
       if (parent == null) {
         throw new Error(`Could not find a scope boundary above "${this.getFactoryName()}", which is also not a scope factory.`)
       }
@@ -76,6 +90,10 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
   public getChildren (): Map<TreeNode<TemplateNodeValue>, FactoryAnalyzer<TemplateNodeValue>> {
     return this.children
+  }
+
+  public getChildrenFactories (): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
+    return this.getChildren().values()
   }
 
   public getFirstChild<T extends FactoryAnalyzer<TemplateNodeValue> = FactoryAnalyzer<TemplateNodeValue>> (): T {
@@ -131,14 +149,32 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     )
   }
 
+  public isHopToParent (to: FactoryAnalyzer<TemplateNodeValue>): boolean {
+    return this.getParentOrUndefined() == to
+  }
+
+  public printHopToParent (isStartingHop: boolean, isEndingHop: boolean): string {
+    return `__wane__factoryParent`
+  }
+
+  public printHopToChild (to: FactoryAnalyzer<TemplateNodeValue>): string {
+    return `__wane__factoryChildren[${to.getFactoryIndexAsChild()} /*${to.getFactoryName()}*/]`
+  }
+
   public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>): string {
+    // console.log(` Path from ${this.getFactoryName()} to ${fa.getFactoryName()}`)
     const isHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
-      from.getParentOrUndefined() == to
-    const printHopToParent = () => `__wane__factoryParent`
+      from.isHopToParent(to)
+    const printHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>, isStartingHop: boolean, isEndingHop: boolean) => {
+      return from.printHopToParent(isStartingHop, isEndingHop)
+    }
     const printHopToChild = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
-      `__wane__factoryChildren[${to.getFactoryIndexAsChild()}`
+      from.printHopToChild(to)
     const path = this.getPathTo(fa)
-    return printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
+    // console.log(path.map(p => p.getFactoryName()).join(` -> `))
+    const printed = printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
+    // console.log(printed)
+    return printed
   }
 
   /**
@@ -240,6 +276,12 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
    */
   public abstract getPropsBoundToView (): Map<string, string>
 
+  /**
+   * These are only ancestor factories... I think.
+   *
+   * @param {string} methodName
+   * @returns {Iterable<FactoryAnalyzer<TemplateNodeValue>>}
+   */
   public getFactoriesAffectedByCalling (methodName: string): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
     const resolved = this.getFirstScopeBoundaryUpwardsIncludingSelf().hasDefinedAndResolvesTo(methodName)
     if (resolved == null) {
@@ -257,10 +299,12 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           const boundValue = binding.boundValue
           const boundValueMethodName = boundValue.getName()
           const outputName = binding.getName()
-          const originFactory = boundValue.getScopeFactory() as ComponentFactoryAnalyzer
+          const originFactory = boundValue.getDefinitionFactory() as ComponentFactoryAnalyzer
 
           // we skip this binding if it cannot be called when methodName is invoked...
-          const allMethods = this.getFirstScopeBoundaryUpwardsIncludingSelf().componentAnalyzer.getMethodsCalledFrom(methodName)
+          const allMethods = this.getFirstScopeBoundaryUpwardsIncludingSelf()
+            .componentAnalyzer
+            .getMethodsCalledFrom(methodName)
           allMethods.add(methodName) // ...including itself, of course
 
           if (!allMethods.has(outputName)) {
@@ -283,6 +327,10 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     }
 
     return result
+  }
+
+  public isChildOf (fa: FactoryAnalyzer<TemplateNodeValue>): boolean {
+    return [...fa.getChildrenFactories()].includes(this)
   }
 
   public getFactoryIndexAsChild (): number {
@@ -326,7 +374,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
   public getSavedNodes (): TemplateNodeValue[] {
     const flat: TemplateNodeValue[] = []
-    for (const node of this.view) {
+    for (const node of this.getPartialViewFactoryAnalyzer().view) {
       const value = node.getValueOrThrow()
       for (let i = 0; i < value.domNodesCount; i++) {
         flat.push(value)
@@ -375,12 +423,12 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           yield self
         }
 
-        const queue: FactoryAnalyzer<TemplateNodeValue>[] = [...self.getChildren().values()]
+        const queue: FactoryAnalyzer<TemplateNodeValue>[] = [...self.getChildrenFactories()]
         while (queue.length > 0) {
           const current = queue.shift()!
           yield current
           if (!current.isScopeBoundary()) {
-            queue.push(...current.getChildren().values())
+            queue.push(...current.getChildrenFactories())
           }
         }
       },
@@ -425,12 +473,22 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   public getFaDiffMap (): Map<FactoryAnalyzer<TemplateNodeValue>, Set<ViewBoundPropertyAccess>> {
     const result = new Map<FactoryAnalyzer<TemplateNodeValue>, Set<ViewBoundPropertyAccess>>()
 
-    for (const factory of this.factoryAnalyzersInScope({ skipSelf: true })) {
-      for (const binding of factory.getSelfBindings()) {
+    const factories = this.factoryAnalyzersInScope({ skipSelf: true })
+    for (const factory of factories) {
+      const bindings = [...factory.getSelfBindings()]
+      if (!factory.isScopeBoundary()) {
+        // We do not care for what's bound INSIDE the component (= scope boundary),
+        // only what's bound to it.
+        bindings.push(...factory.getHtmlNativeDomBindings())
+      }
+      // console.log([...bindings].map(x => x.getTemplateNode().toString()))
+      for (const binding of bindings) {
         const responsibleFactory = binding.getResponsibleFactory()
+        const definitionFactory = binding.getDefinitionFactory()
         const boundValue = binding.boundValue
-        if (this == responsibleFactory && boundValue instanceof ViewBoundPropertyAccess && !(boundValue instanceof ViewBoundMethodCall)) {
-          result.set(factory, createOrAddToSet(boundValue, result.get(this)))
+        if (responsibleFactory.getPathTo(definitionFactory).includes(this) && boundValue instanceof ViewBoundPropertyAccess && !(boundValue instanceof ViewBoundMethodCall)) {
+          // console.log('adding', boundValue)
+          result.set(factory, createOrAddToSet(boundValue, result.get(factory)))
         }
       }
     }
@@ -467,7 +525,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     const neighbors: FactoryAnalyzer<TemplateNodeValue>[] = []
     const parent = this.getParentOrUndefined()
     if (parent != null) neighbors.push(parent)
-    neighbors.push(...this.getChildren().values())
+    neighbors.push(...this.getChildrenFactories())
     return neighbors
   }
 
