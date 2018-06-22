@@ -14,6 +14,15 @@ import { ViewBoundValue } from '../compiler/template-nodes/view-bound-value'
 import { isCmpNodeWithName, isConditionalViewNodeWithVar } from '../compiler/template-nodes/nodes/utils'
 import { isInstance } from '../compiler/utils/utils'
 import { ComponentFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/component-factory-analyzer'
+import { repeat } from "./utils";
+import { FactoryAnalyzer } from "../compiler/analyzer";
+import { TemplateNodeValue } from "../compiler/template-nodes/nodes/template-node-value-base";
+
+function expectWriter (spy: (wr: CodeBlockWriter) => void, expectation: string): void {
+  const wr = new CodeBlockWriter({ indentNumberOfSpaces: 2 })
+  spy(wr)
+  expect(wr.toString().trim()).toBe(expectation.trim())
+}
 
 describe(`FactoryAnalyzer`, () => {
 
@@ -1467,10 +1476,20 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`in 03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const toggleCmp = app.getFirstChild()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
       describe(`for TogglerCmp`, () => {
         it(`returns 0`, () => {
           expect(toggleCmp.getFactoryIndexAsChild()).toBe(0)
+        })
+      })
+      describe(`for ConditionalView1`, () => {
+        it(`returns 1`, () => {
+          expect(conditionalView1.getFactoryIndexAsChild()).toBe(1)
+        })
+      })
+      describe(`for ConditionalView2`, () => {
+        it(`returns 2`, () => {
+          expect(conditionalView2.getFactoryIndexAsChild()).toBe(2)
         })
       })
       describe(`for App`, () => {
@@ -1480,36 +1499,44 @@ describe(`FactoryAnalyzer`, () => {
       })
     })
 
-    describe(`in 03-toggler`, () => {
-      const app = apps.toggler.getFactoryTree()
-      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
-      describe(`for ToggleCmp`, () => {
-      })
-      describe(`for ConditionalView1`, () => {
-      })
-      describe(`for ConditionalView2`, () => {
-      })
-      describe(`for App`, () => {
-      })
-    })
-
     describe(`in 04-comparator`, () => {
       const app = apps.comparator.getFactoryTree()
       const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
       const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
       describe(`for CounterCmp1`, () => {
+        it(`returns 0`, () => {
+          expect(counterCmp1.getFactoryIndexAsChild()).toBe(0)
+        })
       })
       describe(`for CounterCmp2`, () => {
+        it(`returns 1`, () => {
+          expect(counterCmp2.getFactoryIndexAsChild()).toBe(1)
+        })
       })
       describe(`for IsLeftGreater`, () => {
+        it(`returns 0`, () => {
+          expect(isLeftIsGreater.getFactoryIndexAsChild()).toBe(0)
+        })
       })
       describe(`for IsRightGreater`, () => {
+        it(`returns 1`, () => {
+          expect(isRightIsGreater.getFactoryIndexAsChild()).toBe(1)
+        })
       })
       describe(`for AreEqual`, () => {
+        it(`returns 2`, () => {
+          expect(areEqual.getFactoryIndexAsChild()).toBe(2)
+        })
       })
       describe(`for InfoCmp`, () => {
+        it(`returns 2`, () => {
+          expect(infoCmp.getFactoryIndexAsChild()).toBe(2)
+        })
       })
       describe(`for App`, () => {
+        it(`throws since it's root`, () => {
+          expect(() => app.getFactoryIndexAsChild()).toThrow()
+        })
       })
     })
 
@@ -1546,7 +1573,7 @@ describe(`FactoryAnalyzer`, () => {
       const counterCmp = app.getFirstChild()
       describe(`for CounterCmp`, () => {
       })
-      describe(`App`, () => {
+      describe(`for App`, () => {
       })
     })
 
@@ -1613,10 +1640,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`02-counter`, () => {
       describe(`CounterCmp`, () => {
-
       })
       describe(`App`, () => {
-
       })
     })
 
@@ -1671,10 +1696,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`02-counter`, () => {
       describe(`CounterCmp`, () => {
-
       })
       describe(`App`, () => {
-
       })
     })
 
@@ -1743,10 +1766,8 @@ describe(`FactoryAnalyzer`, () => {
 
     describe(`02-counter`, () => {
       describe(`CounterCmp`, () => {
-
       })
       describe(`App`, () => {
-
       })
     })
 
@@ -1786,26 +1807,51 @@ describe(`FactoryAnalyzer`, () => {
   })
 
 
-  describe(`printDomNodeAssignment`, () => {
+  describe(`printRootDomNodeAssignment`, () => {
 
-    describe(`01-hello-world`, () => {
-      describe(`App`, () => {
-        const app = apps.helloWorld.getFactoryTree()
+    function expectEntryRoot (fa: FactoryAnalyzer<TemplateNodeValue>) {
+      expectWriter(
+        wr => fa.printRootDomNodeAssignment(wr),
+        `this.__wane__root = document.body`
+      )
+    }
+
+    function expectComponentRoot (fa: FactoryAnalyzer<TemplateNodeValue>, parentHopCount: number, index: number) {
+      expectWriter(
+        wr => fa.printRootDomNodeAssignment(wr),
+        `this.__wane__root = this${repeat('.__wane__factoryParent', parentHopCount)}.__wane__domNodes[${index}]`,
+      )
+    }
+
+    function expectDirectiveRoot (fa: FactoryAnalyzer<TemplateNodeValue>, parentHopCount: number, openingIndex: number, closingIndex: number) {
+      expectWriter(
+        wr => fa.printRootDomNodeAssignment(wr),
+        `this.__wane__openingCommentOutlet = this${repeat('.__wane__factoryParent', parentHopCount)}.__wane__domNodes[${openingIndex}]\n` +
+        `this.__wane__closingCommentOutlet = this${repeat('.__wane__factoryParent', parentHopCount)}.__wane__domNodes[${closingIndex}]`,
+      )
+    }
+
+    describe(`in 01-hello-world`, () => {
+      const app = apps.helloWorld.getFactoryTree()
+      describe(`for App`, () => {
         it(`prints assigning the document.body to the root`, () => {
-          const expected = `this.__wane__root = document.body`
-          const wr = new CodeBlockWriter({ indentNumberOfSpaces: 2 })
-          app.printRootDomNodeAssignment(wr)
-          expect(wr.toString().trim()).toBe(expected.trim())
+          expectEntryRoot(app)
         })
       })
     })
 
-    describe(`02-counter`, () => {
-      describe(`CounterCmp`, () => {
-
+    describe(`in 02-counter`, () => {
+      const app = apps.counter.getFactoryTree()
+      const [counterCmp] = app.getChildren().values()
+      describe(`for CounterCmp`, () => {
+        it(`prints assigning parent's second root node`, () => {
+          expectComponentRoot(counterCmp, 1, 1)
+        })
       })
-      describe(`App`, () => {
-
+      describe(`for App`, () => {
+        it(`prints assigning the document body`, () => {
+          expectEntryRoot(app)
+        })
       })
     })
 
@@ -1813,12 +1859,24 @@ describe(`FactoryAnalyzer`, () => {
       const app = apps.toggler.getFactoryTree()
       const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
       describe(`for ToggleCmp`, () => {
+        it(`prints assigning the second node of parent`, () => {
+          expectComponentRoot(toggleCmp, 1, 1)
+        })
       })
       describe(`for ConditionalView1`, () => {
+        it(`prints assigning the fourth and fifth parent's node`, () => {
+          expectDirectiveRoot(conditionalView1, 1, 3, 4)
+        })
       })
       describe(`for ConditionalView2`, () => {
+        it(`prints assigning the seventh and eights parent's node`, () => {
+          expectDirectiveRoot(conditionalView2, 1, 6, 7)
+        })
       })
       describe(`for App`, () => {
+        it(`prints assigning the document body`, () => {
+          expectEntryRoot(app)
+        })
       })
     })
 
@@ -1827,18 +1885,42 @@ describe(`FactoryAnalyzer`, () => {
       const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
       const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
       describe(`for CounterCmp1`, () => {
+        it(`prints assigning the parent node with index 3`, () => {
+          expectComponentRoot(counterCmp1, 1, 3)
+        })
       })
       describe(`for CounterCmp2`, () => {
+        it(`prints assigning the parent node with index 7`, () => {
+          expectComponentRoot(counterCmp2, 1, 7)
+        })
       })
       describe(`for IsLeftGreater`, () => {
+        it(`prints assigning the parent nodes with index 1 and 2`, () => {
+          expectDirectiveRoot(isLeftIsGreater, 1, 1, 2)
+        })
       })
       describe(`for IsRightGreater`, () => {
+        it(`prints assigning the parent nodes with index 4 and 5`, () => {
+          expectDirectiveRoot(isRightIsGreater, 1, 4, 5)
+        })
       })
       describe(`for AreEqual`, () => {
+        it(`prints assigning the parent nodes with index 7 and 8`, () => {
+          expectDirectiveRoot(areEqual, 1, 7, 8)
+        })
       })
       describe(`for InfoCmp`, () => {
+        it(`prints assigning to the parent node with index 11`, () => {
+          expectComponentRoot(infoCmp, 1, 11)
+        })
       })
       describe(`for App`, () => {
+        it(`prints assigning the document body`, () => {
+          expectWriter(
+            wr => app.printRootDomNodeAssignment(wr),
+            `this.__wane__root = document.body`,
+          )
+        })
       })
     })
 
@@ -1848,8 +1930,8 @@ describe(`FactoryAnalyzer`, () => {
   describe(`factoryAnalyzersInScope`, () => {
 
     describe(`in 01-hello-world`, () => {
+      const app = apps.helloWorld.getFactoryTree()
       describe(`for App`, () => {
-        const app = apps.helloWorld.getFactoryTree()
         it(`returns an empty iterable when skipSelf is true`, () => {
           expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
@@ -1860,11 +1942,23 @@ describe(`FactoryAnalyzer`, () => {
     })
 
     describe(`in 02-counter`, () => {
+      const app = apps.counter.getFactoryTree()
+      const [counterCmp] = app.getChildren().values()
       describe(`for CounterCmp`, () => {
-
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(counterCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(counterCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([counterCmp])
+        })
       })
       describe(`for App`, () => {
-
+        it(`returns an iterable with CounterCmp when skipSelf is true`, () => {
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([counterCmp])
+        })
+        it(`returns an iterable with CounterCmp and itself when skipSelf is false`, () => {
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([app, counterCmp])
+        })
       })
     })
 
@@ -1872,12 +1966,36 @@ describe(`FactoryAnalyzer`, () => {
       const app = apps.toggler.getFactoryTree()
       const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
       describe(`for ToggleCmp`, () => {
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(toggleCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(toggleCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([toggleCmp])
+        })
       })
       describe(`for ConditionalView1`, () => {
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(conditionalView1.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(conditionalView1.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([conditionalView1])
+        })
       })
       describe(`for ConditionalView2`, () => {
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(conditionalView2.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(conditionalView2.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([conditionalView2])
+        })
       })
       describe(`for App`, () => {
+        it(`returns an iterable with ToggleCmp, IsJavaScript and IsTypeScript when skipSelf is true`, () => {
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([toggleCmp, conditionalView1, conditionalView2])
+        })
+        it(`returns an iterable with ToggleCmp, IsJavaScript, IsTypeScript and itself when skipSelf is false`, () => {
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([app, toggleCmp, conditionalView1, conditionalView2])
+        })
       })
     })
 
@@ -1886,18 +2004,60 @@ describe(`FactoryAnalyzer`, () => {
       const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
       const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
       describe(`for CounterCmp1`, () => {
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(counterCmp1.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(counterCmp1.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([counterCmp1])
+        })
       })
       describe(`for CounterCmp2`, () => {
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(counterCmp2.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(counterCmp2.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([counterCmp2])
+        })
       })
       describe(`for IsLeftGreater`, () => {
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(isLeftIsGreater.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(isLeftIsGreater.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([isLeftIsGreater])
+        })
       })
       describe(`for IsRightGreater`, () => {
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(isRightIsGreater.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(isRightIsGreater.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([isRightIsGreater])
+        })
       })
       describe(`for AreEqual`, () => {
+        it(`returns an empty iterable when skipSelf is true`, () => {
+          expect(Array.from(areEqual.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
+        })
+        it(`returns an iterable with itself when skipSelf is false`, () => {
+          expect(Array.from(areEqual.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([areEqual])
+        })
       })
       describe(`for InfoCmp`, () => {
+        it(`returns an iterable with IsLeftGreater, IsRightGreater and AreEqual when skipSelf is true`, () => {
+          expect(Array.from(infoCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([isLeftIsGreater, isRightIsGreater, areEqual])
+        })
+        it(`returns an iterable with itself, IsLeftGreater, IsRightGreater and AreEqual when skipSelf is false`, () => {
+          expect(Array.from(infoCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([infoCmp, isLeftIsGreater, isRightIsGreater, areEqual])
+        })
       })
       describe(`for App`, () => {
+        it(`returns an iterable with CounterCmp, CounterCmp and InfoCmp when skipSelf is true`, () => {
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([counterCmp1, counterCmp2, infoCmp])
+        })
+        it(`returns an iterable with itself, CounterCmp, CounterCmp and InfoCmp when skipSelf is false`, () => {
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([app, counterCmp1, counterCmp2, infoCmp])
+        })
       })
     })
 
