@@ -382,6 +382,17 @@ export class Forest<V> {
     return this.getNthRoot(this.getRootCount() - 1)
   }
 
+  public getByChildPath (...path: number[]): TreeNode<V> {
+    if (path.length <= 0) {
+      throw new Error(`Path must have at least one item`)
+    }
+    let current = this.getNthRoot(path.shift()!)
+    while (path.length > 0) {
+      current = current.getNthChild(path.shift()!)!
+    }
+    return current
+  }
+
   public printLeftPrefix (print: (v: V) => string = v => `${v}`): string {
     let string = `( `
     for (const root of this.roots) {

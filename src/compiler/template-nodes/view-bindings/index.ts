@@ -105,6 +105,10 @@ export class AttributeBinding extends ViewBinding<TemplateNodeHtmlValue> {
     super(boundValue)
   }
 
+  public getName() {
+    return this.attributeName
+  }
+
   public isNativeHtml (): boolean {
     return true
   }
@@ -206,6 +210,10 @@ export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValu
   constructor (protected inputName: string,
                boundValue: ViewBoundValue) {
     super(boundValue)
+  }
+
+  public getName(): string {
+    return this.inputName
   }
 
   public isNativeHtml (): boolean {

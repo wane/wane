@@ -10,7 +10,7 @@ import {
 import iterare from 'iterare'
 import { stripIndent } from 'common-tags'
 import CodeBlockWriter from 'code-block-writer'
-import { ViewBoundValue } from '../compiler/template-nodes/view-bound-value'
+import { ViewBoundPropertyAccess, ViewBoundValue } from '../compiler/template-nodes/view-bound-value'
 import { isCmpNodeWithName, isConditionalViewNodeWithVar } from '../compiler/template-nodes/nodes/utils'
 import { isInstance } from '../compiler/utils/utils'
 import { ComponentFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/component-factory-analyzer'
@@ -2132,14 +2132,14 @@ describe(`FactoryAnalyzer`, () => {
         it(`has two entries`, () => {
           expect(Array.from(domDiffMap).length).toBe(2)
         })
-        it(`maps #1 ({{ greeting }}) to a set of only that prop access`, () => {
+        it(`maps #1 ({{ greeting }}) to a set ["greeting"]`, () => {
           const one = Array.from(domDiffMap.get(1)!) as ViewBoundValue[]
           const greetingBoundValues = iterare(greeting.getValueOrThrow().viewBindings)
             .map(vb => vb.boundValue)
             .toArray() as ViewBoundValue[]
           expect(one).toEqual(greetingBoundValues)
         })
-        it(`maps #3 ({{ someone }}) to a set of only that prop access`, () => {
+        it(`maps #3 ({{ someone }}) to a set ["someone"]`, () => {
           const three = Array.from(domDiffMap.get(3)!) as ViewBoundValue[]
           const someoneBoundValues = iterare(someone.getValueOrThrow().viewBindings)
             .map(vb => vb.boundValue)
@@ -2192,8 +2192,16 @@ describe(`FactoryAnalyzer`, () => {
         })
       })
       describe(`for ConditionalView1`, () => {
+        const domDiffMap = conditionalView1.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for ConditionalView2`, () => {
+        const domDiffMap = conditionalView2.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for App`, () => {
         const domDiffMap = app.getDomDiffMap()
@@ -2208,18 +2216,62 @@ describe(`FactoryAnalyzer`, () => {
       const [counterCmp1, counterCmp2, infoCmp] = app.getChildren().values()
       const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
       describe(`for CounterCmp1`, () => {
+        const domDiffMap = counterCmp1.getDomDiffMap()
+        it(`has one entry`, () => {
+          expect(Array.from(domDiffMap).length).toBe(1)
+        })
+        it(`maps 8 to {{ value }}`, () => {
+          const actual = Array.from(domDiffMap.get(8)!) as ViewBoundValue[]
+          const templateNode = counterCmp1.view.getByChildPath(3, 0)
+          const expected = iterare(templateNode.getValueOrThrow().viewBindings)
+            .map(vb => vb.boundValue)
+            .toArray() as ViewBoundValue[]
+          expect(actual).toEqual(expected)
+        })
       })
       describe(`for CounterCmp2`, () => {
+        const domDiffMap = counterCmp2.getDomDiffMap()
+        it(`has one entry`, () => {
+          expect(Array.from(domDiffMap).length).toBe(1)
+        })
+        it(`maps 8 to {{ value }}`, () => {
+          const actual = Array.from(domDiffMap.get(8)!) as ViewBoundValue[]
+          const templateNode = counterCmp2.view.getByChildPath(3, 0)
+          const expected = iterare(templateNode.getValueOrThrow().viewBindings)
+            .map(vb => vb.boundValue)
+            .toArray() as ViewBoundValue[]
+          expect(actual).toEqual(expected)
+        })
       })
       describe(`for IsLeftGreater`, () => {
+        const domDiffMap = isLeftIsGreater.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for IsRightGreater`, () => {
+        const domDiffMap = isRightIsGreater.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for AreEqual`, () => {
+        const domDiffMap = areEqual.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for InfoCmp`, () => {
+        const domDiffMap = infoCmp.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
       describe(`for App`, () => {
+        const domDiffMap = app.getDomDiffMap()
+        it(`has no entries`, () => {
+          expect(Array.from(domDiffMap).length).toBe(0)
+        })
       })
     })
 
@@ -2246,24 +2298,87 @@ describe(`FactoryAnalyzer`, () => {
         })
       })
       describe(`for App`, () => {
-
+        const map = app.getFaDiffMap()
+        it(`has a single entry`, () => {
+          expect(map.size).toEqual(1)
+        })
+        it(`maps CounterCmp into a set which contains the "count" prop access bound to "value" input`, () => {
+          const set = map.get(counterCmp)!
+          expect(set).not.toBeFalsy()
+          const counterCmpNodeValue = app.view
+            .findOrFail(isCmpNodeWithName('counter-cmp'))
+            .getValueOrThrow()
+          const inputBinding = counterCmpNodeValue.getInputBindingByNameOrFail('value')
+          expect(set.has(inputBinding.boundValue as ViewBoundPropertyAccess)).toBe(true)
+        })
       })
     })
 
     describe(`03-toggler`, () => {
       const app = apps.toggler.getFactoryTree()
-      const toggleCmp = app.getFirstChild()
+      const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
       describe(`for ToggleCmp`, () => {
         it(`returns empty factory diff map because it has no children`, () => {
           expect(Array.from(toggleCmp.getFaDiffMap()).length).toBe(0)
         })
       })
       describe(`for ConditionalView1`, () => {
+        it(`returns empty factory diff map because it has no children`, () => {
+          expect(Array.from(conditionalView1.getFaDiffMap()).length).toBe(0)
+        })
       })
       describe(`for ConditionalView2`, () => {
+        it(`returns empty factory diff map because it has no children`, () => {
+          expect(Array.from(conditionalView2.getFaDiffMap()).length).toBe(0)
+        })
       })
       describe(`for App`, () => {
-
+        const map = app.getFaDiffMap()
+        it(`has length three`, () => {
+          expect(map.size).toBe(3)
+        })
+        describe(`set which maps from toggle-cmp`, () => {
+          const set = map.get(toggleCmp)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "bool" binding to "value" input`, () => {
+            const toggleCmpNodeValue = app.view
+              .findOrFail(isCmpNodeWithName('toggle-cmp'))
+              .getValueOrThrow()
+            const inputBinding = toggleCmpNodeValue.getInputBindingByNameOrFail('value')
+            const inputBindingBoundValue = inputBinding.boundValue as ViewBoundPropertyAccess
+            const [setItem] = set
+            expect(setItem).toBe(inputBindingBoundValue)
+          })
+        })
+        describe(`set which maps from w:if isJavaScript`, () => {
+          const set = map.get(conditionalView1)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "isJavaScript" binding to the conditional node`, () => {
+            const isJsNodeValue = app.view
+              .findOrFail(isConditionalViewNodeWithVar('isJavaScript'))
+              .getValueOrThrow()
+            const [binding] = isJsNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            const [setItem] = set
+            expect(setItem).toBe(boundValue)
+          })
+        })
+        describe(`set which maps from w:for isTypeScript`, () => {
+          const set = map.get(conditionalView2)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "isTypeScript" binding to the conditional node`, () => {
+            const isTsNodeValue = app.view
+              .findOrFail(isConditionalViewNodeWithVar('isTypeScript'))
+              .getValueOrThrow()
+            const [binding] = isTsNodeValue.viewBindings
+            const boundValue = binding.boundValue as ViewBoundPropertyAccess
+            const [setItem] = set
+            expect(setItem).toBe(boundValue)
+          })
+        })
       })
     })
 

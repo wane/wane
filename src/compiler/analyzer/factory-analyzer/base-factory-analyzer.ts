@@ -21,7 +21,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     this._view = view
   }
 
-  public get view() {
+  public get view(): Forest<TemplateNodeValue> {
     if (this._view == null) {
       throw new Error(`No view set for "${this.getFactoryName()}".`)
     }
