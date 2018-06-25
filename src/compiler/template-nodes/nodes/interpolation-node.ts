@@ -3,6 +3,7 @@ import CodeBlockWriter from 'code-block-writer'
 import { InterpolationBinding } from '../view-bindings'
 import * as himalaya from 'himalaya'
 import { FactoryAnalyzer } from "../../analyzer";
+import {ViewBoundPropertyAccess} from '../view-bound-value'
 
 export class TemplateNodeInterpolationValue extends TemplateNodeValue {
 
@@ -26,12 +27,16 @@ export class TemplateNodeInterpolationValue extends TemplateNodeValue {
   public domNodesCount = 1
 
   public toString (): string {
-    return `[Text] ${this.rawProp()}`
+    return `[Text] ${this.rawContent()}`
   }
 
-  public rawProp (): string {
-    const html = this.originalTemplateNode as himalaya.Text
-    return html.content.replace(/\n/g, `\\n`)
+  public rawContent (): string {
+    const boundValue = this.interpolationBinding.boundValue
+    if (boundValue.isConstant()) {
+      return boundValue.resolve()
+    } else {
+      return (boundValue as ViewBoundPropertyAccess).getRawPath()
+    }
   }
 
 }

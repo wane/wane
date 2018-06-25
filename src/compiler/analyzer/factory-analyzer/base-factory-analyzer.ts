@@ -1,12 +1,13 @@
-import { Forest, TreeNode } from '../../utils/tree'
-import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
-import { ComponentOutputBinding, ViewBinding } from '../../template-nodes/view-bindings'
+import {Forest, TreeNode} from '../../utils/tree'
+import {TemplateNodeValue} from '../../template-nodes/nodes/template-node-value-base'
+import {ComponentOutputBinding, ViewBinding} from '../../template-nodes/view-bindings'
 import CodeBlockWriter from 'code-block-writer'
-import { createOrAddToSet, getIntersection, has } from '../../utils/utils'
-import { ViewBoundMethodCall, ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
-import { paramCase } from 'change-case'
-import { ComponentFactoryAnalyzer } from './component-factory-analyzer'
-import { getPath, printTreePath } from '../../utils/graph'
+import {createOrAddToSet, getIntersection, has} from '../../utils/utils'
+import {ViewBoundMethodCall, ViewBoundPropertyAccess} from '../../template-nodes/view-bound-value'
+import {paramCase} from 'change-case'
+import {ComponentFactoryAnalyzer} from './component-factory-analyzer'
+import {getPath, printTreePath} from '../../utils/graph'
+import iterare from 'iterare'
 
 export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
@@ -17,11 +18,11 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
   private _view!: Forest<TemplateNodeValue>
 
-  public set view(view: Forest<TemplateNodeValue>) {
+  public set view (view: Forest<TemplateNodeValue>) {
     this._view = view
   }
 
-  public get view(): Forest<TemplateNodeValue> {
+  public get view (): Forest<TemplateNodeValue> {
     if (this._view == null) {
       throw new Error(`No view set for "${this.getFactoryName()}".`)
     }
@@ -37,7 +38,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   public getFirstScopeBoundaryUpwardsIncludingSelf (): ComponentFactoryAnalyzer {
     let current: FactoryAnalyzer<TemplateNodeValue> = this
     while (!current.isScopeBoundary()) {
-      const parent = current.parent
+      const parent = current.getParentOrUndefined()
       if (parent == null) {
         throw new Error(`Could not find a scope boundary above "${this.getFactoryName()}", which is also not a scope factory.`)
       }
@@ -92,7 +93,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return this.children
   }
 
-  public getChildrenFactories(): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
+  public getChildrenFactories (): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
     return this.getChildren().values()
   }
 
@@ -149,7 +150,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     )
   }
 
-  public isHopToParent(to: FactoryAnalyzer<TemplateNodeValue>): boolean {
+  public isHopToParent (to: FactoryAnalyzer<TemplateNodeValue>): boolean {
     return this.getParentOrUndefined() == to
   }
 
@@ -162,7 +163,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   }
 
   public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>): string {
-    console.log(`Path from ${this.getFactoryName()} to ${fa.getFactoryName()}`)
+    // console.log(` Path from ${this.getFactoryName()} to ${fa.getFactoryName()}`)
     const isHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
       from.isHopToParent(to)
     const printHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>, isStartingHop: boolean, isEndingHop: boolean) => {
@@ -171,9 +172,9 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     const printHopToChild = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
       from.printHopToChild(to)
     const path = this.getPathTo(fa)
-    console.log(path.map(p => p.getFactoryName()).join(` -> `))
+    // console.log(path.map(p => p.getFactoryName()).join(` -> `))
     const printed = printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
-    console.log(printed)
+    // console.log(printed)
     return printed
   }
 
@@ -296,7 +297,9 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           const originFactory = boundValue.getScopeFactory() as ComponentFactoryAnalyzer
 
           // we skip this binding if it cannot be called when methodName is invoked...
-          const allMethods = this.getFirstScopeBoundaryUpwardsIncludingSelf().componentAnalyzer.getMethodsCalledFrom(methodName)
+          const allMethods = this.getFirstScopeBoundaryUpwardsIncludingSelf()
+            .componentAnalyzer
+            .getMethodsCalledFrom(methodName)
           allMethods.add(methodName) // ...including itself, of course
 
           if (!allMethods.has(outputName)) {
@@ -403,7 +406,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   public abstract printRootDomNodeAssignment (wr: CodeBlockWriter): CodeBlockWriter
 
   public factoryAnalyzersInScope (options: Partial<{ skipSelf: boolean }> = {}): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
-    const { skipSelf = false } = options
+    const {skipSelf = false} = options
     const self = this
     return {
       [Symbol.iterator]: function* () {
@@ -461,12 +464,16 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   public getFaDiffMap (): Map<FactoryAnalyzer<TemplateNodeValue>, Set<ViewBoundPropertyAccess>> {
     const result = new Map<FactoryAnalyzer<TemplateNodeValue>, Set<ViewBoundPropertyAccess>>()
 
-    for (const factory of this.factoryAnalyzersInScope({ skipSelf: true })) {
-      for (const binding of factory.getSelfBindings()) {
+    for (const factory of this.factoryAnalyzersInScope({skipSelf: true})) {
+      const bindings = iterare(factory.getSelfBindings()).concat(factory.getHtmlNativeDomBindings())
+      // console.log([...bindings].map(x => x.getTemplateNode().toString()))
+      for (const binding of bindings) {
         const responsibleFactory = binding.getResponsibleFactory()
+        const definitionFactory = binding.getDefinitionFactory()
         const boundValue = binding.boundValue
-        if (this == responsibleFactory && boundValue instanceof ViewBoundPropertyAccess && !(boundValue instanceof ViewBoundMethodCall)) {
-          result.set(factory, createOrAddToSet(boundValue, result.get(this)))
+        if (this == definitionFactory && boundValue instanceof ViewBoundPropertyAccess && !(boundValue instanceof ViewBoundMethodCall)) {
+          // console.log('adding', boundValue)
+          result.set(factory, createOrAddToSet(boundValue, result.get(factory)))
         }
       }
     }

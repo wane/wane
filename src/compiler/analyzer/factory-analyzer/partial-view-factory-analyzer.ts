@@ -1,30 +1,30 @@
-import { FactoryAnalyzer } from "./base-factory-analyzer";
-import { TemplateNodeValue } from "../../template-nodes/nodes/template-node-value-base";
-import { Forest } from "../../utils/tree";
-import { DirectiveFactoryAnalyzer } from "./directive-factory-analyzer";
-import CodeBlockWriter from "code-block-writer";
-import { ConditionalViewFactoryAnalyzer } from "./conditional-view-factory-analyzer";
-import { RepeatingViewFactoryAnalyzer } from "./repeating-view-factory-analyzer";
+import {FactoryAnalyzer} from "./base-factory-analyzer"
+import {TemplateNodeValue} from "../../template-nodes/nodes/template-node-value-base"
+import {Forest} from "../../utils/tree"
+import {DirectiveFactoryAnalyzer} from "./directive-factory-analyzer"
+import CodeBlockWriter from "code-block-writer"
+import {ConditionalViewFactoryAnalyzer} from "./conditional-view-factory-analyzer"
+import {RepeatingViewFactoryAnalyzer} from "./repeating-view-factory-analyzer"
 
 export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValue> {
 
-  public get view(): Forest<TemplateNodeValue> {
+  public get view (): Forest<TemplateNodeValue> {
     return this.getDirectiveFactoryAnalyzer().view
   }
 
-  public getParentOrUndefined(): FactoryAnalyzer<TemplateNodeValue> | undefined {
+  public getParentOrUndefined (): FactoryAnalyzer<TemplateNodeValue> | undefined {
     return this.getDirectiveFactoryAnalyzer()
   }
 
   private directiveFactoryAnalyzer: DirectiveFactoryAnalyzer | undefined
 
-  public templateDefinition: Forest<TemplateNodeValue>;
+  public templateDefinition: Forest<TemplateNodeValue>
 
   public getPartialViewFactoryAnalyzer () {
     return this
   }
 
-  public getChildrenFactories() {
+  public getChildrenFactories () {
     return this.getDirectiveFactoryAnalyzer().getChildrenFactories()
   }
 
@@ -56,7 +56,6 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
 
   hasDefinedAndResolvesTo (propAccessPath: string): string | null {
     let print = false
-    console.log(`~~~~`, propAccessPath)
     if (propAccessPath == 'item.name') {
       print = true
     }
@@ -64,7 +63,6 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
     if (directiveFa instanceof ConditionalViewFactoryAnalyzer) {
       return null
     } else if (directiveFa instanceof RepeatingViewFactoryAnalyzer) {
-      console.log('rut')
       const iterativeConstantName = directiveFa.getBinding().iterativeConstantName
       const indexConstantName = directiveFa.getBinding().indexConstantName
       const [propName, ...rest] = propAccessPath.split('.')
@@ -80,7 +78,7 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
   }
 
   isScopeBoundary (): boolean {
-    return false;
+    return false
   }
 
   printAssemblingDomNodes (wr: CodeBlockWriter): CodeBlockWriter {
@@ -96,10 +94,10 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
   }
 
   getFactoryName (): string {
-    return `PartialView_${this.getDirectiveFactoryAnalyzer().getFactoryName()}_${this.uniqueId}`;
+    return `PartialView_${this.getDirectiveFactoryAnalyzer().getFactoryName()}_${this.uniqueId}`
   }
 
-  public isHopToParent(to: FactoryAnalyzer<TemplateNodeValue>): boolean {
+  public isHopToParent (to: FactoryAnalyzer<TemplateNodeValue>): boolean {
     return to == this.getDirectiveFactoryAnalyzer()
   }
 

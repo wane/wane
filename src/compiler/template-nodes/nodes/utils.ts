@@ -64,7 +64,7 @@ export function isInterpolationNodeWithProp (propAccessorPath: string): Guard<Tr
   return and(
     isTreeNodeValueTypeOf(TemplateNodeInterpolationValue),
     node => !node.getValueOrThrow().getBinding().boundValue.isConstant(),
-    node => node.getValueOrThrow().rawProp() == `{{ ${propAccessorPath} }}`,
+    node => node.getValueOrThrow().rawContent() == propAccessorPath,
   )
 }
 
@@ -72,6 +72,6 @@ export function isTextNodeWithContent (textContent: string): Guard<TreeNode<Temp
   return and(
     isTreeNodeValueTypeOf(TemplateNodeInterpolationValue),
     node => node.getValueOrThrow().getBinding().boundValue.isConstant(),
-    node => isStringSameWhenTrimmed(node.getValueOrThrow().rawProp())(textContent),
+    node => isStringSameWhenTrimmed(node.getValueOrThrow().rawContent())(textContent),
   )
 }

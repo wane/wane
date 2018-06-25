@@ -168,7 +168,15 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
                 const factoryChildIndex = factoryChild.getFactoryIndexAsChild()
                 const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex}]`
                 const factoryChildDataAccess = `${factoryChildAccess}.__wane__data`
-                binding.printUpdate(this.writer, factoryChildDataAccess, fa)
+                try {
+                  binding.printUpdate(this.writer, factoryChildDataAccess, fa)
+                } catch (error) {
+                  this.writer
+                    .writeLine(`/**`)
+                    .writeLine(`ERROR! Skipped generating update.`)
+                    .writeLine(error.toString())
+                    .writeLine(`*/`)
+                }
                 this.writer.writeLine(`${factoryChildAccess}.__wane__update()`)
               }
             })

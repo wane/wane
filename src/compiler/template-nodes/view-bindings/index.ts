@@ -175,7 +175,7 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
                     instance: string,
                     from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory(),
   ): CodeBlockWriter {
-    console.log(`start === === ===`)
+    // console.log(`start === === ===`)
     return wr
       .write(`util.__wane__addEventListener(${instance}, '${this.eventName}', (`)
       .conditionalWrite(this.boundValue.usesPlaceholder(), `__wane__placeholder`)
@@ -190,9 +190,9 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
           wr.writeLine(`this${pathToAncestor}.__wane__update()`)
         }
       })
-      .indentBlock(() => {
-        console.log(`end === === ===`)
-      })
+      // .indentBlock(() => {
+        // console.log(`end === === ===`)
+      // })
       .write(`})`)
   }
 
