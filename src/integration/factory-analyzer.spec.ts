@@ -8,22 +8,22 @@ import {
   InterpolationBinding,
 } from '../compiler/template-nodes/view-bindings'
 import iterare from 'iterare'
-import {stripIndent} from 'common-tags'
+import { stripIndent } from 'common-tags'
 import CodeBlockWriter from 'code-block-writer'
-import {ViewBoundPropertyAccess, ViewBoundValue} from '../compiler/template-nodes/view-bound-value'
+import { ViewBoundPropertyAccess, ViewBoundValue } from '../compiler/template-nodes/view-bound-value'
 import {
   isCmpNodeWithName,
   isConditionalViewNodeWithVar,
   isInterpolationNodeWithProp,
 } from '../compiler/template-nodes/nodes/utils'
-import {isInstance} from '../compiler/utils/utils'
-import {ComponentFactoryAnalyzer} from '../compiler/analyzer/factory-analyzer/component-factory-analyzer'
-import {repeat} from "./utils"
-import {FactoryAnalyzer} from "../compiler/analyzer"
-import {TemplateNodeValue} from "../compiler/template-nodes/nodes/template-node-value-base"
+import { isInstance } from '../compiler/utils/utils'
+import { ComponentFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/component-factory-analyzer'
+import { repeat } from "./utils"
+import { FactoryAnalyzer } from "../compiler/analyzer"
+import { TemplateNodeValue } from "../compiler/template-nodes/nodes/template-node-value-base"
 
 function expectWriter (spy: (wr: CodeBlockWriter) => void, expectation: string): void {
-  const wr = new CodeBlockWriter({indentNumberOfSpaces: 2})
+  const wr = new CodeBlockWriter({ indentNumberOfSpaces: 2 })
   spy(wr)
   expect(wr.toString().trim()).toBe(expectation.trim())
 }
@@ -1798,7 +1798,7 @@ describe(`FactoryAnalyzer`, () => {
               ])
             ])
           `
-          const wr = new CodeBlockWriter({indentNumberOfSpaces: 2})
+          const wr = new CodeBlockWriter({ indentNumberOfSpaces: 2 })
           app.printAssemblingDomNodes(wr)
           expect((stripIndent as any)(wr.toString())).toEqual(string)
         })
@@ -1974,10 +1974,10 @@ describe(`FactoryAnalyzer`, () => {
       const app = apps.helloWorld.getFactoryTree()
       describe(`for App`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({skipSelf: false}))).toEqual([app])
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([app])
         })
       })
     })
@@ -1987,18 +1987,18 @@ describe(`FactoryAnalyzer`, () => {
       const [counterCmp] = app.getChildren().values()
       describe(`for CounterCmp`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(counterCmp.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(counterCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(counterCmp.factoryAnalyzersInScope({skipSelf: false}))).toEqual([counterCmp])
+          expect(Array.from(counterCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([counterCmp])
         })
       })
       describe(`for App`, () => {
         it(`returns an iterable with CounterCmp when skipSelf is true`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({skipSelf: true}))).toEqual([counterCmp])
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([counterCmp])
         })
         it(`returns an iterable with CounterCmp and itself when skipSelf is false`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({skipSelf: false}))).toEqual([app, counterCmp])
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([app, counterCmp])
         })
       })
     })
@@ -2008,35 +2008,35 @@ describe(`FactoryAnalyzer`, () => {
       const [toggleCmp, conditionalView1, conditionalView2] = app.getChildren().values()
       describe(`for ToggleCmp`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(toggleCmp.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(toggleCmp.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(toggleCmp.factoryAnalyzersInScope({skipSelf: false}))).toEqual([toggleCmp])
+          expect(Array.from(toggleCmp.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([toggleCmp])
         })
       })
       describe(`for ConditionalView1`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(conditionalView1.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(conditionalView1.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(conditionalView1.factoryAnalyzersInScope({skipSelf: false}))).toEqual([conditionalView1])
+          expect(Array.from(conditionalView1.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([conditionalView1])
         })
       })
       describe(`for ConditionalView2`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(conditionalView2.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(conditionalView2.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(conditionalView2.factoryAnalyzersInScope({skipSelf: false}))).toEqual([conditionalView2])
+          expect(Array.from(conditionalView2.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([conditionalView2])
         })
       })
       describe(`for App`, () => {
         it(`returns an iterable with ToggleCmp, IsJavaScript and IsTypeScript when skipSelf is true`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({skipSelf: true})))
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true })))
             .toEqual([toggleCmp, conditionalView1, conditionalView2])
         })
         it(`returns an iterable with ToggleCmp, IsJavaScript, IsTypeScript and itself when skipSelf is false`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({skipSelf: false})))
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false })))
             .toEqual([app, toggleCmp, conditionalView1, conditionalView2])
         })
       })
@@ -2048,60 +2048,60 @@ describe(`FactoryAnalyzer`, () => {
       const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildren().values()
       describe(`for CounterCmp1`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(counterCmp1.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(counterCmp1.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(counterCmp1.factoryAnalyzersInScope({skipSelf: false}))).toEqual([counterCmp1])
+          expect(Array.from(counterCmp1.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([counterCmp1])
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(counterCmp2.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(counterCmp2.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(counterCmp2.factoryAnalyzersInScope({skipSelf: false}))).toEqual([counterCmp2])
+          expect(Array.from(counterCmp2.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([counterCmp2])
         })
       })
       describe(`for IsLeftGreater`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(isLeftIsGreater.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(isLeftIsGreater.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(isLeftIsGreater.factoryAnalyzersInScope({skipSelf: false}))).toEqual([isLeftIsGreater])
+          expect(Array.from(isLeftIsGreater.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([isLeftIsGreater])
         })
       })
       describe(`for IsRightGreater`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(isRightIsGreater.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(isRightIsGreater.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(isRightIsGreater.factoryAnalyzersInScope({skipSelf: false}))).toEqual([isRightIsGreater])
+          expect(Array.from(isRightIsGreater.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([isRightIsGreater])
         })
       })
       describe(`for AreEqual`, () => {
         it(`returns an empty iterable when skipSelf is true`, () => {
-          expect(Array.from(areEqual.factoryAnalyzersInScope({skipSelf: true}))).toEqual([])
+          expect(Array.from(areEqual.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([])
         })
         it(`returns an iterable with itself when skipSelf is false`, () => {
-          expect(Array.from(areEqual.factoryAnalyzersInScope({skipSelf: false}))).toEqual([areEqual])
+          expect(Array.from(areEqual.factoryAnalyzersInScope({ skipSelf: false }))).toEqual([areEqual])
         })
       })
       describe(`for InfoCmp`, () => {
         it(`returns an iterable with IsLeftGreater, IsRightGreater and AreEqual when skipSelf is true`, () => {
-          expect(Array.from(infoCmp.factoryAnalyzersInScope({skipSelf: true})))
+          expect(Array.from(infoCmp.factoryAnalyzersInScope({ skipSelf: true })))
             .toEqual([isLeftIsGreater, isRightIsGreater, areEqual])
         })
         it(`returns an iterable with itself, IsLeftGreater, IsRightGreater and AreEqual when skipSelf is false`, () => {
-          expect(Array.from(infoCmp.factoryAnalyzersInScope({skipSelf: false})))
+          expect(Array.from(infoCmp.factoryAnalyzersInScope({ skipSelf: false })))
             .toEqual([infoCmp, isLeftIsGreater, isRightIsGreater, areEqual])
         })
       })
       describe(`for App`, () => {
         it(`returns an iterable with CounterCmp, CounterCmp and InfoCmp when skipSelf is true`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({skipSelf: true}))).toEqual([counterCmp1, counterCmp2, infoCmp])
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: true }))).toEqual([counterCmp1, counterCmp2, infoCmp])
         })
         it(`returns an iterable with itself, CounterCmp, CounterCmp and InfoCmp when skipSelf is false`, () => {
-          expect(Array.from(app.factoryAnalyzersInScope({skipSelf: false})))
+          expect(Array.from(app.factoryAnalyzersInScope({ skipSelf: false })))
             .toEqual([app, counterCmp1, counterCmp2, infoCmp])
         })
       })
@@ -2518,6 +2518,43 @@ describe(`FactoryAnalyzer`, () => {
         })
       })
       describe(`for App`, () => {
+        const map = app.getFaDiffMap()
+        it(`has size 3`, () => expect(map.size).toBe(3))
+        describe(`set which maps from counter-cmp (first)`, () => {
+          const set = map.get(counterCmp1)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "left" binding to input [value]`, () => {
+            const counterCmp1NodeValue = app.view.getByChildPath(3)
+          })
+        })
+        describe(`set which maps from counter-cmp (second)`, () => {
+          const set = map.get(counterCmp2)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 1`, () => expect(set.size).toBe(1))
+          it(`contains the "right" binding to input [value]`, () => {
+            const counterCmp2NodeValue = app.view.getByChildPath(7)
+          })
+        })
+        describe(`set which maps from info-cmp`, () => {
+          const set = map.get(infoCmp)!
+          it(`exists`, () => expect(set).not.toBeFalsy())
+          it(`has size 2`, () => expect(set.size).toBe(1))
+          it(`contains the "isLeftGreater" binding to [isLeftGreater] input`, () => {
+            const infoCmpNodeValue = app.view
+              .findOrFail(isCmpNodeWithName('info-cmp'))
+              .getValueOrThrow()
+            const [binding] = infoCmpNodeValue.viewBindings
+            expect(set.has(binding.boundValue as ViewBoundPropertyAccess)).toBe(true)
+          })
+          it(`contains the "isRightGreater" binding to input [isRightGreater]`, () => {
+            const infoCmpNodeValue = app.view
+              .findOrFail(isCmpNodeWithName('info-cmp'))
+              .getValueOrThrow()
+            const [binding] = infoCmpNodeValue.viewBindings
+            expect(set.has(binding.boundValue as ViewBoundPropertyAccess)).toBe(true)
+          })
+        })
       })
     })
 
