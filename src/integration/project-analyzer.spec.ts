@@ -165,32 +165,28 @@ describe(`ProjectAnalyzer`, () => {
       const app = apps.deepIfs
       const entry = app.getFactoryTree()
       const entryChildren = Array.from(entry.getChildrenFactories())
-      it(`has 5 + 5 + 1 children`, () => {
-        expect(entryChildren.length).toBe(11, entryChildren.map(c => c.getFactoryName()))
+      it(`has 3 + 3 + 1 = 7 children`, () => {
+        expect(entryChildren.length).toBe(7, entryChildren.map(c => c.getFactoryName()))
       })
       it(`counter-cmp has no children`, () => {
-        const counterCmpFactories = entryChildren.slice(0, 5)
+        const counterCmpFactories = entryChildren.slice(0, 3)
         counterCmpFactories.forEach(counterCmp => {
           expect(Array.from(counterCmp.getChildren()).length).toBe(0)
         })
       })
       it(`toggle-cmp has no children`, () => {
-        const toggleCmpFactories = entryChildren.slice(5, 10)
+        const toggleCmpFactories = entryChildren.slice(3, 6)
         toggleCmpFactories.forEach(toggleCmp => {
           expect(Array.from(toggleCmp.getChildren()).length).toBe(0)
         })
       })
-      it(`w:if visibility.a has one child, etc a chain until visibility.e which has none`, () => {
+      it(`w:if visibility.a has one child, etc a chain until visibility.c which has none`, () => {
         const [wIfA] = entryChildren.slice(-1)
         expect(Array.from(wIfA.getChildren()).length).toBe(1, `a`)
         const [wIfB] = Array.from(wIfA.getChildrenFactories()).slice(-1)
         expect(Array.from(wIfB.getChildren()).length).toBe(1, `b`)
         const [wIfC] = Array.from(wIfB.getChildrenFactories()).slice(-1)
-        expect(Array.from(wIfC.getChildren()).length).toBe(1, `c`)
-        const [wIfD] = Array.from(wIfC.getChildrenFactories()).slice(-1)
-        expect(Array.from(wIfD.getChildren()).length).toBe(1, `d`)
-        const [wIfE] = Array.from(wIfD.getChildrenFactories()).slice(-1)
-        expect(Array.from(wIfE.getChildren()).length).toBe(0, `e`)
+        expect(Array.from(wIfC.getChildren()).length).toBe(0, `c`)
       })
     })
     describe(`for 06-hello-everyone`, () => {

@@ -277,6 +277,12 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
    */
   public abstract getPropsBoundToView (): Map<string, string>
 
+  /**
+   * These are only ancestor factories... I think.
+   *
+   * @param {string} methodName
+   * @returns {Iterable<FactoryAnalyzer<TemplateNodeValue>>}
+   */
   public getFactoriesAffectedByCalling (methodName: string): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
     const resolved = this.getFirstScopeBoundaryUpwardsIncludingSelf().hasDefinedAndResolvesTo(methodName)
     if (resolved == null) {

@@ -1,10 +1,10 @@
-import {FactoryAnalyzer} from "./base-factory-analyzer"
-import {TemplateNodeValue} from "../../template-nodes/nodes/template-node-value-base"
-import {Forest} from "../../utils/tree"
-import {DirectiveFactoryAnalyzer} from "./directive-factory-analyzer"
-import CodeBlockWriter from "code-block-writer"
-import {ConditionalViewFactoryAnalyzer} from "./conditional-view-factory-analyzer"
-import {RepeatingViewFactoryAnalyzer} from "./repeating-view-factory-analyzer"
+import { FactoryAnalyzer } from './base-factory-analyzer'
+import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
+import { Forest } from '../../utils/tree'
+import { DirectiveFactoryAnalyzer } from './directive-factory-analyzer'
+import CodeBlockWriter from 'code-block-writer'
+import { ConditionalViewFactoryAnalyzer } from './conditional-view-factory-analyzer'
+import { RepeatingViewFactoryAnalyzer } from './repeating-view-factory-analyzer'
 
 export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValue> {
 
@@ -105,6 +105,10 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
     const runtimeParent = this.getDirectiveFactoryAnalyzer()
     const runtimeChildren = runtimeParent.getChildrenFactories()
     return [runtimeParent, ...runtimeChildren]
+  }
+
+  public toString (): string {
+    return `ComponentFactoryAnalyzer#${this.getFactoryName()}`
   }
 
 }

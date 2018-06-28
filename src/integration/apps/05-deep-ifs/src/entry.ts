@@ -1,6 +1,6 @@
 import { Template, Entry, Register } from 'wane'
 
-export type Letters = 'a' | 'b' | 'c' | 'd' | 'e'
+export type Letters = 'a' | 'b' | 'c'
 
 @Template(`
   <button (click)="changeState()">Toggle (currently {{ value }})</button>
@@ -45,28 +45,18 @@ export class CounterCmp {
     a: <counter-cmp [value]="values.a" (valueChange)="onChange('a', #)"/>
     b: <counter-cmp [value]="values.b" (valueChange)="onChange('b', #)"/>
     c: <counter-cmp [value]="values.c" (valueChange)="onChange('c', #)"/>
-    d: <counter-cmp [value]="values.d" (valueChange)="onChange('d', #)"/>
-    e: <counter-cmp [value]="values.e" (valueChange)="onChange('e', #)"/>
     <h2>Visibility</h2>
     a: <toggle-cmp [value]="visibility.a" (valueChange)="onToggle('a')"/>
     b: <toggle-cmp [value]="visibility.b" (valueChange)="onToggle('b')"/>
     c: <toggle-cmp [value]="visibility.c" (valueChange)="onToggle('c')"/>
-    d: <toggle-cmp [value]="visibility.d" (valueChange)="onToggle('d')"/>
-    e: <toggle-cmp [value]="visibility.e" (valueChange)="onToggle('e')"/>
   </div>
   
   <w:if visibility.a>
-    a: {{ a }}
+    a: {{ values.a }}
     <w:if visibility.b>
-      b: {{ b }}
+      b: {{ values.b }}
       <w:if visibility.c>
-        c: {{ c }}
-        <w:if visibility.d>
-          d: {{ d }}
-            <w:if visibility.e>
-              e: {{ e }}
-            </w:if>
-        </w:if>
+        c: {{ values.c }}
       </w:if>
     </w:if>
   </w:if>
@@ -76,16 +66,12 @@ export class App {
     a: 1,
     b: 2,
     c: 3,
-    d: 4,
-    e: 5,
   }
 
   public visibility: { [key in Letters]: boolean } = {
     a: true,
     b: true,
     c: true,
-    d: true,
-    e: true,
   }
 
   private onToggle (name: Letters): void {
