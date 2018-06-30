@@ -12,8 +12,11 @@ import { TemplateNodeComponentValue } from '../template-nodes/nodes/component-no
 import { TemplateNodeConditionalViewValue } from '../template-nodes/nodes/conditional-view-node'
 import { TemplateNodeRepeatingViewValue } from '../template-nodes/nodes/repeating-view-node'
 import { WaneCompilerOptions } from '../compile'
-import { PartialViewFactoryAnalyzer } from "./factory-analyzer/partial-view-factory-analyzer";
+import { PartialViewFactoryAnalyzer } from './factory-analyzer/partial-view-factory-analyzer'
 
+function spaces(n: number, space: string = '~') {
+  return Array.from({length: n}).fill(space).join('')
+}
 
 export class ProjectAnalyzer {
 
@@ -116,7 +119,11 @@ export class ProjectAnalyzer {
     return result
   }
 
-  private indentationLevelForDebugging = 0
+  private factoryNodeIndentation = 0
+  private templateNodeIndentation = 0
+  private get totalIndentation () {
+    return this.factoryNodeIndentation = this.templateNodeIndentation
+  }
 
   private _processTemplateNode (
     responsibleFactory: FactoryAnalyzer<TemplateNodeValue>,
@@ -124,9 +131,11 @@ export class ProjectAnalyzer {
     parentViewNode: TreeNode<TemplateNodeValue> | null,
     definitionFactory: ComponentFactoryAnalyzer,
   ): void {
-    this.indentationLevelForDebugging++
+    this.templateNodeIndentation++
 
     const value = templateNode.getValueOrThrow()
+    // console.log(`${spaces(this.totalIndentation)}${value.toString()}`)
+
     const viewNode = new TreeNode(value)
     if (parentViewNode != null) {
       responsibleFactory.view.findValueOrFail(v => v == parentViewNode.getValue()).appendChild(viewNode)
@@ -137,53 +146,60 @@ export class ProjectAnalyzer {
         this._processTemplateNode(responsibleFactory, templateNodeChild, viewNode, definitionFactory)
       }
     } else {
-      let childFactory: FactoryAnalyzer<TemplateNodeValue>
       if (isInstance(TemplateNodeComponentValue)(value)) {
         const componentClassName = (viewNode.getValueOrThrow() as TemplateNodeComponentValue).getComponentClassName()
         const componentDeclaration = definitionFactory.componentAnalyzer.getRegisteredComponentDeclaration(componentClassName)
         const componentCompilerNode = new ComponentAnalyzer(componentDeclaration)
-        childFactory = new ComponentFactoryAnalyzer(
+        const childFactory = new ComponentFactoryAnalyzer(
           this.counter.next().value,
           responsibleFactory,
           viewNode as TreeNode<TemplateNodeComponentValue>,
           componentCompilerNode,
         )
+        responsibleFactory.registerChild(viewNode, childFactory)
+        this._generateFactoryTree(childFactory, definitionFactory)
       } else if (isInstance(TemplateNodeConditionalViewValue)(value)) {
-        childFactory = new ConditionalViewFactoryAnalyzer(
+        const partialView = new PartialViewFactoryAnalyzer(
+          this.counter.next().value,
+          new Forest(templateNode.getChildren()),
+        )
+        const childFactory = new ConditionalViewFactoryAnalyzer(
           this.counter.next().value,
           responsibleFactory,
           viewNode as TreeNode<TemplateNodeConditionalViewValue>,
           new Forest(templateNode.getChildren()),
-          new PartialViewFactoryAnalyzer(
-            this.counter.next().value,
-            new Forest(templateNode.getChildren()),
-          )
+          partialView,
         )
+        responsibleFactory.registerChild(viewNode, childFactory)
+        this._generateFactoryTree(partialView, definitionFactory)
       } else if (isInstance(TemplateNodeRepeatingViewValue)(value)) {
-        childFactory = new RepeatingViewFactoryAnalyzer(
+        const partialView = new PartialViewFactoryAnalyzer(
+          this.counter.next().value,
+          new Forest(templateNode.getChildren()),
+        )
+        const childFactory = new RepeatingViewFactoryAnalyzer(
           this.counter.next().value,
           responsibleFactory,
           viewNode as TreeNode<TemplateNodeRepeatingViewValue>,
           new Forest(templateNode.getChildren()),
-          new PartialViewFactoryAnalyzer(
-            this.counter.next().value,
-            new Forest(templateNode.getChildren()),
-          )
+          partialView,
         )
+        responsibleFactory.registerChild(viewNode, childFactory)
+        this._generateFactoryTree(partialView, definitionFactory)
       } else {
         throw new Error(`Unsupported type of TemplateNodeValue.`)
       }
-      responsibleFactory.registerChild(viewNode, childFactory)
-      this._generateFactoryTree(childFactory, definitionFactory)
     }
 
-    this.indentationLevelForDebugging--
+    this.templateNodeIndentation--
   }
 
   private _generateFactoryTree (
     responsibleFactory: FactoryAnalyzer<TemplateNodeValue>,
     definitionFactory: ComponentFactoryAnalyzer,
   ) {
+    this.factoryNodeIndentation++
+    // console.log(`${spaces(this.totalIndentation)}_generateFactoryTree(${responsibleFactory.getFactoryName()}, ${definitionFactory.getFactoryName()})`)
     const roots = responsibleFactory.templateDefinition.getRoots()
     const onlyRoots = Array.from(roots)
       .map(root => root.getValueOrThrow())
@@ -195,6 +211,7 @@ export class ProjectAnalyzer {
     for (const node of responsibleFactory.view) {
       node.getValueOrThrow().registerResponsibleFactory(responsibleFactory.getPartialViewFactoryAnalyzer())
     }
+    this.factoryNodeIndentation--
   }
 
   private _factoryTree: ComponentFactoryAnalyzer | undefined
@@ -208,6 +225,7 @@ export class ProjectAnalyzer {
     if (this._factoryTree != null) {
       return this._factoryTree
     }
+    debugger
     const entryComponentCompilerNode = new ComponentAnalyzer(this.getEntryComponentDeclaration())
     const entryFactory = new ComponentFactoryAnalyzer(
       this.counter.next().value,
@@ -215,8 +233,11 @@ export class ProjectAnalyzer {
       undefined,
       entryComponentCompilerNode,
     )
+    // console.log(`=== FACTORY TREE FOR ${entryFactory.getFactoryName()} ===`)
     this._generateFactoryTree(entryFactory, entryFactory)
-    return this._factoryTree = entryFactory
+    this._factoryTree = entryFactory
+    // console.log('done generating')
+    return this._factoryTree
   }
 
   public factories () {

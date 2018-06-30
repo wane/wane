@@ -99,7 +99,8 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
   }
 
   public resolveFactory (from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()) {
-    const chain = from.printPathTo(this.getScopeFactory())
+    const scopeFactory = this.getScopeFactory()
+    const chain = from.printPathTo(scopeFactory)
     return `this${chain}`
   }
 

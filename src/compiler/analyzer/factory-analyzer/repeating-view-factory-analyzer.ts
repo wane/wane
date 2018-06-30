@@ -5,9 +5,7 @@ import { DirectiveFactoryAnalyzer } from './directive-factory-analyzer'
 import { RepeatingViewBinding } from '../../template-nodes/view-bindings'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
-import { printTreePath } from '../../utils/graph'
-import { PartialViewFactoryAnalyzer } from "./partial-view-factory-analyzer";
-import { TemplateNodeConditionalViewValue } from "../../template-nodes/nodes/conditional-view-node";
+import { PartialViewFactoryAnalyzer } from './partial-view-factory-analyzer'
 
 export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<TemplateNodeRepeatingViewValue> {
 
@@ -47,7 +45,7 @@ export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Templ
     return `ConditionalViewFactoryAnalyzer#${this.getFactoryName()}`
   }
 
-  public getNeighbors(): FactoryAnalyzer<TemplateNodeValue>[] {
+  public getNeighbors (): FactoryAnalyzer<TemplateNodeValue>[] {
     const neighbors: FactoryAnalyzer<TemplateNodeValue>[] = []
 
     const runtimeParent = this.getParentOrUndefined()

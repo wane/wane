@@ -25,6 +25,15 @@ export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialView
     return this.partialViewFa
   }
 
+  public getChildren(): Map<TreeNode<TemplateNodeValue>, FactoryAnalyzer<TemplateNodeValue>> {
+    return new Map<TreeNode<TemplateNodeValue>, FactoryAnalyzer<TemplateNodeValue>>([
+      [
+        this.getAnchorViewNode(),
+        this.getPartialViewFactoryAnalyzer(),
+      ]
+    ])
+  }
+
   constructor (
     uniqueId: number,
     parentFactory: FactoryAnalyzer<TemplateNodeValue>,

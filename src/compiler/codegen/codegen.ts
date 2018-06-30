@@ -16,6 +16,8 @@ import { RepeatingViewFactoryAnalyzer } from '../analyzer/factory-analyzer/repea
 import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
 import * as rollupPluginUglify from 'rollup-plugin-uglify'
 import { WaneCompilerOptions } from '../compile'
+import { PartialViewFactoryCodegen } from './partial-view-codegen/partial-view-factory-codegen'
+import { PartialViewFactoryAnalyzer } from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
 
 type Constructor<T> = { new (writerOptions: any, waneCompilerOptions: WaneCompilerOptions): T }
 
@@ -32,6 +34,7 @@ export class Codegen {
       helpers: this.createCodegen(HelpersCodegen),
       bootstrap: this.createCodegen(BootstrapCodegen),
       component: this.createCodegen(ComponentFactoryCodegen),
+      partialView: this.createCodegen(PartialViewFactoryCodegen),
       conditionalView: this.createCodegen(ConditionalViewFactoryCodegen),
       repeatingView: this.createCodegen(RepeatingViewFactoryCodegen),
     }
@@ -70,6 +73,7 @@ export class Codegen {
     helpers: HelpersCodegen,
     bootstrap: BootstrapCodegen,
     component: ComponentFactoryCodegen,
+    partialView: PartialViewFactoryCodegen,
     conditionalView: ConditionalViewFactoryCodegen,
     repeatingView: RepeatingViewFactoryCodegen,
   }
@@ -93,6 +97,8 @@ export class Codegen {
       writer = this.codegen.conditionalView.printCode(factory)
     } else if (factory instanceof RepeatingViewFactoryAnalyzer) {
       writer = this.codegen.repeatingView.printCode(factory)
+    } else if (factory instanceof PartialViewFactoryAnalyzer) {
+      writer = this.codegen.partialView.printCode(factory)
     } else {
       throw new Error(`Unknown type of FactoryAnalyzer.`)
     }

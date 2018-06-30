@@ -8,8 +8,13 @@ import { RepeatingViewFactoryAnalyzer } from './repeating-view-factory-analyzer'
 
 export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValue> {
 
+  public set view (view: Forest<TemplateNodeValue>) {
+    this.getDirectiveFactoryAnalyzer().view = view
+  }
+
   public get view (): Forest<TemplateNodeValue> {
-    return this.getDirectiveFactoryAnalyzer().view
+    const directiveFactoryAnalyzer = this.getDirectiveFactoryAnalyzer()
+    return directiveFactoryAnalyzer.view
   }
 
   public getParentOrUndefined (): FactoryAnalyzer<TemplateNodeValue> | undefined {
@@ -22,10 +27,6 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
 
   public getPartialViewFactoryAnalyzer () {
     return this
-  }
-
-  public getChildrenFactories () {
-    return this.getDirectiveFactoryAnalyzer().getChildrenFactories()
   }
 
   public registerDirectiveFactoryAnalyzer (directiveFactoryAnalyzer: DirectiveFactoryAnalyzer): void {
@@ -99,12 +100,6 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
 
   public isHopToParent (to: FactoryAnalyzer<TemplateNodeValue>): boolean {
     return to == this.getDirectiveFactoryAnalyzer()
-  }
-
-  public getNeighbors (): FactoryAnalyzer<TemplateNodeValue>[] {
-    const runtimeParent = this.getDirectiveFactoryAnalyzer()
-    const runtimeChildren = runtimeParent.getChildrenFactories()
-    return [runtimeParent, ...runtimeChildren]
   }
 
   public toString (): string {

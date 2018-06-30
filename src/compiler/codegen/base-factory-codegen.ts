@@ -4,6 +4,7 @@ import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-b
 import { ViewBinding } from '../template-nodes/view-bindings'
 import iterare from 'iterare'
 import { ViewBoundPropertyAccess } from '../template-nodes/view-bound-value'
+import { getIntersection } from '../utils/utils'
 
 export abstract class BaseFactoryCodegen extends BaseCodegen {
 
@@ -13,7 +14,6 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
 
   public abstract getFactoryFileNameWithoutExtension (fa: FactoryAnalyzer<TemplateNodeValue>): string
 
-  // final (ffs typescript)
   protected printImports (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     this.writer
       .writeLine(`import * as util from './util.js'`)
@@ -158,26 +158,58 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
         this.writer.writeLine(`// ...Dom nodes end.`)
 
         this.writer.writeLine(`// Factory children...`)
-        for (const [factoryChild, boundValues] of fa.getFaDiffMap()) {
+
+        const faDiffMap = fa.getFaDiffMap()
+        for (const [factoryDescendant, boundValues] of fa.getFaDiffMap()) {
           const condition = ViewBoundPropertyAccess.printCondition(boundValues)
           this.writer
             .writeLine(`if (${condition}) {`)
             .indentBlock(() => {
+
               for (const boundValue of boundValues) {
                 const binding = boundValue.getViewBinding()
-                const factoryChildIndex = factoryChild.getFactoryIndexAsChild()
-                const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex}]`
-                const factoryChildDataAccess = `${factoryChildAccess}.__wane__data`
-                try {
-                  binding.printUpdate(this.writer, factoryChildDataAccess, fa)
-                } catch (error) {
-                  this.writer
-                    .writeLine(`/**`)
-                    .writeLine(`ERROR! Skipped generating update.`)
-                    .writeLine(error.toString())
-                    .writeLine(`*/`)
+                const definitionFactory = boundValue.getDefinitionFactory()
+                const path = factoryDescendant.getPathTo(definitionFactory)
+
+                /**
+                 * Assignment in "updated" is printed if the resolved factory is
+                 * the first scope boundary upwards (for components, this is self,
+                 * for  directives, this is the context they are placed in),
+                 * and if the path to the factoryDescendant (which is being updated)
+                 * is a direct descendant of `this`.
+                 */
+                if (definitionFactory == fa.getFirstScopeBoundaryUpwardsIncludingSelf() && factoryDescendant.isChildOf(fa)) {
+                  const factoryChild = factoryDescendant // just for semantics
+                  const factoryChildIndex = factoryChild.getFactoryIndexAsChild()
+                  const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex}]`
+                  const factoryChildDataAccess = `${factoryChildAccess}.__wane__data`
+                  try {
+                    binding.printUpdate(this.writer, factoryChildDataAccess, fa)
+                  } catch (e) {
+                    this.writer.writeLine(`/** ${e} */`)
+                  }
                 }
-                this.writer.writeLine(`${factoryChildAccess}.__wane__update()`)
+
+                /**
+                 * `update` call is being made if `this` is included in the path
+                 * to the resolved factory. This should be a sub-case of the case
+                 * above, meaning update should be printed whenever
+                 */
+                if (path.includes(fa)) {
+                  const [factoryChildInThePath] = getIntersection(
+                    fa.getChildrenFactories(),
+                    path,
+                  )
+                  if (factoryChildInThePath == null) {
+                    console.log('in codegen:')
+                    console.log([...path].map(x => x.getFactoryName()))
+                    console.log([...fa.getChildrenFactories()].map(x => x.getFactoryName()))
+                    throw new Error(`The intersection between the path and factory children should exist.`)
+                  }
+                  const factoryChildIndex = factoryChildInThePath.getFactoryIndexAsChild()
+                  const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex}]`
+                  this.writer.writeLine(`${factoryChildAccess}.__wane__update(diff)`)
+                }
               }
             })
             .writeLine(`}`)

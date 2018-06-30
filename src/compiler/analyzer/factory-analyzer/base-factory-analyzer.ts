@@ -1,13 +1,12 @@
-import {Forest, TreeNode} from '../../utils/tree'
-import {TemplateNodeValue} from '../../template-nodes/nodes/template-node-value-base'
-import {ComponentOutputBinding, ViewBinding} from '../../template-nodes/view-bindings'
+import { Forest, TreeNode } from '../../utils/tree'
+import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
+import { ComponentOutputBinding, ViewBinding } from '../../template-nodes/view-bindings'
 import CodeBlockWriter from 'code-block-writer'
-import {createOrAddToSet, getIntersection, has} from '../../utils/utils'
-import {ViewBoundMethodCall, ViewBoundPropertyAccess} from '../../template-nodes/view-bound-value'
-import {paramCase} from 'change-case'
-import {ComponentFactoryAnalyzer} from './component-factory-analyzer'
-import {getPath, printTreePath} from '../../utils/graph'
-import iterare from 'iterare'
+import { createOrAddToSet, getIntersection, has } from '../../utils/utils'
+import { ViewBoundMethodCall, ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
+import { paramCase } from 'change-case'
+import { ComponentFactoryAnalyzer } from './component-factory-analyzer'
+import { getPath, printTreePath } from '../../utils/graph'
 
 export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
@@ -330,6 +329,10 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return result
   }
 
+  public isChildOf (fa: FactoryAnalyzer<TemplateNodeValue>): boolean {
+    return [...fa.getChildrenFactories()].includes(this)
+  }
+
   public getFactoryIndexAsChild (): number {
     if (this.parent == null) {
       throw new Error(`A root ("${this.getFactoryName()}") cannot have a factory index because it is not a child.`)
@@ -412,7 +415,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   public abstract printRootDomNodeAssignment (wr: CodeBlockWriter): CodeBlockWriter
 
   public factoryAnalyzersInScope (options: Partial<{ skipSelf: boolean }> = {}): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
-    const {skipSelf = false} = options
+    const { skipSelf = false } = options
     const self = this
     return {
       [Symbol.iterator]: function* () {
@@ -470,14 +473,20 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   public getFaDiffMap (): Map<FactoryAnalyzer<TemplateNodeValue>, Set<ViewBoundPropertyAccess>> {
     const result = new Map<FactoryAnalyzer<TemplateNodeValue>, Set<ViewBoundPropertyAccess>>()
 
-    for (const factory of this.factoryAnalyzersInScope({skipSelf: true})) {
-      const bindings = iterare(factory.getSelfBindings()).concat(factory.getHtmlNativeDomBindings())
+    const factories = this.factoryAnalyzersInScope({ skipSelf: true })
+    for (const factory of factories) {
+      const bindings = [...factory.getSelfBindings()]
+      if (!factory.isScopeBoundary()) {
+        // We do not care for what's bound INSIDE the component (= scope boundary),
+        // only what's bound to it.
+        bindings.push(...factory.getHtmlNativeDomBindings())
+      }
       // console.log([...bindings].map(x => x.getTemplateNode().toString()))
       for (const binding of bindings) {
         const responsibleFactory = binding.getResponsibleFactory()
         const definitionFactory = binding.getDefinitionFactory()
         const boundValue = binding.boundValue
-        if (this == definitionFactory && boundValue instanceof ViewBoundPropertyAccess && !(boundValue instanceof ViewBoundMethodCall)) {
+        if (boundValue instanceof ViewBoundPropertyAccess && !(boundValue instanceof ViewBoundMethodCall)) {
           // console.log('adding', boundValue)
           result.set(factory, createOrAddToSet(boundValue, result.get(factory)))
         }

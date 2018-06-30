@@ -6,6 +6,7 @@ import { ConditionalViewFactoryAnalyzer } from '../compiler/analyzer/factory-ana
 import { RepeatingViewFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/repeating-view-factory-analyzer'
 import { TemplateNodeHtmlValue, TemplateNodeInterpolationValue } from '../compiler/template-nodes'
 import { assertIsInterpolationAndHasNoChildren } from './utils'
+import { PartialViewFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/partial-view-factory-analyzer'
 
 describe(`ProjectAnalyzer`, () => {
 
@@ -97,10 +98,10 @@ describe(`ProjectAnalyzer`, () => {
     describe(`for 03-toggler`, () => {
       const app = apps.toggler
       const entry = app.getFactoryTree()
-      const entryChildren = Array.from(entry.getChildren())
-      const toggle = entryChildren[0][1] as ComponentFactoryAnalyzer
-      const if1 = entryChildren[1][1] as ConditionalViewFactoryAnalyzer
-      const if2 = entryChildren[2][1] as ConditionalViewFactoryAnalyzer
+      const entryChildren = Array.from(entry.getChildrenFactories())
+      const toggle = entryChildren[0] as ComponentFactoryAnalyzer
+      const if1 = entryChildren[1] as ConditionalViewFactoryAnalyzer
+      const if2 = entryChildren[2] as ConditionalViewFactoryAnalyzer
       it(`is a factory with three children`, () => {
         expect(entry.getClassName()).toBe(`App`)
         expect(entryChildren.length).toBe(3)
@@ -116,19 +117,28 @@ describe(`ProjectAnalyzer`, () => {
         expect(if1.getParentOrUndefined()).toBe(entry)
         expect(if2.getParentOrUndefined()).toBe(entry)
       })
-      it(`has no other descendants`, () => {
-        expect(Array.from(toggle.getChildren()).length).toBe(0, `children of toggle`)
-        expect(Array.from(if1.getChildren()).length).toBe(0, `children of if1`)
-        expect(Array.from(if2.getChildren()).length).toBe(0, `children of if2`)
+      it(`each conditional view has a partial view`, () => {
+        const if1Children = [...if1.getChildrenFactories()]
+        expect(if1Children.length).toBe(1)
+        expect(if1Children[0] instanceof PartialViewFactoryAnalyzer).toBe(true, `partial view inside first if`)
+        const if2Children = [...if2.getChildrenFactories()]
+        expect(if2Children.length).toBe(1)
+        expect(if2Children[0] instanceof PartialViewFactoryAnalyzer).toBe(true, `partial view inside second if`)
+      })
+      it(`partial views have no children`, () => {
+        const [first] = if1.getChildrenFactories()
+        const [second] = if2.getChildrenFactories()
+        expect([...first.getChildrenFactories()].length).toBe(0)
+        expect([...second.getChildrenFactories()].length).toBe(0)
       })
     })
     describe(`for 04-comparator`, () => {
       const app = apps.comparator
       const entry = app.getFactoryTree()
-      const entryChildren = Array.from(entry.getChildren())
-      const counter1 = entryChildren[0][1] as ComponentFactoryAnalyzer
-      const counter2 = entryChildren[1][1] as ComponentFactoryAnalyzer
-      const info = entryChildren[2][1] as ComponentFactoryAnalyzer
+      const entryChildren = Array.from(entry.getChildrenFactories())
+      const counter1 = entryChildren[0] as ComponentFactoryAnalyzer
+      const counter2 = entryChildren[1] as ComponentFactoryAnalyzer
+      const info = entryChildren[2] as ComponentFactoryAnalyzer
       it(`is a factory with three children`, () => {
         expect(entry.getClassName()).toBe(`App`)
         expect(entryChildren.length).toBe(3)
@@ -147,13 +157,17 @@ describe(`ProjectAnalyzer`, () => {
         expect(info instanceof ComponentFactoryAnalyzer).toBe(true)
         expect(info.getClassName()).toBe(`InfoCmp`)
       })
-      it(`has InfoCmp as third child with three w:if children and no other descendants`, () => {
+      it(`has InfoCmp as third child with three w:if children, each has a partial view, they have no other descendants`, () => {
         const children = Array.from(info.getChildrenFactories())
         const conditionalViews = [0, 1, 2].map(n => children[n])
         conditionalViews.forEach(conditionalView => {
           expect(conditionalView instanceof ConditionalViewFactoryAnalyzer).toBe(true)
-          expect(Array.from(conditionalView.getChildren()).length).toBe(0)
           expect(conditionalView.getParentOrUndefined()).toBe(info)
+          const children = [...conditionalView.getChildrenFactories()]
+          expect(children.length).toBe(1)
+          const [partial] = children
+          expect([...partial.getChildrenFactories()].length).toBe(0)
+          expect(partial.getParentOrUndefined()).toBe(conditionalView)
         })
       })
       it(`has no other descendants`, () => {
@@ -182,21 +196,56 @@ describe(`ProjectAnalyzer`, () => {
       })
       it(`w:if visibility.a has one child, etc a chain until visibility.c which has none`, () => {
         const [wIfA] = entryChildren.slice(-1)
-        expect(Array.from(wIfA.getChildren()).length).toBe(1, `a`)
-        const [wIfB] = Array.from(wIfA.getChildrenFactories()).slice(-1)
-        expect(Array.from(wIfB.getChildren()).length).toBe(1, `b`)
-        const [wIfC] = Array.from(wIfB.getChildrenFactories()).slice(-1)
-        expect(Array.from(wIfC.getChildren()).length).toBe(0, `c`)
+        expect(Array.from(wIfA.getChildrenFactories()).length).toBe(1, `a`)
+        const wIfAChildren = [...wIfA.getChildrenFactories()]
+        expect(wIfAChildren.length).toBe(1)
+        const [pvA] = wIfAChildren
+        expect(pvA instanceof PartialViewFactoryAnalyzer).toBe(true)
+
+        const [wIfB] = Array.from(pvA.getChildrenFactories())
+        expect(Array.from(wIfB.getChildrenFactories()).length).toBe(1, `b`)
+        const wIfBChildren = [...wIfB.getChildrenFactories()]
+        expect(wIfBChildren.length).toBe(1)
+        const [pvB] = wIfBChildren
+        expect(pvB instanceof PartialViewFactoryAnalyzer).toBe(true)
+
+        const [wIfC] = Array.from(pvB.getChildrenFactories())
+        expect(Array.from(wIfC.getChildrenFactories()).length).toBe(1, `c`)
+        const wIfCChildren = [...wIfC.getChildrenFactories()]
+        expect(wIfCChildren.length).toBe(1)
+        const [pvC] = wIfCChildren
+        expect(pvC instanceof PartialViewFactoryAnalyzer).toBe(true)
+
+        expect([...pvC.getChildrenFactories()].length).toBe(0)
       })
     })
     describe(`for 06-hello-everyone`, () => {
-      const app = apps.helloEveryone
-      const entry = app.getFactoryTree()
+      const entry = apps.helloEveryone.getFactoryTree()
       const entryChildren = Array.from(entry.getChildrenFactories())
-      const child = entryChildren[0] as RepeatingViewFactoryAnalyzer
-      it(`has a single child`, () => {
+      const wFor = entryChildren[0] as RepeatingViewFactoryAnalyzer
+      it(`has a single child, a w:for`, () => {
         expect(entryChildren.length).toBe(1)
-        expect(child instanceof RepeatingViewFactoryAnalyzer).toBe(true)
+        expect(wFor instanceof RepeatingViewFactoryAnalyzer).toBe(true)
+      })
+      describe(`the single child w:for`, () => {
+        it(`has app as parent`, () => {
+          expect(wFor.getParentOrUndefined()).toBe(entry)
+        })
+        it(`has a single child, a partial view`, () => {
+          const wForChildren = [...wFor.getChildrenFactories()]
+          expect(wForChildren.length).toBe(1)
+          const [partialView] = wForChildren
+          expect(partialView instanceof PartialViewFactoryAnalyzer).toBe(true)
+        })
+        describe(`partial view`, () => {
+          const partialView = [...wFor.getChildrenFactories()][0]
+          it(`has w:for as parent`, () => {
+            expect(partialView.getParentOrUndefined()).toBe(wFor)
+          })
+          it(`has no children`, () => {
+            expect([...partialView.getChildrenFactories()].length).toBe(0)
+          })
+        })
       })
     })
     describe(`for 07-scoreboard`, () => {
@@ -204,17 +253,38 @@ describe(`ProjectAnalyzer`, () => {
       const entryChildren = Array.from(entry.getChildrenFactories())
       const wFor = entryChildren[0] as RepeatingViewFactoryAnalyzer
       const wForChildren = Array.from(wFor.getChildrenFactories())
-      const itemCmp = wForChildren[0] as ComponentFactoryAnalyzer
+      const wForPartial = wForChildren[0] as PartialViewFactoryAnalyzer
+      const wForPartialChildren = [...wForPartial.getChildrenFactories()]
+      const itemCmp = wForPartialChildren[0] as ComponentFactoryAnalyzer
       it(`has a single w:for child`, () => {
         expect(entryChildren.length).toBe(1)
-        expect(wFor instanceof RepeatingViewFactoryAnalyzer).toBe(true, itemCmp.constructor.name)
+        expect(wFor instanceof RepeatingViewFactoryAnalyzer).toBe(true, wForPartial.constructor.name)
       })
-      it(`w:for child has a single item-cmp child`, () => {
-        expect(wForChildren.length).toBe(1)
-        expect(itemCmp instanceof ComponentFactoryAnalyzer).toBe(true, itemCmp.constructor.name)
-      })
-      it(`item-cmp has no children`, () => {
-        expect(Array.from(itemCmp.getChildren()).length).toBe(0)
+      describe(`the single w:for child`, () => {
+        it(`has the parent set to the entry component`, () => {
+          expect(wFor.getParent()).toBe(entry)
+        })
+        it(`has a single partial view child`, () => {
+          expect(wForChildren.length).toBe(1)
+          expect(wForPartial instanceof PartialViewFactoryAnalyzer).toBe(true, wForPartial.constructor.name)
+        })
+        describe(`the single partial view child`, () => {
+          it(`has the parent set to the w:for`, () => {
+            expect(wForPartial.getParentOrUndefined()).toBe(wFor)
+          })
+          it(`has a single item-cmp child`, () => {
+            expect(Array.from(wForPartial.getChildren()).length).toBe(1)
+            expect(itemCmp instanceof ComponentFactoryAnalyzer).toBe(true)
+          })
+          describe(`the item-cmp factory`, () => {
+            it(`has parent set to partial view`, () => {
+              expect(itemCmp.getParent()).toBe(wForPartial)
+            })
+            it(`has no children`, () => {
+              expect([...itemCmp.getChildrenFactories()].length).toBe(0)
+            })
+          })
+        })
       })
     })
   })

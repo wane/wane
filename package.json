@@ -10,6 +10,7 @@
   "scripts": {
     "tsc:w": "tsc -w",
     "test": "jasmine --config=jasmine.json",
+    "test:debug": "echo \"Open chrome://inspect in Chrome.\"; node --inspect-brk ./node_modules/jasmine/bin/jasmine.js --config=jasmine.json",
     "karma": "karma start karma.conf.js",
     "test:w": "nodemon -w ./dist -e jasmine -- --config=jasmine.json",
     "e2e": "ts-node ./tests/e2e/e2e.ts"
