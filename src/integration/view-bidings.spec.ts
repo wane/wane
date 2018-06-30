@@ -57,7 +57,7 @@ describe(`InterpolationBinding`, () => {
       it(`returns App for everything since that's the only factory anyway`, () => {
         for (const viewBindingSet of helloWorldBindings) {
           for (const binding of viewBindingSet) {
-            expect(binding.getDefinitionFactory()).toBe(apps.helloWorld.getFactoryTree())
+            expect(binding.getFirstScopeBoundaryUpwardsIncludingSelf()).toBe(apps.helloWorld.getFactoryTree())
           }
         }
       })

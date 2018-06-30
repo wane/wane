@@ -97,7 +97,7 @@
 //           })
 //
 //           it(`should have EntryCmp as scope factory`, () => {
-//             expect(boundValue.getScopeFactory()).toBe(entryFa)
+//             expect(boundValue.getDefinitionFactory()).toBe(entryFa)
 //           })
 //
 //           it(`should resolve to the text it contains (some whitespace)`, () => {

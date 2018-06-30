@@ -57,15 +57,28 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
    * <w:if bar>{{ foo }} is a nice number</w:if>
    * ```
    *
+   * The example above:
    * For the outer foo interpolation, Cmp is both a **responsible factory** and a **definition factory**.
    * For the inner foo interpolation, Cmp only a **definition** factory. Its **responsible factory** is w:if.
+   *
+   * ```
+   * <span>{{ foo }}
+   * <w:for foo of foos>{{ foo }}</w:for>
+   *
+   * The example above:
+   * For the outer foo interpolation, Cmp is both a **responsible factory** and a **definition factory**.
+   * For the inner foo interpolation, w:for is both **responsible** and **definition**.
    */
   public getResponsibleFactory (): FactoryAnalyzer<TemplateNodeValue> {
     return this.boundValue.getResponsibleFactory()
   }
 
-  public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
+  public getDefinitionFactory(): FactoryAnalyzer<TemplateNodeValue> {
     return this.boundValue.getDefinitionFactory()
+  }
+
+  public getFirstScopeBoundaryUpwardsIncludingSelf (): FactoryAnalyzer<TemplateNodeValue> {
+    return this.boundValue.getFirstScopeBoundaryUpwardsIncludingSelf()
   }
 
 }
@@ -183,7 +196,7 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
       .newLine()
       .indentBlock(() => {
         wr.writeLine(this.boundValue.resolve(from))
-        const factories = this.boundValue.getScopeFactory()
+        const factories = this.boundValue.getDefinitionFactory()
           .getFactoriesAffectedByCalling(this.boundValue.getName())
         for (const factory of factories) {
           const pathToAncestor: string = from.printPathTo(factory)

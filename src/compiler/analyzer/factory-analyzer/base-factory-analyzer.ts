@@ -158,7 +158,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   }
 
   public printHopToChild (to: FactoryAnalyzer<TemplateNodeValue>): string {
-    return `__wane__factoryChildren[${to.getFactoryIndexAsChild()}]`
+    return `__wane__factoryChildren[${to.getFactoryIndexAsChild()} /*${to.getFactoryName()}*/]`
   }
 
   public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>): string {
@@ -299,7 +299,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           const boundValue = binding.boundValue
           const boundValueMethodName = boundValue.getName()
           const outputName = binding.getName()
-          const originFactory = boundValue.getScopeFactory() as ComponentFactoryAnalyzer
+          const originFactory = boundValue.getDefinitionFactory() as ComponentFactoryAnalyzer
 
           // we skip this binding if it cannot be called when methodName is invoked...
           const allMethods = this.getFirstScopeBoundaryUpwardsIncludingSelf()
@@ -486,7 +486,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
         const responsibleFactory = binding.getResponsibleFactory()
         const definitionFactory = binding.getDefinitionFactory()
         const boundValue = binding.boundValue
-        if (boundValue instanceof ViewBoundPropertyAccess && !(boundValue instanceof ViewBoundMethodCall)) {
+        if (responsibleFactory.getPathTo(definitionFactory).includes(this) && boundValue instanceof ViewBoundPropertyAccess && !(boundValue instanceof ViewBoundMethodCall)) {
           // console.log('adding', boundValue)
           result.set(factory, createOrAddToSet(boundValue, result.get(factory)))
         }

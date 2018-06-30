@@ -31,17 +31,14 @@ export abstract class ViewBoundValue {
   }
 
   /**
-   * Where the data is defined, meaning where the data is defined.
+   * The first scope boundary factory.
    * @returns {FactoryAnalyzer<TemplateNodeValue>}
    */
-  public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
+  public getFirstScopeBoundaryUpwardsIncludingSelf (): FactoryAnalyzer<TemplateNodeValue> {
     return this.getResponsibleFactory().getFirstScopeBoundaryUpwardsIncludingSelf()
   }
 
-  /**
-   * @deprecated
-   */
-  public abstract getScopeFactory (): FactoryAnalyzer<TemplateNodeValue>
+  public abstract getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue>
 
   public abstract resolve (from?: FactoryAnalyzer<TemplateNodeValue>): string
 
@@ -55,7 +52,7 @@ export class ViewBoundConstant extends ViewBoundValue {
     super()
   }
 
-  public getScopeFactory (): FactoryAnalyzer<TemplateNodeValue> {
+  public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
     return this.getResponsibleFactory()
   }
 
@@ -84,11 +81,9 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
     return this.path
   }
 
-  public getScopeFactory (): FactoryAnalyzer<TemplateNodeValue> {
-    const debug = this.path == 'item.name'
+  public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
     let current = this.getResponsibleFactory()
     while (!current.hasDefinedAndResolvesTo(this.getName())) {
-      debug && console.log(`???`, current.getFactoryName())
       const parent = current.getParentOrUndefined()
       if (parent == null) {
         throw new Error(`Cannot determine scope factory for "${this.path}".`)
@@ -99,13 +94,13 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
   }
 
   public resolveFactory (from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()) {
-    const scopeFactory = this.getScopeFactory()
+    const scopeFactory = this.getDefinitionFactory()
     const chain = from.printPathTo(scopeFactory)
     return `this${chain}`
   }
 
   public resolveNameInFactory () {
-    const resolvedName = this.getScopeFactory().hasDefinedAndResolvesTo(this.path)
+    const resolvedName = this.getDefinitionFactory().hasDefinedAndResolvesTo(this.path)
     if (resolvedName == null) {
       throw new Error(`Expected resolved name not to be null.`)
     }
@@ -153,15 +148,15 @@ export class ViewBoundMethodCall extends ViewBoundPropertyAccess {
   }
 
   // just for the type, should really be a generic but this works for now
-  public getScopeFactory (): ComponentFactoryAnalyzer {
-    return super.getScopeFactory() as ComponentFactoryAnalyzer
+  public getDefinitionFactory (): ComponentFactoryAnalyzer {
+    return super.getDefinitionFactory() as ComponentFactoryAnalyzer
   }
 
 }
 
 export class ViewBoundPlaceholder extends ViewBoundValue {
 
-  public getScopeFactory (): FactoryAnalyzer<TemplateNodeValue> {
+  public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
     return this.getResponsibleFactory()
   }
 

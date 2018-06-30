@@ -168,8 +168,12 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
 
               for (const boundValue of boundValues) {
                 const binding = boundValue.getViewBinding()
-                const definitionFactory = boundValue.getDefinitionFactory()
+                const definitionFactory = boundValue.getFirstScopeBoundaryUpwardsIncludingSelf()
                 const path = factoryDescendant.getPathTo(definitionFactory)
+
+                // if (boundValue instanceof ViewBoundPropertyAccess && boundValue.getRawPath().startsWith('item.')) {
+                //   console.log(path.map(x => x.getFactoryName()))
+                // }
 
                 /**
                  * Assignment in "updated" is printed if the resolved factory is
@@ -181,7 +185,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
                 if (definitionFactory == fa.getFirstScopeBoundaryUpwardsIncludingSelf() && factoryDescendant.isChildOf(fa)) {
                   const factoryChild = factoryDescendant // just for semantics
                   const factoryChildIndex = factoryChild.getFactoryIndexAsChild()
-                  const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex}]`
+                  const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex} /*${factoryChild.getFactoryName()}*/]`
                   const factoryChildDataAccess = `${factoryChildAccess}.__wane__data`
                   try {
                     binding.printUpdate(this.writer, factoryChildDataAccess, fa)
@@ -207,7 +211,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
                     throw new Error(`The intersection between the path and factory children should exist.`)
                   }
                   const factoryChildIndex = factoryChildInThePath.getFactoryIndexAsChild()
-                  const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex}]`
+                  const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex} /*${factoryChildInThePath.getFactoryName()}*/]`
                   this.writer.writeLine(`${factoryChildAccess}.__wane__update(diff)`)
                 }
               }
