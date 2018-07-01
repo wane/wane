@@ -12,7 +12,7 @@
     "test": "jasmine --config=jasmine.json",
     "test:w": "nodemon -w ./dist -e jasmine -- --config=jasmine.json",
     "test:debug": "echo \"Open chrome://inspect in Chrome.\"; node --inspect-brk ./node_modules/jasmine/bin/jasmine.js --config=jasmine.json",
-    "e2e": "ts-node ./tests/e2e/e2e.ts",
+    "e2e": "node --trace-warnings ./dist/e2e/e2e.js",
     "karma": "karma start karma.conf.js"
   },
   "repository": {
@@ -67,6 +67,7 @@
     "@types/fs-extra": "^5.0.1",
     "@types/jasmine": "^2.8.6",
     "@types/lodash": "^4.14.107",
+    "@types/mocha": "^5.2.4",
     "@types/puppeteer": "^1.2.1",
     "jasmine": "^3.1.0",
     "jasmine-pretty-html-reporter": "^0.2.5",
@@ -75,6 +76,7 @@
     "karma-cli": "^1.0.1",
     "karma-jasmine": "^1.1.2",
     "karma-jasmine-html-reporter": "^1.1.0",
+    "mocha": "^5.2.0",
     "node-ts": "^2.1.2",
     "nodemon": "^1.17.5",
     "ts-node": "^5.0.1"

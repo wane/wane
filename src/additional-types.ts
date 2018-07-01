@@ -1,9 +1,5 @@
-// import { Plugin } from "rollup";
-
 declare module 'uglify-es' {
-
   function minify (...args: any[]): any
-
 }
 
 declare module 'brotli-size' {
