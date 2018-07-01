@@ -5,6 +5,7 @@ import { ViewBinding } from '../template-nodes/view-bindings'
 import iterare from 'iterare'
 import { ViewBoundPropertyAccess } from '../template-nodes/view-bound-value'
 import { getIntersection } from '../utils/utils'
+import { PartialViewFactoryAnalyzer } from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
 
 export abstract class BaseFactoryCodegen extends BaseCodegen {
 
@@ -51,9 +52,10 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
       .writeLine(`// Create a flat array of all DOM nodes which this component controls:`)
       .writeLine(`this.__wane__domNodes = [`)
       .indentBlock(() => {
+        let index = 0
         Array.from(new Set(partialView.getSavedNodes())).forEach(node => {
           node.printDomInit(partialView).forEach(init => {
-            this.writer.writeLine(`${init},`)
+            this.writer.writeLine(`/*${index++}*/ ${init},`)
           })
         })
       })
@@ -107,6 +109,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
     return this
   }
 
+  // TODO: This will always be empty for PartialView_ConditionalView
   protected generateDiffMethod (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     this.writer
       .writeLine(`__wane__diff() {`)
@@ -115,15 +118,13 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
           .writeLine(`return {`)
           .indentBlock(() => {
             for (const boundValue of fa.responsibleFor()) {
-              const name = boundValue.getName()
+              const path = fa.hasDefinedAndResolvesTo(boundValue.getRawPath())
+              if (path == null) continue
+              const [name] = path.split('.')
               this.writer
                 .write(`${name}: this.__wane__prevData.${name}`)
                 .write(` !== `)
-                .write(`(`)
-                .write(`this.__wane__prevData.${name}`)
-                .write(` = `)
-                .write(`this.__wane__data.${name}`)
-                .write(`),`)
+                .write(`(this.__wane__prevData.${name} = this.__wane__data.${name}),`)
                 .newLine()
             }
           })
@@ -135,14 +136,18 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
 
   protected generateUpdateViewMethod (fa: FactoryAnalyzer<TemplateNodeValue>,
                                       name: string = `__wane__update`,
-                                      callDiffAtStart: boolean = true): this {
+                                      callDiffAtStart: boolean = true,
+                                      mergeDiffs: boolean = false): this {
     this.writer
       .writeLine(callDiffAtStart ? `${name}() {` : `${name}(diff) {`)
       .indentBlock(() => {
-        this.writer.conditionalWriteLine(callDiffAtStart, `const diff = this.__wane__diff()`)
+        this.writer
+          .conditionalWriteLine(callDiffAtStart && !mergeDiffs, `const diff = this.__wane__diff()`)
+          .conditionalWriteLine(mergeDiffs, `Object.assign(diff, this.__wane__diff())`)
 
         this.writer.writeLine(`// Dom nodes...`)
-        for (const [domNodeIndex, boundValues] of fa.getDomDiffMap()) {
+        const map = fa.getDomDiffMap()
+        for (const [domNodeIndex, boundValues] of map) {
           const condition = ViewBoundPropertyAccess.printCondition(boundValues)
           this.writer
             .writeLine(`if (${condition}) {`)
@@ -205,9 +210,6 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
                     path,
                   )
                   if (factoryChildInThePath == null) {
-                    console.log('in codegen:')
-                    console.log([...path].map(x => x.getFactoryName()))
-                    console.log([...fa.getChildrenFactories()].map(x => x.getFactoryName()))
                     throw new Error(`The intersection between the path and factory children should exist.`)
                   }
                   const factoryChildIndex = factoryChildInThePath.getFactoryIndexAsChild()

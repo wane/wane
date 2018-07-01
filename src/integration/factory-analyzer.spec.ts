@@ -3236,7 +3236,6 @@ describe(`FactoryAnalyzer`, () => {
         describe(`set which maps from toggle-cmp`, () => {
           const map = app.getFaDiffMap()
           const set = map.get(toggleCmp)!
-          console.log([...set].map(x => x.getRawPath()))
           it(`exists`, () => expect(set).not.toBeFalsy())
           it(`has size 1`, () => expect(set.size).toBe(1))
           it(`contains the "bool" binding to "value" input`, () => {

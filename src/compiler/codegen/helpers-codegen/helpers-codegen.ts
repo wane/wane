@@ -144,7 +144,7 @@ export class HelpersCodegen extends BaseCodegen {
     return this
   }
 
-  private recursiveDestroy (factoryVarName: string): this {
+  private destroyFactoryChildrenArray (factoryVarName: string): this {
     this.writer
       .writeLine(`${factoryVarName}.__wane__factoryChildren.forEach(child => {`)
       .indentBlock(() => {
@@ -159,7 +159,7 @@ export class HelpersCodegen extends BaseCodegen {
     this.writer
       .writeLine(`function ${this.names.destroyComponentFactory} (factory) {`)
       .indentBlock(() => {
-        this.recursiveDestroy(`factory`)
+        this.destroyFactoryChildrenArray(`factory`)
         this.writer
           .writeLine(`while (factory.__wane__root.firstChild !== null) {`)
           .indentBlock(() => {
@@ -172,11 +172,12 @@ export class HelpersCodegen extends BaseCodegen {
     return this
   }
 
-  private generateDestroyDirective (): this {
+  private generateDestroyDirective (generateDestroyChildren: () => void): this {
     this.writer
       .writeLine(`export function ${this.names.destroyDirectiveFactory} (factory) {`)
       .indentBlock(() => {
-        this.recursiveDestroy(`factory`)
+        generateDestroyChildren()
+        this.destroyFactoryChildrenArray(`factory`)
         this.writer
           .writeLine(`let node = factory.__wane__openingCommentOutlet.nextSibling`)
           .writeLine(`while (node != factory.__wane__closingCommentOutlet) {`)
@@ -192,6 +193,12 @@ export class HelpersCodegen extends BaseCodegen {
     return this
   }
 
+  private generateDestroyConditionalDirective (): this {
+    return this.generateDestroyDirective(() => {
+      this.destroyFactoryChildrenArray(`factory`)
+    })
+  }
+
   public printCode (): CodeBlockWriter {
     return this
       .resetWriter()
@@ -200,7 +207,7 @@ export class HelpersCodegen extends BaseCodegen {
       .generateDomHelpers()
       .generateFactoryTreeHelpers()
       .generateGetNextNotUsed()
-      .generateDestroyDirective()
+      .generateDestroyConditionalDirective()
       .getWriter()
   }
 

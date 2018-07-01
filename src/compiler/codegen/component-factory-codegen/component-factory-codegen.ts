@@ -30,9 +30,9 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
         this
           .printTakeValuesFromAncestors(fa)
           .printDomNodesRegistration(fa)
-          .printDomPropsInit(fa)
           .printAssemblingDomNodes(fa)
           .printAssembleFactoryChildren(fa)
+          .printDomPropsInit(fa)
         this.writer
           .writeLine(`this.${this.names.diff}() // to populate the previous state`)
       })

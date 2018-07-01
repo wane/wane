@@ -21,15 +21,15 @@ export class EmptyStateCmp {
   <form (submit)="onSubmit(#)">
     <label>
       <span>Name</span>
-      <input type="text" [value]="initialValue.name">
+      <input type="text" name="name" [value]="initialValue.name">
     </label>
     <label>
       <span>Age</span>
-      <input type="number" [value]="initialValue.age">    
+      <input type="number" name="age" [value]="initialValue.age">    
     </label>
     <label>
       <span>Continent</span>
-      <select [value]="initialValue.continent">
+      <select name="continent" [value]="initialValue.continent">
         <option value="">Unknown</option>
         <w:for continent of listOfContinents>
           <option [value]="continent">{{ continent }}</option>
@@ -87,7 +87,7 @@ export class FormCmp {
         <th>Continent</th>
         <th [attr.colspan]="'2'">Actions</th>
       </tr>
-      <w:for (item, index) of data>
+      <w:for (item, index) of data; key: id>
         <tr>
           <td>{{ item.name }}</td>
           <td>{{ item.age }}</td>
@@ -169,9 +169,10 @@ export class App {
     this.closeNewForm()
   }
 
-  private edit (index: number, item: Item): void {
-    const above = this.data.slice(0, index)
-    const below = this.data.slice(index + 1)
+  private edit (item: Item): void {
+    const oldItemIndex = this.data.findIndex(({id}) => id == item.id)
+    const above = this.data.slice(0, oldItemIndex)
+    const below = this.data.slice(oldItemIndex + 1)
     this.data = [...above, item, ...below]
     this.closeEditForm()
   }

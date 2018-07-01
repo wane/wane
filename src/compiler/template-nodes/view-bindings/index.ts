@@ -346,7 +346,11 @@ export class RepeatingViewBinding extends ViewBinding<TemplateNodeRepeatingViewV
                       instance: string,
                       from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory(),
   ): CodeBlockWriter {
-    return wr.write(`${instance}.__wane__data = ${this.boundValue.resolve(from)}`)
+    return wr.write(`${instance} = ${this.boundValue.resolve(from)}`)
+  }
+
+  public getKeyFunction (): string {
+    return this.keyAccessorPath == null ? `item => item` : `item => item.${this.keyAccessorPath}`
   }
 
 }

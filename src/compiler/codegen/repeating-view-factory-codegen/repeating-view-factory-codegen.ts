@@ -18,17 +18,19 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
           closingIndex,
         ] = fa.getParent().getIndexesFor(fa.getAnchorViewNode().getValueOrThrow())
 
+        const getKeyFunctionString = fa.getBinding().getKeyFunction()
+
         this.writer
           .writeLine(`this.__wane__contextFactory = this${path}`)
           .writeLine(`this.__wane__openingCommentOutlet = this.__wane__factoryParent.__wane__domNodes[${openingIndex}]`)
           .writeLine(`this.__wane__closingCommentOutlet = this.__wane__factoryParent.__wane__domNodes[${closingIndex}]`)
-          .writeLine(`this.__wane__getKey = item => item`) // TODO: let user set this
+          .writeLine(`this.__wane__getKey = ${getKeyFunctionString}`) // TODO: let user set this
           .writeLine(`this.__wane__keys = []`)
           .writeLine(`this.__wane__commentsDict = {}`)
           .writeLine(`this.__wane__positions = {}`)
           .writeLine(`this.__wane__factoryChildren = {}`)
 
-        fa.getBinding().printUpdate(this.writer, 'this', fa)
+        fa.getBinding().printUpdate(this.writer, 'this.__wane__data', fa)
 
         this.writer
           .newLineIfLastNot()
@@ -44,7 +46,7 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
 
               .writeLine(`util.__wane__insertBefore(this.__wane__closingCommentOutlet, [opening, closing])`)
 
-              .writeLine(`this.__wane__factoryChildren[key] = SingleItem()`)
+              .writeLine(`this.__wane__factoryChildren[key] = ${fa.getPartialViewFactoryAnalyzer().getFactoryName()}()`)
               .writeLine(`this.__wane__factoryChildren[key].__wane__factoryParent = this`)
               .writeLine(`this.__wane__factoryChildren[key].__wane__openingCommentOutlet = opening`)
               .writeLine(`this.__wane__factoryChildren[key].__wane__closingCommentOutlet = closing`)
@@ -60,12 +62,12 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
     return this
   }
 
-  protected generateUpdateViewMethod (fa: RepeatingViewFactoryAnalyzer): this {
+  protected generateUpdateMethod (fa: RepeatingViewFactoryAnalyzer): this {
     this.writer
       .writeLine(`__wane__update(diff) {`)
       .indentBlock(() => {
-        fa.getBinding().printUpdate(this.writer, `const newModel = this`, fa)
         this.writer
+          .writeLine(`const newModel = this.__wane__data`)
           .writeLine(`const oldKeys = this.__wane__keys`)
           .writeLine(`this.__wane__keys = []`)
           .writeLine(`const backlog: { [key: string]: [Comment, Comment] | undefined } = {}`)
@@ -89,6 +91,8 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                       .writeLine(`// aligned`)
                       .writeLine(`// save key, update view, move the dom pointer, go to next new, go to next old`)
                       .writeLine(`this.__wane__keys.push(newKey)`)
+                      .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.item = newModel[currNewIndex]`)
+                      .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.index = currNewIndex`)
                       .writeLine(`this.__wane__factoryChildren[newKey].__wane__update(diff)`)
                       .writeLine(`used[oldKey] = true`)
                       .writeLine(`currDomIndex = util.__wane__getNextNotUsed(oldKeys, currDomIndex, used)`)
@@ -111,7 +115,7 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
               .writeLine(`} else {`)
               .indentBlock(() => {
                 this.writer
-                  .writeLine(`backlog[oldKey] = comments[oldKey]`)
+                  .writeLine(`backlog[oldKey] = [this.__wane__factoryChildren[oldKey].__wane__openingCommentOutlet, this.__wane__factoryChildren[oldKey].__wane__closingCommentOutlet]`)
                   .writeLine(`let fromBacklog = backlog[newKey]`)
                   .writeLine(`if (fromBacklog != null) {`)
                   .indentBlock(() => {
@@ -203,7 +207,7 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                           .writeLine(`util.__wane__insertBefore(this.__wane__closingCommentOutlet, [opening, closing])`)
 
                           .writeLine(`this.__wane__positions[key] = currNewIndex`)
-                          .writeLine(`this.__wane__factoryChildren[key] = SingleItem()`)
+                          .writeLine(`this.__wane__factoryChildren[key] = ${fa.getPartialViewFactoryAnalyzer().getFactoryName()}()`)
                           .writeLine(`this.__wane__factoryChildren[key].__wane__factoryParent = this`)
                           .writeLine(`this.__wane__factoryChildren[key].__wane__openingCommentOutlet = opening`)
                           .writeLine(`this.__wane__factoryChildren[key].__wane__closingCommentOutlet = closing`)
@@ -239,56 +243,24 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
     return this
   }
 
-  private generateFactory (fa: RepeatingViewFactoryAnalyzer): this {
-    this.writer.writeLine(`const SingleItem = () => ({`)
-
-    this.writer
-      .writeLine(`__wane__init() {`)
-      .indentBlock(() => {
-        this
-          .printDomNodesRegistration(fa)
-          .printDomPropsInit(fa)
-          .printAssemblingDomNodes(fa)
-          .printAssembleFactoryChildren(fa)
-      })
-      .writeLine(`},`)
-
-    this.writer
-      .writeLine(`__wane__update(diff) {`)
-      .indentBlock(() => {
-
-      })
-      .writeLine(`},`)
-
+  private generateDestroyView (fa: RepeatingViewFactoryAnalyzer) {
     this.writer
       .writeLine(`__wane__destroy() {`)
       .indentBlock(() => {
-        this.writer
-          .writeLine(`this.__wane__factoryChildren.forEach(factoryChild => {`)
-          .indentBlock(() => {
-            this.writer
-              .writeLine(`factoryChild.__wane__destroy()`)
-          })
-          .writeLine(`})`)
-          .writeLine(`util.__wane__destroyDirectiveFactory(this)`)
+        // TODO
+        this.writer.writeLine(`console.log('// TODO')`)
       })
       .writeLine(`},`)
+  }
 
-    this.writer.writeLine(`})`)
-
+  private generateFactory (fa: RepeatingViewFactoryAnalyzer): this {
     this.writer
       .writeLine(`export default () => ({`)
       .indentBlock(() => {
-        this.writer
-        // .writeLine(`children_: [],`)
-          .writeLine(`prevStates: {}, // maps a key value to prev state`)
         this
           .generateInitMethod(fa)
-          .generateUpdateViewMethod(fa)
-        // .generateDestroyViewMethod(fa)
-        // .generateViewDiff(fa)
-        // .generateUpdateView(fa)
-        // .generateDestroyView(fa)
+          .generateUpdateMethod(fa)
+          .generateDestroyView(fa)
       })
       .writeLine(`})`)
     return this

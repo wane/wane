@@ -1,6 +1,6 @@
 import { TreeNode } from '../../utils/tree'
 import { TemplateNodeComponentValue } from './component-node'
-import { Guard, log, Predicate, UnaryPredicate } from '../../utils/utils'
+import { Guard, Predicate, UnaryPredicate } from '../../utils/utils'
 import { TemplateNodeInterpolationValue } from './interpolation-node'
 import { TemplateNodeConditionalViewValue } from './conditional-view-node'
 

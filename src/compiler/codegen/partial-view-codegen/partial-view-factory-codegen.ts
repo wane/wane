@@ -13,18 +13,22 @@ export class PartialViewFactoryCodegen extends BaseFactoryCodegen {
     this.writer
       .writeLine(`export default () => ({`)
 
+    this.writer
+      .writeLine(`__wane__prevData: {},`)
+
       .writeLine(`__wane__init() {`)
       .indentBlock(() => {
         this
           .printDomNodesRegistration(fa)
-          .printDomPropsInit(fa)
           .printAssemblingDomNodes(fa)
           .printAssembleFactoryChildren(fa)
+          .printDomPropsInit(fa)
       })
       .writeLine(`},`)
 
+    this.generateDiffMethod(fa)
 
-    this.generateUpdateViewMethod(fa, `__wane__update`, false)
+    this.generateUpdateViewMethod(fa, `__wane__update`, false, true)
 
     this.writer
       .writeLine(`__wane__destroy() {`)
