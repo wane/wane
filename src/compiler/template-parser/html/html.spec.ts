@@ -1,5 +1,6 @@
 import {
-  getAttributeName, getElementOrComponentAttributes,
+  getAttributeName,
+  getElementOrComponentAttributes,
   getElementProps,
   getInputName,
   getOutputName,
@@ -552,6 +553,24 @@ describe(`getElementOrComponentAttributes`, () => {
     ])
     expect(getElementOrComponentAttributes(himalayaNode)).toEqual(htmlElementAttrBindings)
   })
+  it(`gets an explicitly bound "colspan" from an html element`, () => {
+    const himalayaNode: himalaya.Element = {
+      type: 'element',
+      tagName: `th`,
+      attributes: [
+        { key: `[attr.colspan]`, value: `'2'` },
+      ],
+      children: [],
+      position: DUMMY_POSITION,
+    }
+    const htmlElementAttrBindings = new Set([
+      new AttributeBinding(
+        `colspan`,
+        new ViewBoundConstant(`'2'`),
+      ),
+    ])
+    expect(getElementOrComponentAttributes(himalayaNode)).toEqual(htmlElementAttrBindings)
+  })
 })
 
 describe(`getElementProps`, () => {
@@ -623,7 +642,7 @@ describe(`getElementProps`, () => {
       new HtmlElementPropBinding(
         `class`,
         new ViewBoundConstant(`'foo'`),
-      )
+      ),
     ])
     expect(getElementProps(himalayaNode)).toEqual(htmlElementPropBindings)
   })

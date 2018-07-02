@@ -292,7 +292,9 @@ export function getElementOrComponentAttributes (htmlNode: himalaya.Element): Se
     }
     const viewBoundValue = htmlAttribute.value == null
       ? new ViewBoundConstant(`''`)
-      : new ViewBoundConstant(`'${htmlAttribute.value}'`)
+      : isWrappedInPropBindingDelims(htmlAttribute.key)
+        ? new ViewBoundConstant(htmlAttribute.value)
+        : new ViewBoundConstant(`'${htmlAttribute.value}'`)
     const attributeName = getAttributeName(htmlAttribute)
     result.add(new AttributeBinding(attributeName, viewBoundValue))
   }

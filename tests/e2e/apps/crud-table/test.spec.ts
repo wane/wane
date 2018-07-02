@@ -23,7 +23,7 @@ function dom (domProps: DomProps) {
         h.th(`Name`),
         h.th(`Age`),
         h.th(`Continent`),
-        h.th({ colspan: '' }, [`Actions`]), // TODO: This a bug, should be colspan: 2
+        h.th({ colspan: '2' }, [`Actions`]),
       ]),
       ...domProps.tableData.map(row => {
         return h.tr(row.map(cell => h.td([cell])))

@@ -73,7 +73,7 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
     return this.boundValue.getResponsibleFactory()
   }
 
-  public getDefinitionFactory(): FactoryAnalyzer<TemplateNodeValue> {
+  public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
     return this.boundValue.getDefinitionFactory()
   }
 
@@ -118,7 +118,7 @@ export class AttributeBinding extends ViewBinding<TemplateNodeHtmlValue> {
     super(boundValue)
   }
 
-  public getName() {
+  public getName () {
     return this.attributeName
   }
 
@@ -130,10 +130,9 @@ export class AttributeBinding extends ViewBinding<TemplateNodeHtmlValue> {
                     instance: string,
                     from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory(),
   ): CodeBlockWriter {
-    return wr.write(`${instance}.setAttribute('${this.attributeName}'`)
-      .write(`, `)
-      .write(`${this.boundValue.resolve(from)})`)
-      .newLine()
+    const name = `'${this.attributeName}'`
+    const value = this.boundValue.resolve(from)
+    return wr.writeLine(`${instance}.setAttribute(${name}, ${value})`)
   }
 
   public printUpdate (wr: CodeBlockWriter,
@@ -204,7 +203,7 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
         }
       })
       // .indentBlock(() => {
-        // console.log(`end === === ===`)
+      // console.log(`end === === ===`)
       // })
       .write(`})`)
   }
@@ -225,7 +224,7 @@ export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValu
     super(boundValue)
   }
 
-  public getName(): string {
+  public getName (): string {
     return this.inputName
   }
 
