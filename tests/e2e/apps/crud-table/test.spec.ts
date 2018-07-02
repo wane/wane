@@ -1,122 +1,67 @@
-import * as puppeteer from 'puppeteer'
-import { compileTestApp } from '../../utils'
+import { expectDomStructure, h, runTest } from '../../utils'
 import { expect } from 'chai'
+import { VNode } from '../../utils/vdom'
 
-export default async function runTests () {
-  const browser = await puppeteer.launch()
-  try {
+interface DomProps {
+  tableData: (VNode | string)[][]
+  isAddNewVisible?: boolean
+}
 
-    await compileTestApp({ dir: __dirname })
-    const page = await browser.newPage()
-    await page.goto(`file:///${__dirname}/dist/index.html`)
+function editButton () {
+  return h.button({ type: 'button' }, [`Edit`])
+}
 
-    // Basic structure
-    {
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      const rows = [
-        `John Doe 42 Africa Edit Remove`,
-        `Jane Doe 41 Antarctica Edit Remove`,
-        `Don Joe 40 Asia Edit Remove`,
-        `Donna Joe 39 Europe Edit Remove`,
-      ]
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Name Age Continent Actions ${rows.join(' ')} Add new`)
-    }
+function removeButton () {
+  return h.button({ type: 'button' }, [`Remove`])
+}
 
-    // DOM details
-    {
-      const body = await page.evaluate(() => {
-        return Array.from(document.body.children).map(({ tagName }) => tagName)
-      })
-      const table = await page.evaluate(() => {
-        return Array.from(document.querySelector('table')!.children)
-          .map(({ tagName }) => tagName)
-      })
-      const tr1 = await page.evaluate(() => {
-        return Array.from(document.querySelector('table tr:nth-child(1)')!.children)
-          .map(({ tagName }) => tagName)
-      })
-      const tr2 = await page.evaluate(() => {
-        return Array.from(document.querySelector('table tr:nth-child(2)')!.children)
-          .map(({ tagName }) => tagName)
-      })
-      const tr3 = await page.evaluate(() => {
-        return Array.from(document.querySelector('table tr:nth-child(3)')!.children)
-          .map(({ tagName }) => tagName)
-      })
-      const tr4 = await page.evaluate(() => {
-        return Array.from(document.querySelector('table tr:nth-child(4)')!.children)
-          .map(({ tagName }) => tagName)
-      })
-      const tr5 = await page.evaluate(() => {
-        return Array.from(document.querySelector('table tr:nth-child(5)')!.children)
-          .map(({ tagName }) => tagName)
-      })
+function dom (domProps: DomProps) {
+  return h.body([
+    h.script({ src: 'index.js' }),
+    h.table([
+      h.tr([
+        h.th(`Name`),
+        h.th(`Age`),
+        h.th(`Continent`),
+        h.th({ colspan: '' }, [`Actions`]), // TODO: This a bug, should be colspan: 2
+      ]),
+      ...domProps.tableData.map(row => {
+        return h.tr(row.map(cell => h.td([cell])))
+      }),
+    ]),
+    h.button({ type: 'button' }, [`Add new`]),
+  ])
+}
 
-      expect(body).to.eql(['SCRIPT', 'TABLE', 'BUTTON'])
-      expect(table).to.eql(['TR', 'TR', 'TR', 'TR', 'TR'])
-      expect(tr1).to.eql(['TH', 'TH', 'TH', 'TH'])
-      expect(tr2).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
-      expect(tr3).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
-      expect(tr4).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
-      expect(tr5).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
-    }
+function getActionSelector (row: number, action: 'edit' | 'remove') {
+  const tdChildIndex = action == 'edit' ? 4 : 5
+  return `table tr:nth-child(${row + 1}) > td:nth-child(${tdChildIndex}) > button`
+}
 
-    // DOM details
-    {
-      const body = await page.evaluate(() => {
-      return Array.from(document.body.children).map(({ tagName }) => tagName)
-    })
-      const table = await page.evaluate(() => {
-      return Array.from(document.querySelector('table')!.children)
-        .map(({ tagName }) => tagName)
-    })
-      const tr1 = await page.evaluate(() => {
-      return Array.from(document.querySelector('table tr:nth-child(1)')!.children)
-        .map(({ tagName }) => tagName)
-    })
-      const tr2 = await page.evaluate(() => {
-      return Array.from(document.querySelector('table tr:nth-child(2)')!.children)
-        .map(({ tagName }) => tagName)
-    })
-      const tr3 = await page.evaluate(() => {
-      return Array.from(document.querySelector('table tr:nth-child(3)')!.children)
-        .map(({ tagName }) => tagName)
-    })
-      const tr4 = await page.evaluate(() => {
-      return Array.from(document.querySelector('table tr:nth-child(4)')!.children)
-        .map(({ tagName }) => tagName)
-    })
-      const tr5 = await page.evaluate(() => {
-      return Array.from(document.querySelector('table tr:nth-child(5)')!.children)
-        .map(({ tagName }) => tagName)
-    })
+export default function () {
+  return runTest(__dirname, async page => {
 
-      expect(body).to.eql(['SCRIPT', 'TABLE', 'BUTTON'])
-      expect(table).to.eql(['TR', 'TR', 'TR', 'TR', 'TR'])
-      expect(tr1).to.eql(['TH', 'TH', 'TH', 'TH'])
-      expect(tr2).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
-      expect(tr3).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
-      expect(tr4).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
-      expect(tr5).to.eql(['TD', 'TD', 'TD', 'TD', 'TD'])
-    }
+    const testDom = (domProps: DomProps) => expectDomStructure(page, dom(domProps))
+
+    // Initial page structure
+    await testDom({
+      tableData: [
+        [`John Doe`, `42`, `Africa`, editButton(), removeButton()],
+        [`Jane Doe`, `41`, `Antarctica`, editButton(), removeButton()],
+        [`Don Joe`, `40`, `Asia`, editButton(), removeButton()],
+        [`Donna Joe`, `39`, `Europe`, editButton(), removeButton()],
+      ],
+    })
 
     // Remove an item in the middle
-    {
-      await page.click('table tr:nth-child(3) > td:nth-child(5) > button')
+    await page.click(getActionSelector(3, 'remove'))
+    await testDom({
+      tableData: [
+        [`John Doe`, `42`, `Africa`, editButton(), removeButton()],
+        [`Jane Doe`, `41`, `Antarctica`, editButton(), removeButton()],
+        [`Donna Joe`, `39`, `Europe`, editButton(), removeButton()],
+      ],
+    })
 
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      const rows = [
-        `John Doe 42 Africa Edit Remove`,
-        `Don Joe 40 Asia Edit Remove`,
-        `Donna Joe 39 Europe Edit Remove`,
-      ]
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Name Age Continent Actions ${rows.join(' ')} Add new`)
-    }
-
-  } catch (e) {
-    throw e
-  } finally {
-    await browser.close()
-  }
-
+  })
 }

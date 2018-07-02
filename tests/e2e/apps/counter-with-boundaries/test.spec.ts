@@ -1,111 +1,69 @@
-import * as puppeteer from 'puppeteer'
-import { compileTestApp } from '../../utils'
+import { expectDomStructure, h, runTest } from '../../utils'
 import { expect } from 'chai'
+import { asyncRepeat } from '../../utils/puppeteer-utils'
 
-async function getInfo (page: puppeteer.Page) {
-  return await page.evaluate(() => {
-    const count = document.querySelector(`body > counter-cmp > span`)!
-    const minusTen = document.querySelector(`body > counter-cmp > button:nth-of-type(1)`)! as HTMLButtonElement
-    const minusOne = document.querySelector(`body > counter-cmp > button:nth-of-type(2)`)! as HTMLButtonElement
-    const plusOne = document.querySelector(`body > counter-cmp > button:nth-of-type(3)`)! as HTMLButtonElement
-    const plusTen = document.querySelector(`body > counter-cmp > button:nth-of-type(4)`)! as HTMLButtonElement
-    return {
-      count: count.textContent,
-      isDisabled: {
-        minusTen: minusTen.disabled,
-        minusOne: minusOne.disabled,
-        plusOne: plusOne.disabled,
-        plusTen: plusTen.disabled,
-      },
-    }
-  })
+interface DomProps {
+  value: number | string
+  isDisabled?: {
+    minusTen?: boolean
+    minusOne?: boolean
+    plusOne?: boolean
+    plusTen?: boolean
+  }
 }
 
-export default async function runTests () {
-  const browser = await puppeteer.launch()
-  try {
-    await compileTestApp({ dir: __dirname })
-    const page = await browser.newPage()
-    await page.goto(`file:///${__dirname}/dist/index.html`)
+function conditionallyAssign<T extends Object, U extends Object> (target: T, source: U, condition: boolean): T | (T & U) {
+  return condition ? Object.assign(target, source) : target
+}
 
-    // Structure of HTML
-    {
-      const roots = await page.evaluate(() => {
-        return Array.from(document.body.children).map(({ tagName }) => tagName)
-      })
-      const counter = await page.evaluate(() => {
-        return Array.from(document.querySelector(`body > counter-cmp`)!.children)
-          .map(({ tagName }) => tagName)
-      })
+function dom ({
+                value,
+                isDisabled: {
+                  minusTen = false,
+                  minusOne = false,
+                  plusOne = false,
+                  plusTen = false,
+                } = {},
+              }: DomProps) {
+  return h.body([
+    h.script({ src: 'index.js' }),
+    h('counter-cmp', [
+      h.button(conditionallyAssign({}, { disabled: '' }, minusTen), [`-10`]),
+      h.button(conditionallyAssign({}, { disabled: '' }, minusOne), [`-1`]),
+      h.button(conditionallyAssign({}, { disabled: '' }, plusOne), [`+1`]),
+      h.button(conditionallyAssign({}, { disabled: '' }, plusTen), [`+10`]),
+      h.span(value!.toString()),
+    ]),
+  ])
+}
 
-      expect(roots).to.eql([`SCRIPT`, `COUNTER-CMP`])
-      expect(counter).to.eql([`BUTTON`, `BUTTON`, `BUTTON`, `BUTTON`, `SPAN`])
-    }
+const MINUS_TEN = 'body > counter-cmp > button:nth-of-type(1)'
+const MINUS_ONE = 'body > counter-cmp > button:nth-of-type(2)'
+const PLUS_ONE = 'body > counter-cmp > button:nth-of-type(3)'
+const PLUS_TEN = 'body > counter-cmp > button:nth-of-type(4)'
 
-    // Initial value and button states
-    {
-      const elements = await getInfo(page)
-      expect(elements.count).to.eql(`25`)
-      expect(elements.isDisabled.minusTen).to.eql(false)
-      expect(elements.isDisabled.minusOne).to.eql(false)
-      expect(elements.isDisabled.plusOne).to.eql(false)
-      expect(elements.isDisabled.plusTen).to.eql(false)
-    }
+export default function () {
+  return runTest(__dirname, async (page) => {
 
-    // Disabled plus ten (at 45)
-    {
-      await page.click(`body > counter-cmp > button:nth-of-type(4)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(4)`)
-      const elements = await getInfo(page)
-      expect(elements.count).to.eql(`45`)
-      expect(elements.isDisabled.minusTen).to.eql(false)
-      expect(elements.isDisabled.minusOne).to.eql(false)
-      expect(elements.isDisabled.plusOne).to.eql(false)
-      expect(elements.isDisabled.plusTen).to.eql(true)
-    }
+    const testDom = (domProps: DomProps) => expectDomStructure(page, dom(domProps))
 
-    // Disabled plus ten and plus one (at 50)
-    {
-      await page.click(`body > counter-cmp > button:nth-of-type(3)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(3)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(3)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(3)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(3)`)
-      const elements = await getInfo(page)
-      expect(elements.count).to.eql(`50`)
-      expect(elements.isDisabled.minusTen).to.eql(false)
-      expect(elements.isDisabled.minusOne).to.eql(false)
-      expect(elements.isDisabled.plusOne).to.eql(true)
-      expect(elements.isDisabled.plusTen).to.eql(true)
-    }
+    // Initial page structure
+    await testDom({ value: 25 })
+
+    // After two +10 clicks, +10 is disabled (at 45)
+    await asyncRepeat(2, () => page.click(PLUS_TEN))
+    await testDom({ value: 45, isDisabled: { plusTen: true } })
+
+    // After five +1 clicks, both +1 and +10 are disabled (at 50)
+    await asyncRepeat(5, () => page.click(PLUS_ONE))
+    await testDom({ value: 50, isDisabled: { plusOne: true, plusTen: true } })
 
     // Disabled minus ten and minus one (at 0)
-    {
-      await page.click(`body > counter-cmp > button:nth-of-type(1)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(1)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(1)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(1)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      await page.click(`body > counter-cmp > button:nth-of-type(2)`)
-      const elements = await getInfo(page)
-      expect(elements.count).to.eql(`0`)
-      expect(elements.isDisabled.minusTen).to.eql(true)
-      expect(elements.isDisabled.minusOne).to.eql(true)
-      expect(elements.isDisabled.plusOne).to.eql(false)
-      expect(elements.isDisabled.plusTen).to.eql(false)
-    }
+    await asyncRepeat(2, () => page.click(MINUS_TEN))
+    await asyncRepeat(5, () => page.click(MINUS_ONE))
+    await asyncRepeat(2, () => page.click(MINUS_TEN))
+    await asyncRepeat(5, () => page.click(MINUS_ONE))
+    await testDom({ value: 0, isDisabled: { minusOne: true, minusTen: true } })
 
-  } catch (e) {
-    throw e
-  } finally {
-    await browser.close()
-  }
+  })
 }

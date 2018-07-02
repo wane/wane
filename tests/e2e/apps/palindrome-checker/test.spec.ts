@@ -1,83 +1,53 @@
-import * as puppeteer from 'puppeteer'
-import { compileTestApp } from '../../utils'
+import { expectDomStructure, h, runTest } from '../../utils'
 import { expect } from 'chai'
+import { getValue, isFocused } from '../../utils/puppeteer-utils'
 
-export default async function runTests () {
-  const browser = await puppeteer.launch()
-  try {
+function dom (isPalindrome: boolean) {
+  const yes = [
+    `Yup, it's a `,
+    h.b(`palindrome`),
+    `!`,
+  ]
 
-    await compileTestApp({ dir: __dirname })
-    const page = await browser.newPage()
-    await page.goto(`file:///${__dirname}/dist/index.html`)
+  const no = [
+    `Nah, this is `,
+    h.strong(`not`),
+    ` a palindrome.`,
+  ]
 
-    // Basic structure
-    {
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Yup, it's a palindrome!`)
-    }
+  return h.body([
+    h.script({ src: 'index.js' }),
+    h.input({ type: 'text' }),
+    ...(isPalindrome ? yes : no),
+  ])
+}
 
-    // HTML structure
-    {
-      const roots = await page.evaluate(() => {
-        return Array.from(document.body.children).map(({ tagName }) => tagName)
-      })
-      expect(roots).to.eql([`SCRIPT`, `INPUT`, `B`])
-    }
+export default function () {
+  return runTest(__dirname, async page => {
 
-    // Typing one letter keeps that it is a palindrome ("a")
-    {
-      await page.focus(`body > input`)
-      await page.type(`body > input`, `a`)
-      const inputValue = await page.evaluate(() => {
-        const inputEl = document.querySelector(`body > input`) as HTMLInputElement
-        return inputEl.value
-      })
-      expect(inputValue).to.eql(`a`)
+    const testDom = (isPalindrome: boolean) => expectDomStructure(page, dom(isPalindrome))
 
-      const text = await page.evaluate(() => document.body.textContent)
-      expect(text.replace(/\s+/g, ' ').trim()).to.eql(`Yup, it's a palindrome!`)
-    }
+    // Initial page structure
+    await testDom(true)
+
+    // Typing "a" still keeps it being a palindrome
+    await page.focus('input')
+    await page.type('input', `a`)
+    expect(await getValue(page, 'input')).to.equal(`a`)
+    await testDom(true)
 
     // The previous test did not remove focus from the input
-    {
-      const isInputFocused = await page.evaluate(() => {
-        const inputEl = document.querySelector(`input`) as HTMLInputElement
-        const activeElement = document.activeElement
-        return inputEl == activeElement
-      })
-      expect(isInputFocused).to.eql(true)
-    }
+    expect(await isFocused(page, 'input')).to.eql(true)
 
     // Typing another letter makes it not a palindrome ("ab")
-    {
-      await page.type(`input`, `b`)
-      const inputValue = await page.evaluate(() => {
-        const inputEl = document.querySelector(`input`) as HTMLInputElement
-        return inputEl.value
-      })
-      expect(inputValue).to.eql(`ab`)
-
-      const text = await page.evaluate(() => document.body.textContent)
-      expect(text.replace(/\s+/g, ' ').trim()).to.eql(`Nah, this is not a palindrome.`)
-    }
+    await page.type(`input`, `b`)
+    expect(await getValue(page, 'input')).to.eql(`ab`)
+    await testDom(false)
 
     // Typing yet another letter makes it a palindrome again ("aba")
-    {
-      await page.type(`input`, `a`)
-      const inputValue = await page.evaluate(() => {
-        const inputEl = document.querySelector(`body > input`) as HTMLInputElement
-        return inputEl.value
-      })
-      expect(inputValue).to.eql(`aba`)
+    await page.type(`input`, `a`)
+    expect(await getValue(page, 'input')).to.eql(`aba`)
+    await testDom(true)
 
-      const text = await page.evaluate(() => document.body.textContent)
-      expect(text.replace(/\s+/g, ' ').trim()).to.eql(`Yup, it's a palindrome!`)
-    }
-
-  } catch (e) {
-    throw e
-  } finally {
-    await browser.close()
-  }
-
+  })
 }

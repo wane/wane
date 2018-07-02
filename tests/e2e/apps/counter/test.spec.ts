@@ -1,63 +1,35 @@
-import * as puppeteer from 'puppeteer'
-import { compileTestApp } from '../../utils'
+import { expectDomStructure, h, runTest } from '../../utils'
 import { expect } from 'chai'
 
-export default async function runTests () {
-  const browser = await puppeteer.launch()
-  try {
+const BUTTON_DEC = 'body > counter-cmp > button:nth-child(1)'
+const BUTTON_INC = 'body > counter-cmp > button:nth-child(3)'
 
-    await compileTestApp({dir: __dirname})
-    const page = await browser.newPage()
-    await page.goto(`file:///${__dirname}/dist/index.html`)
+function dom (value: number) {
+  return h.body([
+    h.script({ src: 'index.js' }),
+    h('counter-cmp', [
+      h.button('Decrement'),
+      h.span(value.toString()),
+      h.button('Increment'),
+    ]),
+  ])
+}
 
-    {
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.equal(`Decrement 42 Increment`)
-    }
+export default function () {
+  return runTest(__dirname, async page => {
 
-    // Structure of HTML
-    {
-      const roots = await page.evaluate(() => {
-        return Array.from(document.body.children).map(({tagName}) => tagName)
-      })
-      const counter = await page.evaluate(() => {
-        return Array.from(document.querySelector(`body > counter-cmp`)!.children)
-          .map(({tagName}) => tagName)
-      })
+    const testDom = (value: number) => expectDomStructure(page, dom(value))
 
-      expect(roots).to.eql([`SCRIPT`, `COUNTER-CMP`])
-      expect(counter).to.eql([`BUTTON`, `SPAN`, `BUTTON`])
-    }
-
-    // Initial value
-    {
-      const count = await page.evaluate(() => {
-        return document.querySelector(`body > counter-cmp > span`)!.textContent
-      })
-      expect(count).to.eql(`42`)
-    }
+    // Initial page structure
+    await testDom(42)
 
     // Decrementing
-    {
-      await page.click(`body > counter-cmp > button:nth-child(1)`)
-      const count = await page.evaluate(() => {
-        return document.querySelector(`body > counter-cmp > span`)!.textContent
-      })
-      expect(count).to.eql(`41`)
-    }
+    await page.click(BUTTON_DEC)
+    await testDom(41)
 
     // Incrementing
-    {
-      await page.click(`body > counter-cmp > button:nth-child(3)`)
-      const count = await page.evaluate(() => {
-        return document.querySelector(`body > counter-cmp > span`)!.textContent
-      })
-      expect(count).to.eql(`42`)
-    }
+    await page.click(BUTTON_INC)
+    await testDom(42)
 
-  } catch (e) {
-    throw e
-  } finally {
-    await browser.close()
-  }
+  })
 }

@@ -1,74 +1,60 @@
-import * as puppeteer from 'puppeteer'
-import { compileTestApp } from '../../utils'
+import { expectDomStructure, h, runTest } from '../../utils'
 import { expect } from 'chai'
 
-export default async function runTests () {
-  const browser = await puppeteer.launch()
-  try {
+function dom (array: number[]) {
+  return h.body([
+    h.script({ src: 'index.js' }),
+    h.form([
+      h.label([
+        h.span(`Number of elements`),
+        h.input({ type: 'number', name: 'numberOfElements' }),
+      ]),
+      h.button({ type: 'submit' }, [
+        'Update',
+      ]),
+    ]),
+    h.hr(),
+    h.h1(`First ${array.length} Fibonacci numbers`),
+    h('sequence-cmp', array.join(' ')),
+  ])
+}
 
-    await compileTestApp({ dir: __dirname })
-    const page = await browser.newPage()
-    await page.goto(`file:///${__dirname}/dist/index.html`)
+export default function () {
+  return runTest(__dirname, async page => {
 
-    // Basic structure
-    {
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Number of elements Update First 5 Fibonacci numbers 1 2 3 5 8`)
-    }
+    const testDom = (...array: number[]) => expectDomStructure(page, dom(array))
+
+    // Initial page structure
+    await testDom(1, 2, 3, 5, 8)
 
     // Updating to 6
-    {
-      await page.focus('input')
-      await page.keyboard.press('ArrowUp')
-      await page.keyboard.press('Enter')
-
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Number of elements Update First 6 Fibonacci numbers 1 2 3 5 8 13`)
-    }
+    await page.focus('input')
+    await page.keyboard.press('ArrowUp')
+    await page.keyboard.press('Enter')
+    await testDom(1, 2, 3, 5, 8, 13)
 
     // Updating back to 5
-    {
-      await page.keyboard.press('ArrowDown')
-      await page.keyboard.press('Enter')
-
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Number of elements Update First 5 Fibonacci numbers 1 2 3 5 8`)
-    }
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Enter')
+    await testDom(1, 2, 3, 5, 8)
 
     // Updating to 10
-    {
-      await page.keyboard.press('Backspace')
-      await page.type('input', `10`)
-      await page.keyboard.press('Enter')
-
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Number of elements Update First 10 Fibonacci numbers 1 2 3 5 8 13 21 34 55 89`)
-    }
+    await page.keyboard.press('Backspace')
+    await page.type('input', `10`)
+    await page.keyboard.press('Enter')
+    await testDom(1, 2, 3, 5, 8, 13, 21, 34, 55, 89)
 
     // Updating to 0
-    {
-      await page.keyboard.press('Backspace')
-      await page.keyboard.press('Backspace')
-      await page.type('input', `0`)
-      await page.keyboard.press('Enter')
-
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Number of elements Update First 0 Fibonacci numbers`)
-    }
+    await page.keyboard.press('Backspace')
+    await page.keyboard.press('Backspace')
+    await page.type('input', `0`)
+    await page.keyboard.press('Enter')
+    await testDom()
 
     // Updating to 1
-    {
-      await page.keyboard.press('ArrowUp')
-      await page.keyboard.press('Enter')
+    await page.keyboard.press('ArrowUp')
+    await page.keyboard.press('Enter')
+    await testDom(1)
 
-      const bodyInnerText = await page.evaluate(() => document.body.textContent)
-      expect(bodyInnerText.replace(/\s+/g, ' ').trim()).to.eql(`Number of elements Update First 1 Fibonacci numbers 1`)
-    }
-
-  } catch (e) {
-    throw e
-  } finally {
-    await browser.close()
-  }
-
+  })
 }
