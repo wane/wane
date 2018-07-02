@@ -1,6 +1,7 @@
 import { expectDomStructure, h, runTest } from '../../utils'
 import { expect } from 'chai'
 import { VNode } from '../../utils/vdom'
+import { asyncRepeat, getValue } from '../../utils/puppeteer-utils'
 
 interface DomProps {
   tableData: (VNode | string)[][]
@@ -15,21 +16,64 @@ function removeButton () {
   return h.button({ type: 'button' }, [`Remove`])
 }
 
+function continentsSelect () {
+  return h.select({ name: 'continent' }, [
+      h.option({ value: '' }, [`Unknown`]),
+      ...[
+        `Africa`,
+        `Antarctica`,
+        `Asia`,
+        `Europe`,
+        `North America`,
+        `Oceania`,
+        `South America`,
+      ].map(continent => h.option({ value: continent }, [continent])),
+    ],
+  )
+}
+
 function dom (domProps: DomProps) {
   return h.body([
     h.script({ src: 'index.js' }),
-    h.table([
-      h.tr([
-        h.th(`Name`),
-        h.th(`Age`),
-        h.th(`Continent`),
-        h.th({ colspan: '2' }, [`Actions`]),
+    domProps.tableData.length > 0
+      ?
+      h.table([
+        h.tr([
+          h.th(`Name`),
+          h.th(`Age`),
+          h.th(`Continent`),
+          h.th({ colspan: '2' }, [`Actions`]),
+        ]),
+        ...domProps.tableData.map(row => {
+          return h.tr(row.map(cell => h.td([cell])))
+        }),
+      ])
+      :
+      h('empty-state-cmp', [
+        `No entered data.`,
+        h.button(`Add some!`),
       ]),
-      ...domProps.tableData.map(row => {
-        return h.tr(row.map(cell => h.td([cell])))
-      }),
-    ]),
     h.button({ type: 'button' }, [`Add new`]),
+    domProps.isAddNewVisible
+      ? h('form-cmp', [
+        h.form([
+          h.label([
+            h.span(`Name`),
+            h.input({ type: 'text', name: 'name' }),
+          ]),
+          h.label([
+            h.span(`Age`),
+            h.input({ type: 'number', name: 'age' }),
+          ]),
+          h.label([
+            h.span(`Continent`),
+            continentsSelect(),
+          ]),
+          h.button({ type: 'submit' }, [`Save`]),
+          h.button({ type: 'button' }, [`Cancel`]),
+        ]),
+      ])
+      : null,
   ])
 }
 
@@ -60,6 +104,126 @@ export default function () {
         [`John Doe`, `42`, `Africa`, editButton(), removeButton()],
         [`Jane Doe`, `41`, `Antarctica`, editButton(), removeButton()],
         [`Donna Joe`, `39`, `Europe`, editButton(), removeButton()],
+      ],
+    })
+
+    // Open the edit form for the first item
+    await page.click(getActionSelector(1, 'edit'))
+    await testDom({
+      tableData: [
+        [`John Doe`, `42`, `Africa`, editButton(), removeButton()],
+        [`Jane Doe`, `41`, `Antarctica`, editButton(), removeButton()],
+        [`Donna Joe`, `39`, `Europe`, editButton(), removeButton()],
+      ],
+      isAddNewVisible: true,
+    })
+    expect(await getValue(page, 'form [name=name]')).to.equal(`John Doe`)
+    expect(await getValue(page, 'form [name=age]')).to.equal(`42`)
+    expect(await getValue(page, 'form [name=continent]')).to.equal(`Africa`)
+
+    // Remove surname, change age to 44 and continent to Asia
+    await page.focus('form [name=name]')
+    await asyncRepeat(4, () => page.keyboard.press('Backspace'))
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('ArrowUp')
+    await page.keyboard.press('ArrowUp')
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Enter')
+    await testDom({
+      tableData: [
+        [`John`, `44`, `Asia`, editButton(), removeButton()],
+        [`Jane Doe`, `41`, `Antarctica`, editButton(), removeButton()],
+        [`Donna Joe`, `39`, `Europe`, editButton(), removeButton()],
+      ],
+    })
+
+    // Open add new form
+    await page.click('table ~ button')
+    await testDom({
+      tableData: [
+        [`John`, `44`, `Asia`, editButton(), removeButton()],
+        [`Jane Doe`, `41`, `Antarctica`, editButton(), removeButton()],
+        [`Donna Joe`, `39`, `Europe`, editButton(), removeButton()],
+      ],
+      isAddNewVisible: true,
+    })
+    expect(await getValue(page, 'form [name=name]')).to.equal(``)
+    expect(await getValue(page, 'form [name=age]')).to.equal(`0`)
+    expect(await getValue(page, 'form [name=continent]')).to.equal(``)
+
+    // Enter data and submit
+    await page.focus('form [name=name]')
+    await page.keyboard.type(`New user`)
+    await page.keyboard.press('Tab')
+    await page.keyboard.type(`38`)
+    await page.keyboard.press('Tab')
+    await asyncRepeat(5, () => page.keyboard.press('ArrowDown'))
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Enter')
+    await testDom({
+      tableData: [
+        [`John`, `44`, `Asia`, editButton(), removeButton()],
+        [`Jane Doe`, `41`, `Antarctica`, editButton(), removeButton()],
+        [`Donna Joe`, `39`, `Europe`, editButton(), removeButton()],
+        [`New user`, `38`, `North America`, editButton(), removeButton()],
+      ],
+    })
+
+    // Remove all but one
+    await asyncRepeat(3, () => page.click(getActionSelector(1, 'remove')))
+    await testDom({
+      tableData: [
+        [`New user`, `38`, `North America`, editButton(), removeButton()],
+      ],
+    })
+
+    // Remove the last one
+    await page.click(getActionSelector(1, 'remove'))
+    await testDom({
+      tableData: [],
+    })
+
+    // Clicking on "Add new" opens the dialog
+    await page.click('empty-state-cmp ~ button')
+    await testDom({
+      tableData: [],
+      isAddNewVisible: true,
+    })
+    expect(await getValue(page, 'form [name=name]')).to.equal(``)
+    expect(await getValue(page, 'form [name=age]')).to.equal(`0`)
+    expect(await getValue(page, 'form [name=continent]')).to.equal(``)
+
+    // Clicking on "Cancel" closes the form
+    await page.click('form button[type=button]')
+    await testDom({
+      tableData: [],
+    })
+
+    // Clicking on "Add some!" opens the dialog
+    await page.click('empty-state-cmp button')
+    await testDom({
+      tableData: [],
+      isAddNewVisible: true,
+    })
+    expect(await getValue(page, 'form [name=name]')).to.equal(``)
+    expect(await getValue(page, 'form [name=age]')).to.equal(`0`)
+    expect(await getValue(page, 'form [name=continent]')).to.equal(``)
+
+    // Add a new item
+    await page.focus('form [name=name]')
+    await page.keyboard.type(`New user`)
+    await page.keyboard.press('Tab')
+    await page.keyboard.type(`38`)
+    await page.keyboard.press('Tab')
+    await asyncRepeat(5, () => page.keyboard.press('ArrowDown'))
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Enter')
+    await testDom({
+      tableData: [
+        [`New user`, `38`, `North America`, editButton(), removeButton()],
       ],
     })
 

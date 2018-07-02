@@ -125,7 +125,9 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                     this.writer
                       .writeLine(`// save key, update view, move it before dom pointer, go to next new, go to next old`)
                       .writeLine(`this.__wane__keys.push(newKey)`)
-                      .writeLine(`this.__wane__factoryChildren[newKey].__wane__update(newKey)`)
+                      .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.item = newModel[currNewIndex]`)
+                      .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.index = currNewIndex`)
+                      .writeLine(`this.__wane__factoryChildren[newKey].__wane__update(diff)`)
                       .writeLine(`this.__wane__moveView(this.__wane__factoryChildren[oldKeys[currDomIndex]].__wane__openingCommentOutlet, [this.__wane__factoryChildren[newKey].__wane__openingCommentOutlet, this.__wane__factoryChildren[newKey].__wane__closingCommentOutlet])`)
                       .writeLine(`used[oldKey] = true`)
                       .writeLine(`currNewIndex++`)
@@ -143,7 +145,9 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                     this.writer
                       .writeLine(`// remove from backlog (important because of deleting later), only update`)
                       .writeLine(`this.__wane__keys.push(newKey)`)
-                      .writeLine(`this.__wane__updateView(newKey)`)
+                      .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.item = newModel[currNewIndex]`)
+                      .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.index = currNewIndex`)
+                      .writeLine(`this.__wane__factoryChildren[newKey].__wane__update(diff)`)
                       .writeLine(`backlog[newKey] = undefined`)
                       .writeLine(`used[oldKey] = true`)
                       .writeLine(`currDomIndex = util.__wane__getNextNotUsed(oldKeys, currDomIndex, used)`)
@@ -198,12 +202,14 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                 this.writer
                   .writeLine(`const key = this.__wane__getKey(newModel[currNewIndex])`)
                   .writeLine(`this.__wane__keys.push(key)`)
-                  .writeLine(`if (oldKeys[currDomIndex] ===  key) {`)
+                  .writeLine(`if (oldKeys[currDomIndex] === key) {`)
                   .indentBlock(() => {
                     this.writer
                       .writeLine(`// aligned`)
-                      .writeLine(`this.__wane__updateView(key)`)
-                      .writeLine(`backlog[key] = undefined // we dont cant to delete it later`)
+                      .writeLine(`this.__wane__factoryChildren[key].__wane__data.item = newModel[currNewIndex]`)
+                      .writeLine(`this.__wane__factoryChildren[key].__wane__data.index = currNewIndex`)
+                      .writeLine(`this.__wane__factoryChildren[key].__wane__update(diff)`)
+                      .writeLine(`backlog[key] = undefined // we don't cant to delete it later`)
                       .writeLine(`used[key] = true`)
                       .writeLine(`currDomIndex = util.__wane__getNextNotUsed(oldKeys, currDomIndex, used)`)
                   })
