@@ -2,7 +2,7 @@ import { ClassDeclaration, MethodDeclaration } from 'ts-simple-ast'
 import { ComponentTemplateAnalyzer } from './component-template-analyzer'
 import { ViewBinding } from '../template-nodes/view-bindings'
 import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
-import { getMethodsCalledFrom, getPropsWhichCanBeModifiedBy } from './utils'
+import { canPropBeModified, getMethodsCalledFrom, getPropsWhichCanBeModifiedBy } from './utils'
 
 export class ComponentAnalyzer {
 
@@ -94,6 +94,10 @@ export class ComponentAnalyzer {
 
   public getPropsWhichCanBeModifiedBy (methodName: string): Set<string> {
     return getPropsWhichCanBeModifiedBy(this.classDeclaration, methodName)
+  }
+
+  public canPropBeModified (propName: string): boolean {
+    return canPropBeModified(this.classDeclaration, propName)
   }
 
 }

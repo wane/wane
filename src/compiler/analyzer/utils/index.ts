@@ -130,3 +130,21 @@ export function getPropsWhichCanBeModifiedBy (
 
   return result
 }
+
+function canPropBeModifiedByMethod (
+  classDeclaration: ClassDeclaration,
+  propName: string,
+  methodName: string,
+): boolean {
+  const props = getPropsWhichCanBeModifiedBy(classDeclaration, methodName)
+  return props.has(propName)
+}
+
+export function canPropBeModified (
+  classDeclaration: ClassDeclaration,
+  propName: string,
+): boolean {
+  const methodNames = classDeclaration.getMethods()
+    .map(methodDeclaration => methodDeclaration.getName())
+  return methodNames.some(methodName => canPropBeModifiedByMethod(classDeclaration, propName, methodName))
+}

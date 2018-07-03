@@ -3,6 +3,7 @@ class TestClass01 {
   p1 = 1
   p2 = 2
   p3 = 3
+  p4 = 4
 
   m1 () {
     this.m2()

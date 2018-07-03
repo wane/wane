@@ -3627,6 +3627,65 @@ describe(`FactoryAnalyzer`, () => {
   })
 
 
+  describe(`getDiffablePropNames`, () => {
+
+    describe(`in 01-hello-world`, () => {
+      const fas = get01Factories()
+      describe(`for App`, () => {
+        it(`returns {greeting, someone}`, () => {
+          expect(new Set(fas.app.getDiffablePropNames()))
+            .toEqual(new Set(['greeting', 'someone']))
+        })
+      })
+    })
+
+    describe(`in 02-counter`, () => {
+      const fas = get02Factories()
+      describe(`for CounterCmp`, () => {
+        it(`returns {value}`, () => {
+          expect(new Set(fas.counterCmp.getDiffablePropNames()))
+            .toEqual(new Set(['value']))
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns {count}`, () => {
+          expect(new Set(fas.app.getDiffablePropNames()))
+            .toEqual(new Set(['count']))
+        })
+      })
+    })
+
+    describe(`in 03-toggler`, () => {
+      const fas = get03Factories()
+      describe(`for ToggleCmp`, () => {
+        it(`returns {value}`, () => {
+          expect(new Set(fas.toggleCmp.getDiffablePropNames()))
+            .toEqual(new Set(['value']))
+        })
+      })
+      describe(`for w:if with variable "isJavaScript"`, () => {
+        it(`returns an empty set`, () => {
+          expect(new Set(fas.isJavaScriptCondDir.getDiffablePropNames()))
+            .toEqual(new Set([]))
+        })
+      })
+      describe(`for the partial view under w:if with variable "isJavaScript"`, () => {
+        it(`returns an empty set`, () => {
+          expect(new Set(fas.isJavaScriptPartial.getDiffablePropNames()))
+            .toEqual(new Set([]))
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns {bool, isJavaScript, isTypeScript}`, () => {
+          expect(new Set(fas.app.getDiffablePropNames()))
+            .toEqual(new Set(['bool', 'isJavaScript', 'isTypeScript']))
+        })
+      })
+    })
+
+  })
+
+
   describe(`getClassName`, () => {
 
     describe(`in 01-hello-world`, () => {

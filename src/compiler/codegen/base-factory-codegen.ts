@@ -120,10 +120,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
         this.writer
           .writeLine(`return {`)
           .indentBlock(() => {
-            for (const boundValue of fa.responsibleFor()) {
-              const path = fa.hasDefinedAndResolvesTo(boundValue.getRawPath())
-              if (path == null) continue
-              const [name] = path.split('.')
+            for (const name of fa.getDiffablePropNames()) {
               this.writer
                 .write(`${name}: this.__wane__prevData.${name}`)
                 .write(` !== `)

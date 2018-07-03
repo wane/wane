@@ -1,6 +1,6 @@
 import Project, { ClassDeclaration } from 'ts-simple-ast'
 import * as path from 'path'
-import { getMethodsCalledFrom, getPropsWhichCanBeModifiedBy } from '../index'
+import { canPropBeModified, getMethodsCalledFrom, getPropsWhichCanBeModifiedBy } from '../index'
 
 const loadClassFromFile = (filename: string) => (className: string): ClassDeclaration => {
   const dir = path.join(__dirname.replace(`/dist/`, `/src/`), 'files')
@@ -92,6 +92,23 @@ describe(`Analyzer Utils`, () => {
       // expect(getProps(`m8`)).toEqual(new Set([`p1`]))
       // expect(getProps(`m9`)).toEqual(new Set([`p1`, `p2`, `p3`]))
       // expect(getProps(`m10`)).toEqual(new Set([`p2`]))
+    })
+
+  })
+
+  describe(`canPropBeModified`, () => {
+
+    it(`should work`, () => {
+      const klass1 = loadClass('TestClass01')
+      expect(canPropBeModified(klass1, 'p1')).toBe(true)
+      expect(canPropBeModified(klass1, 'p2')).toBe(true)
+      expect(canPropBeModified(klass1, 'p3')).toBe(true)
+      expect(canPropBeModified(klass1, 'p4')).toBe(false)
+
+      const klass6 = loadClass('TestClass06')
+      expect(canPropBeModified(klass6, 'p1')).toBe(true)
+      expect(canPropBeModified(klass6, 'p2')).toBe(false)
+      expect(canPropBeModified(klass6, 'p3')).toBe(true)
     })
 
   })

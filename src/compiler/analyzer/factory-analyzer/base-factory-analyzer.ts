@@ -543,4 +543,21 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return result
   }
 
+  /**
+   * Get everything that should be diffed in this factory's diff method.
+   * @returns {Iterable<string>}
+   */
+  public getDiffablePropNames (): Iterable<string> {
+    return [...this.responsibleFor()]
+      .filter(boundValue => {
+        const path = this.hasDefinedAndResolvesTo(boundValue.getRawPath())
+        return path != null
+      })
+      .map(boundValue => {
+        const path = this.hasDefinedAndResolvesTo(boundValue.getRawPath())!
+        const [name] = path.split('.')
+        return name
+      })
+  }
+
 }
