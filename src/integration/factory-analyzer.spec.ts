@@ -3583,6 +3583,50 @@ describe(`FactoryAnalyzer`, () => {
   })
 
 
+  describe(`getPathToRoot`, () => {
+
+    describe(`in 01-hello-world`, () => {
+      const fas = get01Factories()
+      describe(`for App`, () => {
+        it(`returns [App]`, () => {
+          expect(fas.app.getPathToRoot()).toEqual([fas.app])
+        })
+      })
+    })
+
+    describe(`in 02-counter`, () => {
+      const fas = get02Factories()
+      describe(`for CounterCmp`, () => {
+        it(`returns [CounterCmp, App]`, () => {
+          expect(fas.counterCmp.getPathToRoot()).toEqual([fas.counterCmp, fas.app])
+        })
+      })
+      describe(`for App`, () => {
+        it(`returns [App]`, () => {
+          expect(fas.app.getPathToRoot()).toEqual([fas.app])
+        })
+      })
+    })
+
+    describe(`in 04-comparator`, () => {
+      const fas = get04Factories()
+      describe(`for w:if with condition isLeftGreater`, () => {
+        it(`returns [IsLeftGreaterDirective, InfoCmp, App]`, () => {
+          expect(fas.isLeftGreaterCondDir.getPathToRoot())
+            .toEqual([fas.isLeftGreaterCondDir, fas.infoCmp, fas.app])
+        })
+      })
+      describe(`for partial view under w:if with condition isLeftGreater`, () => {
+        it(`returns [IsLeftGreaterPartial, isLeftGreaterDirective, InfoCmp, App]`, () => {
+          expect(fas.isLeftGreaterPartial.getPathToRoot())
+            .toEqual([fas.isLeftGreaterPartial, fas.isLeftGreaterCondDir, fas.infoCmp, fas.app])
+        })
+      })
+    })
+
+  })
+
+
   describe(`getClassName`, () => {
 
     describe(`in 01-hello-world`, () => {

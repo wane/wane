@@ -529,4 +529,18 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return neighbors
   }
 
+  /**
+   * Includes self.
+   * @returns {FactoryAnalyzer<TemplateNodeValue>[]}
+   */
+  public getPathToRoot (): FactoryAnalyzer<TemplateNodeValue>[] {
+    const result: Array<FactoryAnalyzer<TemplateNodeValue>> = [this]
+    let current = this.getParentOrUndefined()
+    while (current != null) {
+      result.push(current)
+      current = current.getParentOrUndefined()
+    }
+    return result
+  }
+
 }

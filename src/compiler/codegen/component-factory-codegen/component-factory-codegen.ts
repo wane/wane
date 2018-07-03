@@ -41,7 +41,15 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
     return this
   }
 
-  protected generateDestroyViewMethod (): this {
+  protected generateDestroyViewMethod (fa: ComponentFactoryAnalyzer): this {
+    if (fa.getPathToRoot().every(cmp => cmp instanceof ComponentFactoryAnalyzer)) {
+      this.writer
+        .writeLine(`// There is no need for __wane__destroy since this factory is not placed under`)
+        .writeLine(`// any factory which can be destroyed (if you trace its ancestors, you'll see`)
+        .writeLine(`// only components, no w:ifs or w:fors).`)
+      return this
+    }
+
     this.writer
       .writeLine(`__wane__destroy() {`)
       .indentBlock(() => {
@@ -73,7 +81,7 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
           .printInitMethod(fa)
           .generateDiffMethod(fa)
           .generateUpdateViewMethod(fa)
-          .generateDestroyViewMethod()
+          .generateDestroyViewMethod(fa)
       })
       .writeLine(`})`)
     return this
