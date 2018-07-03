@@ -5,7 +5,6 @@ import { ViewBinding } from '../template-nodes/view-bindings'
 import iterare from 'iterare'
 import { ViewBoundPropertyAccess } from '../template-nodes/view-bound-value'
 import { getIntersection } from '../utils/utils'
-import { PartialViewFactoryAnalyzer } from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
 
 export abstract class BaseFactoryCodegen extends BaseCodegen {
 
@@ -97,15 +96,19 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
   }
 
   protected printAssembleFactoryChildren (fa: FactoryAnalyzer<TemplateNodeValue>): this {
-    this.writer
-      .writeLine(`util.__wane__createFactoryChildren(this, [`)
-      .indentBlock(() => {
-        for (const factory of fa.getPartialViewFactoryAnalyzer().getChildrenFactories()) {
-          const name = factory.getFactoryName()
-          this.writer.writeLine(`${name}(),`)
-        }
-      })
-      .writeLine(`])`)
+    if (fa.hasChildren()) {
+      this.writer
+        .writeLine(`util.__wane__createFactoryChildren(this, [`)
+        .indentBlock(() => {
+          for (const factory of fa.getPartialViewFactoryAnalyzer().getChildrenFactories()) {
+            const name = factory.getFactoryName()
+            this.writer.writeLine(`${name}(),`)
+          }
+        })
+        .writeLine(`])`)
+    } else {
+      this.writer.writeLine(`this.__wane__factoryChildren = []`)
+    }
     return this
   }
 

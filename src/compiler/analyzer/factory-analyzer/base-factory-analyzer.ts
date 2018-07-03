@@ -390,17 +390,17 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     const indexes = this.getIndexesFor(node.getValueOrThrow())
     const children = node.getChildren()
     for (const index of indexes) {
-      // if (children.length == 0) {
-      //   wr.writeLine(`this.__wane__domNodes[${index}],`)
-      // } else {
-      wr.writeLine(`util.__wane__appendChildren(this.__wane__domNodes[${index}], [`)
-        .indentBlock(() => {
-          for (const child of children) {
-            this._printAssemblingDomNodesGeneric(wr, child)
-          }
-        })
-        .writeLine(`])`)
-      // }
+      if (children.length == 0) {
+        wr.writeLine(`this.__wane__domNodes[${index}],`)
+      } else {
+        wr.writeLine(`util.__wane__appendChildren(this.__wane__domNodes[${index}], [`)
+          .indentBlock(() => {
+            for (const child of children) {
+              this._printAssemblingDomNodesGeneric(wr, child)
+            }
+          })
+          .writeLine(`])`)
+      }
     }
     return wr
   }
