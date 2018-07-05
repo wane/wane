@@ -25,7 +25,7 @@ import {
   ConditionalViewBinding,
   HtmlElementPropBinding,
   InterpolationBinding,
-  RepeatingViewBinding,
+  RepeatingViewBinding, TextBinding,
 } from '../../template-nodes/view-bindings'
 import {
   ViewBoundConstant,
@@ -39,8 +39,9 @@ import { stripIndent } from 'common-tags'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { Forest, TreeNode } from '../../utils/tree'
 import parseTemplate from './index'
+import { TemplateNodeTextValue } from "../../template-nodes/nodes/text-node";
 
-function position (startIndex: number,
+export function position (startIndex: number,
                    startLine: number,
                    startColumn: number,
                    endIndex: number,
@@ -60,7 +61,7 @@ function position (startIndex: number,
   }
 }
 
-const DUMMY_POSITION = position(0, 0, 0, 0, 0, 0)
+export const DUMMY_POSITION = position(0, 0, 0, 0, 0, 0)
 
 describe(`isJustPropertyAccess`, () => {
 
@@ -103,8 +104,8 @@ describe(`handleText`, () => {
       content: `foo`,
       position: DUMMY_POSITION,
     }
-    const node = new TemplateNodeInterpolationValue(
-      new InterpolationBinding(
+    const node = new TemplateNodeTextValue(
+      new TextBinding(
         new ViewBoundConstant(`'foo'`),
       ),
       htmlNode,
@@ -133,8 +134,8 @@ describe(`handleText`, () => {
       content: `foo {{ bar }} baz`,
       position: DUMMY_POSITION,
     }
-    const nodeFoo = new TemplateNodeInterpolationValue(
-      new InterpolationBinding(
+    const nodeFoo = new TemplateNodeTextValue(
+      new TextBinding(
         new ViewBoundConstant(`'foo '`),
       ),
       htmlNode,
@@ -145,8 +146,8 @@ describe(`handleText`, () => {
       ),
       htmlNode,
     )
-    const nodeBaz = new TemplateNodeInterpolationValue(
-      new InterpolationBinding(
+    const nodeBaz = new TemplateNodeTextValue(
+      new TextBinding(
         new ViewBoundConstant(`' baz'`),
       ),
       htmlNode,
@@ -166,8 +167,8 @@ describe(`handleText`, () => {
       ),
       htmlNode,
     )
-    const nodeBar = new TemplateNodeInterpolationValue(
-      new InterpolationBinding(
+    const nodeBar = new TemplateNodeTextValue(
+      new TextBinding(
         new ViewBoundConstant(`' bar '`),
       ),
       htmlNode,
@@ -725,8 +726,8 @@ describe(`INTEGRATION`, () => {
     `
     const forest = new Forest<TemplateNodeValue>([
       new TreeNode(
-        new TemplateNodeInterpolationValue(
-          new InterpolationBinding(
+        new TemplateNodeTextValue(
+          new TextBinding(
             new ViewBoundConstant(`'foo bar baz'`),
           ),
           {
@@ -749,8 +750,8 @@ describe(`INTEGRATION`, () => {
     `
     const forest = new Forest<TemplateNodeValue>([
       new TreeNode<TemplateNodeValue>(
-        new TemplateNodeInterpolationValue(
-          new InterpolationBinding(
+        new TemplateNodeTextValue(
+          new TextBinding(
             new ViewBoundConstant(`'foo\\n'`),
           ),
           {
@@ -787,8 +788,8 @@ describe(`INTEGRATION`, () => {
         ),
         [
           new TreeNode<TemplateNodeValue>(
-            new TemplateNodeInterpolationValue(
-              new InterpolationBinding(
+            new TemplateNodeTextValue(
+              new TextBinding(
                 new ViewBoundConstant(`'\\n  baz '`),
               ),
               {
@@ -802,18 +803,6 @@ describe(`INTEGRATION`, () => {
             new TemplateNodeInterpolationValue(
               new InterpolationBinding(
                 new ViewBoundPropertyAccess(`qux`),
-              ),
-              {
-                type: 'text',
-                content: `\n  baz {{ qux }}\n`,
-                position: position(21, 1, 17, 38, 3, 0),
-              },
-            ),
-          ),
-          new TreeNode<TemplateNodeValue>(
-            new TemplateNodeInterpolationValue(
-              new InterpolationBinding(
-                new ViewBoundConstant(`'\\n'`),
               ),
               {
                 type: 'text',

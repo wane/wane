@@ -1,8 +1,8 @@
 // @ts-ignore
 import { Entry, Template, Register } from 'wane'
 
-@Template(`a
-  <button (click)="changeState()">Toggle (currently {{ value }})</button>b
+@Template(`
+  <button (click)="changeState()">Toggle (currently {{ value }})</button>
 `)
 export class ToggleCmp {
   public value!: boolean
@@ -17,7 +17,7 @@ export class ToggleCmp {
 
 @Entry()
 @Register(ToggleCmp)
-@Template(`c
+@Template(`
   <toggle-cmp
     [value]="bool"
     (valueChange)="onChange(#)"
@@ -25,13 +25,13 @@ export class ToggleCmp {
   
   You've chosen...
   
-  <w:if isJavaScript>q
-    <span style="font-weight: bold">JavaScript!</span>Q
-  </w:if>d
+  <w:if isJavaScript>
+    <span style="font-weight: bold">JavaScript!</span>
+  </w:if>
   
-  <w:if isTypeScript>w
-    <span style="font-style: italic">TypeScript!</span>W
-  </w:if>e
+  <w:if isTypeScript>
+    <span style="font-style: italic">TypeScript!</span>
+  </w:if>
 `)
 export class App {
   private bool: boolean = false

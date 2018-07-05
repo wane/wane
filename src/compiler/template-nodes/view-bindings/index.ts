@@ -6,6 +6,7 @@ import CodeBlockWriter from 'code-block-writer'
 import { TemplateNodeConditionalViewValue } from '../nodes/conditional-view-node'
 import { TemplateNodeRepeatingViewValue } from '../nodes/repeating-view-node'
 import { FactoryAnalyzer } from '../../analyzer'
+import { TemplateNodeTextValue } from "../nodes/text-node";
 
 export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
 
@@ -79,6 +80,34 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
 
   public getFirstScopeBoundaryUpwardsIncludingSelf (): FactoryAnalyzer<TemplateNodeValue> {
     return this.boundValue.getFirstScopeBoundaryUpwardsIncludingSelf()
+  }
+
+}
+
+export class TextBinding extends ViewBinding<TemplateNodeTextValue> {
+
+  constructor (boundValue: ViewBoundConstant) {
+    super(boundValue)
+  }
+
+  public isNativeHtml (): boolean {
+    return true
+  }
+
+  public printInit (wr: CodeBlockWriter,
+                    instance: string,
+                    from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()
+  ): CodeBlockWriter {
+    // Already been initialzied when the DOM node was created
+    return wr
+  }
+
+  public printUpdate (wr: CodeBlockWriter,
+                      instance: string,
+                      from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()
+  ): CodeBlockWriter {
+    // Always constant, nothing to update.
+    return wr
   }
 
 }

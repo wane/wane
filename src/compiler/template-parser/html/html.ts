@@ -7,7 +7,7 @@ import {
   HtmlElementEventBinding,
   HtmlElementPropBinding,
   InterpolationBinding,
-  RepeatingViewBinding,
+  RepeatingViewBinding, TextBinding,
 } from '../../template-nodes/view-bindings'
 import {
   ViewBoundConstant,
@@ -20,7 +20,8 @@ import { TemplateNodeConditionalViewValue } from '../../template-nodes/nodes/con
 import { TemplateNodeRepeatingViewValue } from '../../template-nodes/nodes/repeating-view-node'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { TemplateNodeComponentValue } from '../../template-nodes/nodes/component-node'
-import { TreeNode } from '../../utils/tree'
+import { Forest, TreeNode } from '../../utils/tree'
+import { TemplateNodeTextValue } from "../../template-nodes/nodes/text-node";
 
 function assert (test: boolean, ...message: any[]): void {
   if (!test) {
@@ -65,10 +66,10 @@ export function isJustPropertyAccess (string: string, disallowNegation: boolean 
     : /^!?[a-zA-Z.]*$/g.test(string)
 }
 
-export function handleText (htmlNode: himalaya.Text): TemplateNodeInterpolationValue[] {
+export function handleText (htmlNode: himalaya.Text): TemplateNodeValue[] {
   const { content } = htmlNode
   const array = content.split(HANDLEBARS_REGEX)
-  const nodes: TemplateNodeInterpolationValue[] = []
+  const nodes: TemplateNodeValue[] = []
   array.forEach((chunk, index) => {
     // The regex will turn "{{ foo }}" into ['', 'foo', ''].
     // We must keep them in order to maintain the indexes, so we skip them as special cases.
@@ -77,9 +78,16 @@ export function handleText (htmlNode: himalaya.Text): TemplateNodeInterpolationV
     }
 
     const isText = index % 2 == 0
-    const viewBoundValue = isText ? new ViewBoundConstant(`'${escape(chunk)}'`) : new ViewBoundPropertyAccess(chunk)
-    const viewBinding = new InterpolationBinding(viewBoundValue)
-    const templateNode = new TemplateNodeInterpolationValue(viewBinding, htmlNode)
+    let templateNode: TemplateNodeValue
+    if (isText) {
+      const viewBoundValue = new ViewBoundConstant(`'${escape(chunk)}'`)
+      const viewBinding = new TextBinding(viewBoundValue)
+      templateNode = new TemplateNodeTextValue(viewBinding, htmlNode)
+    } else {
+      const viewBoundValue = resolveBinding(chunk)
+      const viewBinding = new InterpolationBinding(viewBoundValue)
+      templateNode = new TemplateNodeInterpolationValue(viewBinding, htmlNode)
+    }
     nodes.push(templateNode)
   })
   return nodes
@@ -431,5 +439,19 @@ export function handleNodeRecursively (htmlNode: himalaya.Node): TreeNode<Templa
     return []
   } else {
     throw new Error(`Unknown HTML node type.`)
+  }
+}
+
+export function parseTemplate (html: string): Forest<TemplateNodeValue> {
+  try {
+    const roots = himalaya.parse(html, { ...himalaya.parseDefaults, includePositions: true })
+      .map(handleNodeRecursively)
+      .reduce((acc, curr) => [...acc, ...curr], [])
+    return new Forest(roots)
+  } catch (e) {
+    if (e instanceof ParseError) {
+      console.error(e.toString())
+    }
+    throw e
   }
 }

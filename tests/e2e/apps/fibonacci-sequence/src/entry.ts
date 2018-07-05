@@ -12,7 +12,7 @@ function* fibonacci (n: number) {
 
 @Template(`
   <w:for number of numbers>
-    {{ number }}
+    {{ number }}{{' '}}
   </w:for>
 `)
 export class SequenceCmp {

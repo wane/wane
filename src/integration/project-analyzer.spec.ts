@@ -5,8 +5,9 @@ import { ComponentFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/
 import { ConditionalViewFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/conditional-view-factory-analyzer'
 import { RepeatingViewFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/repeating-view-factory-analyzer'
 import { TemplateNodeHtmlValue, TemplateNodeInterpolationValue } from '../compiler/template-nodes'
-import { assertIsInterpolationAndHasNoChildren } from './utils'
+import { assertIsInterpolationAndHasNoChildren, assertIsTextAndHasNoChildren } from './utils'
 import { PartialViewFactoryAnalyzer } from '../compiler/analyzer/factory-analyzer/partial-view-factory-analyzer'
+import { TemplateNodeTextValue } from "../compiler/template-nodes/nodes/text-node";
 
 describe(`ProjectAnalyzer`, () => {
 
@@ -300,10 +301,10 @@ describe(`ProjectAnalyzer`, () => {
       describe(`App`, () => {
         const entry = apps.helloWorld.getFactoryTree().view
         describe(`roots`, () => {
-          it(`there are five in total`, () => {
-            expect(Array.from(entry.getRoots()).length).toEqual(5)
+          it(`there are four in total`, () => {
+            expect(Array.from(entry.getRoots()).length).toEqual(4)
           })
-          it(`the first one is interpolation (constant leading whitespace)`, () => {
+          it(`the first one is interpolation (greeting binding)`, () => {
             const value = entry.getNthRoot(0).getValueOrThrow()
             expect(value instanceof TemplateNodeInterpolationValue).toBe(true)
           })
@@ -311,15 +312,15 @@ describe(`ProjectAnalyzer`, () => {
             const node = entry.getNthRoot(0)
             expect(node.hasChildren()).toBe(false)
           })
-          it(`the second one is interpolation (greeting binding)`, () => {
+          it(`the second one is text (comma between two interpolations)`, () => {
             const value = entry.getNthRoot(1).getValueOrThrow()
-            expect(value instanceof TemplateNodeInterpolationValue).toBe(true)
+            expect(value instanceof TemplateNodeTextValue).toBe(true)
           })
           it(`the second one has no children`, () => {
             const node = entry.getNthRoot(1)
             expect(node.hasChildren()).toBe(false)
           })
-          it(`the third one is interpolation (comma between two interpolations)`, () => {
+          it(`the third one is interpolation (someone binding)`, () => {
             const value = entry.getNthRoot(2).getValueOrThrow()
             expect(value instanceof TemplateNodeInterpolationValue).toBe(true)
           })
@@ -327,20 +328,12 @@ describe(`ProjectAnalyzer`, () => {
             const node = entry.getNthRoot(2)
             expect(node.hasChildren()).toBe(false)
           })
-          it(`the fourth one is interpolation (someone binding)`, () => {
+          it(`the fourth one is text exclamation mark`, () => {
             const value = entry.getNthRoot(3).getValueOrThrow()
-            expect(value instanceof TemplateNodeInterpolationValue).toBe(true)
+            expect(value instanceof TemplateNodeTextValue).toBe(true)
           })
           it(`the fourth one has no children`, () => {
             const node = entry.getNthRoot(3)
-            expect(node.hasChildren()).toBe(false)
-          })
-          it(`the fifth one is interpolation (someone binding)`, () => {
-            const value = entry.getNthRoot(4).getValueOrThrow()
-            expect(value instanceof TemplateNodeInterpolationValue).toBe(true)
-          })
-          it(`the fifth one has no children`, () => {
-            const node = entry.getNthRoot(4)
             expect(node.hasChildren()).toBe(false)
           })
         })
@@ -354,15 +347,12 @@ describe(`ProjectAnalyzer`, () => {
         const view = counterComponent.view
         describe(`roots`, () => {
           describe(`length`, () => {
-            it(`is 7: ws, button, ws, span, ws, button, ws`, () => {
-              expect(view.getRootCount()).toBe(7)
+            it(`is 3: button, span, button`, () => {
+              expect(view.getRootCount()).toBe(3)
             })
           })
-          describe(`first child (whitespace)`, () => {
-            assertIsInterpolationAndHasNoChildren(view.getNthRoot(0))
-          })
-          describe(`second child (button)`, () => {
-            const child = view.getNthRoot(1)
+          describe(`first child (button)`, () => {
+            const child = view.getNthRoot(0)
             it(`is html element`, () => {
               expect(child.getValueOrThrow() instanceof TemplateNodeHtmlValue).toBe(true)
             })
@@ -370,14 +360,11 @@ describe(`ProjectAnalyzer`, () => {
               expect(child.getChildrenCount()).toBe(1)
             })
             describe(`first child ("decrement")`, () => {
-              assertIsInterpolationAndHasNoChildren(child.getFirstChild()!)
+              assertIsTextAndHasNoChildren(child.getFirstChild()!)
             })
           })
-          describe(`third child (whitespace)`, () => {
-            assertIsInterpolationAndHasNoChildren(view.getNthRoot(2))
-          })
-          describe(`fourth child (span)`, () => {
-            const child = view.getNthRoot(3)
+          describe(`second child (span)`, () => {
+            const child = view.getNthRoot(1)
             it(`is html element`, () => {
               expect(child.getValueOrThrow() instanceof TemplateNodeHtmlValue).toBe(true)
             })
@@ -388,11 +375,8 @@ describe(`ProjectAnalyzer`, () => {
               assertIsInterpolationAndHasNoChildren(child.getFirstChild()!)
             })
           })
-          describe(`fifth child (whitespace)`, () => {
-            assertIsInterpolationAndHasNoChildren(view.getNthRoot(4))
-          })
-          describe(`sixth child (button)`, () => {
-            const child = view.getNthRoot(5)
+          describe(`third child (button)`, () => {
+            const child = view.getNthRoot(2)
             it(`is html element`, () => {
               expect(child.getValueOrThrow() instanceof TemplateNodeHtmlValue).toBe(true)
             })
@@ -400,11 +384,8 @@ describe(`ProjectAnalyzer`, () => {
               expect(child.getChildrenCount()).toBe(1)
             })
             describe(`first child`, () => {
-              assertIsInterpolationAndHasNoChildren(child.getFirstChild()!)
+              assertIsTextAndHasNoChildren(child.getFirstChild()!)
             })
-          })
-          describe(`seventh child (whitespace)`, () => {
-            assertIsInterpolationAndHasNoChildren(view.getNthRoot(6))
           })
         })
       })

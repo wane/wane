@@ -1,4 +1,4 @@
-import { and, isCmpNodeWithName, isInterpolationNodeWithProp, or } from './utils'
+import { and, isCmpNodeWithName, or } from './utils'
 import { isType } from '../../utils/utils'
 import { TemplateNodeComponentValue } from './component-node'
 import { TemplateNodeInterpolationValue } from './interpolation-node'
