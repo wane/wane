@@ -1,8 +1,12 @@
 import CodeBlockWriter from 'code-block-writer'
-import { ComponentFactoryAnalyzer } from '../../analyzer/factory-analyzer/component-factory-analyzer'
-import { paramCase } from 'change-case'
-import { BaseFactoryCodegen } from '../base-factory-codegen'
+import {ComponentFactoryAnalyzer} from '../../analyzer/factory-analyzer/component-factory-analyzer'
+import {paramCase} from 'change-case'
+import {BaseFactoryCodegen} from '../base-factory-codegen'
 import * as path from 'path'
+import {or} from '../../template-nodes/nodes/utils'
+import {isInstance} from '../../utils/utils'
+import {TemplateNodeHtmlValue} from '../../template-nodes'
+import {TemplateNodeComponentValue} from '../../template-nodes/nodes/component-node'
 
 export class ComponentFactoryCodegen extends BaseFactoryCodegen {
 
@@ -33,6 +37,7 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
           .printAssemblingDomNodes(fa)
           .printAssembleFactoryChildren(fa)
           .printDomPropsInit(fa)
+          .printStylesEncapsulationAttributes(fa)
         this.writer
           .writeLine(`this.${this.names.diff}() // to populate the previous state`)
       })
@@ -87,12 +92,30 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
     return this
   }
 
-  public printCode (fa: ComponentFactoryAnalyzer): CodeBlockWriter {
+  private printStylesEncapsulationAttributes (fa: ComponentFactoryAnalyzer): this {
+    const nodes = fa.getSavedNodes()
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i]
+      if (or(isInstance(TemplateNodeHtmlValue), isInstance(TemplateNodeComponentValue))(node)) {
+        this.writer.writeLine(`this.__wane__domNodes[${i}].setAttribute('data-w-${fa.identifier.id}', '')`)
+      }
+    }
     return this
+  }
+
+  public printCode (fa: ComponentFactoryAnalyzer): CodeBlockWriter {
+    this
       .resetWriter()
       .printImports(fa)
       .generateComponentFactory(fa)
       .getWriter()
+
+    const styles = fa.getStyles()
+    if (styles != null) {
+      this.styleCodegen.addStyle(styles)
+    }
+
+    return this.writer
   }
 
   public getFactoryName (fa: ComponentFactoryAnalyzer): string {

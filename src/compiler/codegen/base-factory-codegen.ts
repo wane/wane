@@ -1,10 +1,11 @@
-import { BaseCodegen } from './base-codegen'
-import { FactoryAnalyzer } from '../analyzer'
-import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
-import { ViewBinding } from '../template-nodes/view-bindings'
+import {BaseCodegen} from './base-codegen'
+import {FactoryAnalyzer} from '../analyzer'
+import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
+import {ViewBinding} from '../template-nodes/view-bindings'
 import iterare from 'iterare'
-import { ViewBoundPropertyAccess } from '../template-nodes/view-bound-value'
-import { getIntersection } from '../utils/utils'
+import {ViewBoundPropertyAccess} from '../template-nodes/view-bound-value'
+import {getIntersection} from '../utils/utils'
+import {StyleCodegen} from './style-codegen/style-codegen'
 
 export abstract class BaseFactoryCodegen extends BaseCodegen {
 

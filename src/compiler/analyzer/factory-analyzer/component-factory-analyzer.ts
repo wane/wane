@@ -1,12 +1,14 @@
-import { ComponentAnalyzer } from '../component-analyzer'
-import { FactoryAnalyzer } from './base-factory-analyzer'
-import { Forest, TreeNode } from '../../utils/tree'
-import { TemplateNodeComponentValue } from '../../template-nodes/nodes/component-node'
-import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
+import {ComponentAnalyzer} from '../component-analyzer'
+import {FactoryAnalyzer} from './base-factory-analyzer'
+import {Forest, TreeNode} from '../../utils/tree'
+import {TemplateNodeComponentValue} from '../../template-nodes/nodes/component-node'
+import {TemplateNodeValue} from '../../template-nodes/nodes/template-node-value-base'
 import iterare from 'iterare'
-import { getIntersection } from '../../utils/utils'
-import { ViewBoundValue } from '../../template-nodes/view-bound-value'
+import {getIntersection} from '../../utils/utils'
+import {ViewBoundValue} from '../../template-nodes/view-bound-value'
 import CodeBlockWriter from 'code-block-writer'
+import {pascal, pascalCase} from 'change-case'
+import parseStyle from '../../style-parser'
 
 export class ComponentFactoryIdentifier {
 
@@ -24,7 +26,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   public identifier: ComponentFactoryIdentifier
   public componentAnalyzer: ComponentAnalyzer
 
-  public getPartialViewFactoryAnalyzer(): this {
+  public getPartialViewFactoryAnalyzer (): this {
     return this
   }
 
@@ -151,6 +153,26 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
       }
     }
     return result
+  }
+
+  public domTagName (): string {
+    if (this.isRoot()) {
+      return `body`
+    } else {
+      return pascalCase(this.getClassName())
+    }
+  }
+
+  public getStyles (): string | null {
+    const uniqueId = this.identifier.id
+    const tagName = this.domTagName()
+    const cssString = this.componentAnalyzer.getStyles()
+    if (cssString == null) return null
+    return parseStyle(uniqueId, tagName, cssString)
+  }
+
+  public hasStyles (): boolean {
+    return this.componentAnalyzer.hasStyles()
   }
 
   public toString (): string {

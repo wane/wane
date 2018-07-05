@@ -19,3 +19,8 @@ declare module 'rollup-plugin-uglify' {
   const val: (options?: any) => Plugin
   export = val
 }
+
+declare module 'css-tree' {
+  const val: any
+  export = val
+}

@@ -1,25 +1,33 @@
 import * as path from 'path'
 import * as del from 'del'
+import * as fs from 'fs'
 import chalk from 'chalk'
-import { rollup } from 'rollup'
+import {rollup} from 'rollup'
 import CodeBlockWriter from 'code-block-writer'
-import { FactoryAnalyzer, ProjectAnalyzer } from '../analyzer'
-import { ComponentFactoryCodegen } from './component-factory-codegen/component-factory-codegen'
-import { ConditionalViewFactoryCodegen } from './conditional-view-factory-codegen/conditional-view-factory-codegen'
-import { RepeatingViewFactoryCodegen } from './repeating-view-factory-codegen/repeating-view-factory-codegen'
-import { HelpersCodegen } from './helpers-codegen/helpers-codegen'
-import { BootstrapCodegen } from './bootstrap-codegen/bootstrap-codegen'
-import { Project, SyntaxKind } from 'ts-simple-ast'
-import { ComponentFactoryAnalyzer } from '../analyzer/factory-analyzer/component-factory-analyzer'
-import { ConditionalViewFactoryAnalyzer } from '../analyzer/factory-analyzer/conditional-view-factory-analyzer'
-import { RepeatingViewFactoryAnalyzer } from '../analyzer/factory-analyzer/repeating-view-factory-analyzer'
-import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
+import {FactoryAnalyzer, ProjectAnalyzer} from '../analyzer'
+import {ComponentFactoryCodegen} from './component-factory-codegen/component-factory-codegen'
+import {ConditionalViewFactoryCodegen} from './conditional-view-factory-codegen/conditional-view-factory-codegen'
+import {RepeatingViewFactoryCodegen} from './repeating-view-factory-codegen/repeating-view-factory-codegen'
+import {HelpersCodegen} from './helpers-codegen/helpers-codegen'
+import {BootstrapCodegen} from './bootstrap-codegen/bootstrap-codegen'
+import {Project, SyntaxKind} from 'ts-simple-ast'
+import {ComponentFactoryAnalyzer} from '../analyzer/factory-analyzer/component-factory-analyzer'
+import {ConditionalViewFactoryAnalyzer} from '../analyzer/factory-analyzer/conditional-view-factory-analyzer'
+import {RepeatingViewFactoryAnalyzer} from '../analyzer/factory-analyzer/repeating-view-factory-analyzer'
+import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
 import * as rollupPluginUglify from 'rollup-plugin-uglify'
-import { WaneCompilerOptions } from '../compile'
-import { PartialViewFactoryCodegen } from './partial-view-codegen/partial-view-factory-codegen'
-import { PartialViewFactoryAnalyzer } from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
+import {WaneCompilerOptions} from '../compile'
+import {PartialViewFactoryCodegen} from './partial-view-codegen/partial-view-factory-codegen'
+import {PartialViewFactoryAnalyzer} from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
+import {StyleCodegen} from './style-codegen/style-codegen'
 
-type Constructor<T> = { new (writerOptions: any, waneCompilerOptions: WaneCompilerOptions): T }
+type Constructor<T> = {
+  new (
+    writerOptions: any,
+    waneCompilerOptions: WaneCompilerOptions,
+    styleCodegen: StyleCodegen,
+  ): T
+}
 
 export class Codegen {
 
@@ -45,10 +53,11 @@ export class Codegen {
     const factoryTree = this.analyzer.getFactoryTree()
 
     this
-      .createFile('util.ts', this.codegen.helpers.printCode())
-      .createFile('bootstrap.ts', this.codegen.bootstrap.printCode(factoryTree))
-      .createFile('main.ts', this.generateMainJsFile())
+      .createTsProjectFile('util.ts', this.codegen.helpers.printCode())
+      .createTsProjectFile('bootstrap.ts', this.codegen.bootstrap.printCode(factoryTree))
+      .createTsProjectFile('main.ts', this.generateMainJsFile())
       .generateFactories(factoryTree)
+      .createFileOnDisk('styles.css', this.styleCodegen.getStyle())
       .stripDecorators()
       .saveAll()
       .emit()
@@ -69,6 +78,7 @@ export class Codegen {
     useSingleQuote: true,
   }
 
+  private styleCodegen: StyleCodegen = new StyleCodegen()
   private codegen: {
     helpers: HelpersCodegen,
     bootstrap: BootstrapCodegen,
@@ -79,13 +89,25 @@ export class Codegen {
   }
 
   private createCodegen<T> (codegen: Constructor<T>): T {
-    return new codegen(this.writerOptions, this.waneCompilerOptions)
+    return new codegen(
+      this.writerOptions,
+      this.waneCompilerOptions,
+      this.styleCodegen,
+    )
   }
 
-  private createFile (filePath: string, writer: CodeBlockWriter): this {
+  private createTsProjectFile (filePath: string, writer: CodeBlockWriter): this {
+    const content = writer.toString()
     const fullFilePath = path.join(path.relative(process.cwd(), this.distDirectory), filePath)
-    this.project.createSourceFile(fullFilePath, writer.toString())
-    // console.log(`Created file ${fullFilePath}.`)
+    this.project.createSourceFile(fullFilePath, content)
+    // console.log(`Created project file ${fullFilePath}: "${content.slice(0, 80).replace(/\s+/g, ' ')}..."`)
+    return this
+  }
+
+  private createFileOnDisk (filePath: string, content: string): this {
+    const fullFilePath = path.join(this.distDirectory, filePath)
+    fs.writeFileSync(fullFilePath, content, {encoding: 'utf8'})
+    // console.log(`Created file on disk ${fullFilePath}: "${content.slice(0, 80).replace(/\s+/g, ' ')}..."`)
     return this
   }
 
@@ -103,7 +125,7 @@ export class Codegen {
       throw new Error(`Unknown type of FactoryAnalyzer.`)
     }
 
-    this.createFile(factory.getFactoryFilenameWithExtension(), writer)
+    this.createTsProjectFile(factory.getFactoryFilenameWithExtension(), writer)
 
     factory.getChildren().forEach(childFactory => {
       this.generateFactories(childFactory)
@@ -183,7 +205,7 @@ export class Codegen {
       return this
     } catch (error) {
       if (error.code == 'PARSE_ERROR') {
-        const { loc: { file, line, column }, frame } = error
+        const {loc: {file, line, column}, frame} = error
         const [dirname, filename] = [path.dirname(file), path.basename(file)]
         const formattedFile = path.join(dirname, chalk.bold(filename))
         console.error(chalk.red(`Error during bundling in ${formattedFile} (${line}:${column}).`))

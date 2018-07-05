@@ -22,6 +22,12 @@ export function Entry () {
   }
 }
 
+export function Style (css: string) {
+  return function (target: any) {
+    return target
+  }
+}
+
 export function HostAttribute (name: string) {
   return function (target: any, key: string) {
     return target

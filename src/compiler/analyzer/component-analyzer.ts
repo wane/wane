@@ -1,8 +1,8 @@
-import { ClassDeclaration, MethodDeclaration } from 'ts-simple-ast'
-import { ComponentTemplateAnalyzer } from './component-template-analyzer'
-import { ViewBinding } from '../template-nodes/view-bindings'
-import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
-import { canPropBeModified, getMethodsCalledFrom, getPropsWhichCanBeModifiedBy } from './utils'
+import {ClassDeclaration, MethodDeclaration, NoSubstitutionTemplateLiteral} from 'ts-simple-ast'
+import {ComponentTemplateAnalyzer} from './component-template-analyzer'
+import {ViewBinding} from '../template-nodes/view-bindings'
+import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
+import {canPropBeModified, getMethodsCalledFrom, getPropsWhichCanBeModifiedBy} from './utils'
 
 export class ComponentAnalyzer {
 
@@ -52,7 +52,6 @@ export class ComponentAnalyzer {
     return this.componentTemplateAnalyzer.getNamesOfBoundProperties()
   }
 
-
   public getRegisteredComponentsDeclarations (): Set<ClassDeclaration> {
     const component = this.classDeclaration
     const set = new Set<ClassDeclaration>()
@@ -98,6 +97,21 @@ export class ComponentAnalyzer {
 
   public canPropBeModified (propName: string): boolean {
     return canPropBeModified(this.classDeclaration, propName)
+  }
+
+  public getStyles (): string | null {
+    const component = this.classDeclaration
+    const styleDecorator = component.getDecorator('Style')
+    if (styleDecorator == null) return null
+    const string = styleDecorator.getArguments()[0]
+    if (string instanceof NoSubstitutionTemplateLiteral) {
+      return string.getLiteralValue()
+    }
+    return null
+  }
+
+  public hasStyles(): boolean {
+    return this.getStyles() != null
   }
 
 }

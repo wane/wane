@@ -2,13 +2,14 @@ import { expectDomStructure, h, runTest } from '../../utils'
 import { expect } from 'chai'
 import { getValue } from '../../utils/puppeteer-utils'
 
+const shadow = {'data-w-0': ''}
 function dom (text: string) {
   return h.body([
     h.script({ src: 'index.js' }),
-    h.p(text),
-    h.label([
-      h.span('Name'),
-      h.input({ type: 'text' }),
+    h.p( shadow, [text]),
+    h.label(shadow, [
+      h.span(shadow, ['Name']),
+      h.input({ ...shadow, type: 'text' }),
     ]),
   ])
 }

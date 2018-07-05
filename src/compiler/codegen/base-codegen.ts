@@ -1,11 +1,13 @@
 import CodeBlockWriter from 'code-block-writer'
-import { WaneCompilerOptions } from '../compile'
+import {WaneCompilerOptions} from '../compile'
+import {StyleCodegen} from './style-codegen/style-codegen'
 
 export abstract class BaseCodegen {
 
   constructor (
     protected writerOptions: any,
     protected waneCompilerOptions: WaneCompilerOptions,
+    public styleCodegen: StyleCodegen,
   ) {
   }
 
