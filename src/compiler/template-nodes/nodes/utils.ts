@@ -60,18 +60,18 @@ export function isConditionalViewNodeWithVar (path: string): Guard<TreeNode<Temp
   )
 }
 
-export function isInterpolationNodeWithProp (propAccessorPath: string): Guard<TreeNode<TemplateNodeInterpolationValue>> {
-  return and(
-    isTreeNodeValueTypeOf(TemplateNodeInterpolationValue),
-    node => !node.getValueOrThrow().getBinding().boundValue.isConstant(),
-    node => node.getValueOrThrow().rawContent() == propAccessorPath,
-  )
-}
-
-export function isTextNodeWithContent (textContent: string): Guard<TreeNode<TemplateNodeInterpolationValue>> {
-  return and(
-    isTreeNodeValueTypeOf(TemplateNodeInterpolationValue),
-    node => node.getValueOrThrow().getBinding().boundValue.isConstant(),
-    node => isStringSameWhenTrimmed(node.getValueOrThrow().rawContent())(textContent),
-  )
-}
+// export function isInterpolationNodeWithProp (propAccessorPath: string): Guard<TreeNode<TemplateNodeInterpolationValue>> {
+//   return and(
+//     isTreeNodeValueTypeOf(TemplateNodeInterpolationValue),
+//     // node => !node.getValueOrThrow().getBinding().boundValue.isConstant(),
+//     node => node.getValueOrThrow().rawContent() == propAccessorPath,
+//   )
+// }
+//
+// export function isTextNodeWithContent (textContent: string): Guard<TreeNode<TemplateNodeInterpolationValue>> {
+//   return and(
+//     isTreeNodeValueTypeOf(TemplateNodeInterpolationValue),
+//     // node => node.getValueOrThrow().getBinding().boundValue.isConstant(),
+//     node => isStringSameWhenTrimmed(node.getValueOrThrow().rawContent())(textContent),
+//   )
+// }

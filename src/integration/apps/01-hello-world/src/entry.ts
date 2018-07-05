@@ -6,6 +6,6 @@ import { Entry, Template } from 'wane'
   {{ greeting }}, {{ someone }}!
 `)
 export class App {
-  public greeting: string = `Hello`
-  public someone: string = `World`
+  private greeting: string = `Hello`
+  private someone: string = `World`
 }

@@ -19,19 +19,19 @@ Error.stackTraceLimit = Infinity
 
 async function run () {
   // Basic apps with basic components, inputs, outputs, events.
-  // await helloWorldBasic()
+  await helloWorldBasic()
   await helloWorldWithBinding()
-  // await counter()
-  // await counterWithBoundaries()
-  // await twoCounters()
-  //
-  // // Basic usages of w:if
-  // await palindromeChecker()
-  // await userInfo()
-  //
-  // // Basic usages of w:for
-  // await fibonacciSequence()
-  // await crudTable()
+  await counter()
+  await counterWithBoundaries()
+  await twoCounters()
+
+  // Basic usages of w:if
+  await palindromeChecker()
+  await userInfo()
+
+  // Basic usages of w:for
+  await fibonacciSequence()
+  await crudTable()
 }
 
 async function reportSizes () {

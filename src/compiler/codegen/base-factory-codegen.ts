@@ -153,6 +153,9 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
           this.writer
             .writeLine(`if (${condition}) {`)
             .indentBlock(() => {
+              // TODO: This can leave an empty if block if nothing is written inside.
+              // The way updates are printed needs some rethinking so it's possible
+              // to understand what CAN be written before it's written to the file.
               for (const boundValue of boundValues) {
                 const binding = boundValue.getViewBinding()
                 const instance = `this.__wane__domNodes[${domNodeIndex}]`

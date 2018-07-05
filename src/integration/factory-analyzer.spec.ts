@@ -3304,7 +3304,7 @@ describe(`FactoryAnalyzer`, () => {
           it(`has size 1`, () => expect(set.size).toBe(1))
           it(`contains the "isGreaterString" binding`, () => {
             const [binding] = fas.isLeftGreaterPartial.view
-              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getByChildPath(1)
               .getValueOrThrow()
               .viewBindings
             const boundValue = binding.boundValue as ViewBoundPropertyAccess
@@ -3328,7 +3328,7 @@ describe(`FactoryAnalyzer`, () => {
           it(`has size 1`, () => expect(set.size).toBe(1))
           it(`contains the "isGreaterString" binding`, () => {
             const [binding] = fas.isRightGreaterPartial.view
-              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getByChildPath(1)
               .getValueOrThrow()
               .viewBindings
             const boundValue = binding.boundValue as ViewBoundPropertyAccess
@@ -3368,7 +3368,7 @@ describe(`FactoryAnalyzer`, () => {
           })
           it(`contains the "isGreaterString" binding`, () => {
             const isGreaterStringInterpolationNodeValue = fas.isLeftGreaterCondDir.view
-              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getByChildPath(1)
               .getValueOrThrow()
             const [binding] = isGreaterStringInterpolationNodeValue.viewBindings
             const boundValue = binding.boundValue as ViewBoundPropertyAccess
@@ -3381,7 +3381,7 @@ describe(`FactoryAnalyzer`, () => {
           it(`has size 1`, () => expect(set.size).toBe(1))
           it(`contains the "isGreaterString" binding`, () => {
             const isGreaterStringInterpolationNodeValue = fas.isLeftGreaterCondDir.view
-              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getByChildPath(1)
               .getValueOrThrow()
             const [binding] = isGreaterStringInterpolationNodeValue.viewBindings
             const boundValue = binding.boundValue as ViewBoundPropertyAccess
@@ -3402,7 +3402,7 @@ describe(`FactoryAnalyzer`, () => {
           })
           it(`contains the "isGreaterString" binding`, () => {
             const isGreaterStringInterpolationNodeValue = fas.isRightGreaterCondDir.view
-              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getByChildPath(1)
               .getValueOrThrow()
             const [binding] = isGreaterStringInterpolationNodeValue.viewBindings
             const boundValue = binding.boundValue as ViewBoundPropertyAccess
@@ -3415,7 +3415,7 @@ describe(`FactoryAnalyzer`, () => {
           it(`has size 1`, () => expect(set.size).toBe(1))
           it(`contains the "isGreaterString" binding`, () => {
             const isGreaterStringInterpolationNodeValue = fas.isRightGreaterCondDir.view
-              .findOrFail(isInterpolationNodeWithProp('isGreaterString'))
+              .getByChildPath(1)
               .getValueOrThrow()
             const [binding] = isGreaterStringInterpolationNodeValue.viewBindings
             const boundValue = binding.boundValue as ViewBoundPropertyAccess
@@ -3632,9 +3632,9 @@ describe(`FactoryAnalyzer`, () => {
     describe(`in 01-hello-world`, () => {
       const fas = get01Factories()
       describe(`for App`, () => {
-        it(`returns {greeting, someone}`, () => {
+        it(`returns an empty set because both "greeting" and "someone" are read-only`, () => {
           expect(new Set(fas.app.getDiffablePropNames()))
-            .toEqual(new Set(['greeting', 'someone']))
+            .toEqual(new Set([]))
         })
       })
     })
@@ -3642,7 +3642,7 @@ describe(`FactoryAnalyzer`, () => {
     describe(`in 02-counter`, () => {
       const fas = get02Factories()
       describe(`for CounterCmp`, () => {
-        it(`returns {value}`, () => {
+        it(`returns {value}; even though nothing can change it, it's an input`, () => {
           expect(new Set(fas.counterCmp.getDiffablePropNames()))
             .toEqual(new Set(['value']))
         })

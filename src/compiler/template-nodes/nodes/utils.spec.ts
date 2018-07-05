@@ -112,19 +112,19 @@ describe(`utils`, () => {
     })
   })
 
-  describe(`function interpolationNodeWithProp`, () => {
-    it(`should return true when the given node matches`, () => {
-      expect(isInterpolationNodeWithProp('interpolated')(interpolationNode)).toBe(true)
-    })
-    it(`should return false when the given prop access does not match`, () => {
-      expect(isInterpolationNodeWithProp('whatever')(interpolationNode)).toBe(false)
-    })
-    it(`should return false when the node is pure text (not interpolation)`, () => {
-      expect(isInterpolationNodeWithProp('interpolated')(textNode)).toBe(false)
-    })
-    it(`should return false when the node is not an interpolation node at all`, () => {
-      expect(isInterpolationNodeWithProp('tag-name')(cmpNode)).toBe(false)
-    })
-  })
+  // describe(`function isInterpolationNodeWithProp`, () => {
+  //   it(`should return true when the given node matches`, () => {
+  //     expect(isInterpolationNodeWithProp('interpolated')(interpolationNode)).toBe(true)
+  //   })
+  //   it(`should return false when the given prop access does not match`, () => {
+  //     expect(isInterpolationNodeWithProp('whatever')(interpolationNode)).toBe(false)
+  //   })
+  //   it(`should return false when the node is pure text (not interpolation)`, () => {
+  //     expect(isInterpolationNodeWithProp('interpolated')(textNode)).toBe(false)
+  //   })
+  //   it(`should return false when the node is not an interpolation node at all`, () => {
+  //     expect(isInterpolationNodeWithProp('tag-name')(cmpNode)).toBe(false)
+  //   })
+  // })
 
 })

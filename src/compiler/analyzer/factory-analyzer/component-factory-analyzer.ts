@@ -155,6 +155,18 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     return result
   }
 
+  /**
+   * For components, we filter out things that we know are readonly
+   * (meaning they cannot be changed from within the component).
+   * @returns {Iterable<string>}
+   */
+  public getDiffablePropNames (): Iterable<string> {
+    return [...super.getDiffablePropNames()]
+      .filter(name => {
+        return this.componentAnalyzer.canPropBeModified(name)
+      })
+  }
+
   public domTagName (): string {
     if (this.isRoot()) {
       return `body`

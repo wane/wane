@@ -93,6 +93,7 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
   }
 
   private printStylesEncapsulationAttributes (fa: ComponentFactoryAnalyzer): this {
+    if (!fa.hasStyles()) return this
     const nodes = fa.getSavedNodes()
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i]

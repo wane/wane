@@ -1,4 +1,4 @@
-import {ClassDeclaration, MethodDeclaration, NoSubstitutionTemplateLiteral} from 'ts-simple-ast'
+import {ClassDeclaration, MethodDeclaration, SyntaxKind, NoSubstitutionTemplateLiteral} from 'ts-simple-ast'
 import {ComponentTemplateAnalyzer} from './component-template-analyzer'
 import {ViewBinding} from '../template-nodes/view-bindings'
 import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
@@ -42,6 +42,12 @@ export class ComponentAnalyzer {
 
   public getNamesOfAllMethods (): Set<string> {
     return new Set(this.classDeclaration.getMethods().map(x => x.getName()))
+  }
+
+  public getNamesOfInputs (): Iterable<string> {
+    return [...this.classDeclaration.getProperties()]
+      .filter(prop => prop.hasModifier(SyntaxKind.PublicKeyword))
+      .map(prop => prop.getName())
   }
 
   public getMethodDeclaration (methodName: string): MethodDeclaration {
@@ -95,8 +101,25 @@ export class ComponentAnalyzer {
     return getPropsWhichCanBeModifiedBy(this.classDeclaration, methodName)
   }
 
+  /**
+   * For now, we treat all getters modifiable until we address them in more depth.
+   * TODO ^
+   *
+   * Also we treat all inputs as non-readonly even though we don't ask if they are actually used.
+   * We can address this edge case later.
+   * TODO ^
+   *
+   * @param {string} propName
+   * @returns {boolean}
+   */
   public canPropBeModified (propName: string): boolean {
-    return canPropBeModified(this.classDeclaration, propName)
+    const allGetters = this.classDeclaration.getGetAccessors()
+      .map(getAccessor => getAccessor.getName())
+    const isGetter = allGetters.includes(propName)
+
+    const isInput = [...this.getNamesOfInputs()].includes(propName)
+
+    return isInput || isGetter || canPropBeModified(this.classDeclaration, propName)
   }
 
   public getStyles (): string | null {
