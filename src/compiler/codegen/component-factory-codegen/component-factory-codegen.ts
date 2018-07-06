@@ -30,7 +30,10 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
       .indentBlock(() => {
         fa.printRootDomNodeAssignment(this.writer)
         this.writer
-          .writeLine(`this.${this.names.data} = new ${className}()`)
+          .conditionalWriteLine(
+            fa.componentAnalyzer.getAllVariables().size > 0 || fa.componentAnalyzer.getNamesOfAllMethods().size > 0,
+            `this.${this.names.data} = new ${className}()`,
+          )
         this
           .printTakeValuesFromAncestors(fa)
           .printDomNodesRegistration(fa)
