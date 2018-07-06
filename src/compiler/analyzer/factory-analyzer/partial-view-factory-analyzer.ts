@@ -56,10 +56,6 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
   }
 
   hasDefinedAndResolvesTo (propAccessPath: string): string | null {
-    let print = false
-    if (propAccessPath == 'item.name') {
-      print = true
-    }
     const directiveFa = this.getDirectiveFactoryAnalyzer()
     if (directiveFa instanceof ConditionalViewFactoryAnalyzer) {
       return null
@@ -68,10 +64,10 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
       const indexConstantName = directiveFa.getBinding().indexConstantName
       const [propName, ...rest] = propAccessPath.split('.')
       if (propName == iterativeConstantName) {
-        return [`item`, ...rest].join('.')
+        return [`__wane__data`, `item`, ...rest].join('.')
       }
       if (propAccessPath == indexConstantName) {
-        return `index`
+        return `__wane__data.index`
       }
       return null
     }

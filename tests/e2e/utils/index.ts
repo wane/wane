@@ -5,7 +5,7 @@ import { spawn } from 'child_process'
 import * as path from 'path'
 
 export async function compileTestApp (opts: Partial<WaneCompilerOptions>) {
-  await compile({ pretty: true, ...opts })
+  await compile({ pretty: false, ...opts })
 }
 
 export async function runTest (__dirname: string, test: (page: puppeteer.Page) => Promise<void>) {

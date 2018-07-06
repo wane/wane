@@ -17,6 +17,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
   protected printImports (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     this.writer
       .writeLine(`import * as util from './util.js'`)
+      .writeLine(`import * as __wane__constants from './constants.js'`)
     for (const factory of fa.getChildrenFactories()) {
       this.writer
         .writeLine(`import ${factory.getFactoryName()} from './${factory.getFactoryFilename()}'`)

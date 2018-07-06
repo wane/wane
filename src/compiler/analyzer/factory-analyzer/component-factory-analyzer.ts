@@ -69,10 +69,20 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   }
 
   public hasDefinedAndResolvesTo (identifierAccessorPath: string): string | null {
-    const allProps = this.getPropAndGetterNames()
+    const allVariables = this.componentAnalyzer.getAllVariables()
+    const allConstants = this.componentAnalyzer.getAllConstants()
     const allMethods = this.getMethodNames()
     const [name, ...rest] = identifierAccessorPath.split('.')
-    return allProps.has(name) || allMethods.has(name) ? identifierAccessorPath : null
+
+    if (allVariables.has(name) || allMethods.has(name)) {
+      return `__wane__data.${identifierAccessorPath}`
+    }
+
+    if (allConstants.has(name)) {
+      return `__wane__constants.${this.componentAnalyzer.getConstantName(name)}`
+    }
+
+    return null
   }
 
   public isScopeBoundary (): boolean {
@@ -161,10 +171,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
    * @returns {Iterable<string>}
    */
   public getDiffablePropNames (): Iterable<string> {
-    return [...super.getDiffablePropNames()]
-      .filter(name => {
-        return this.componentAnalyzer.canPropBeModified(name)
-      })
+    return this.componentAnalyzer.getAllVariables()
   }
 
   public domTagName (): string {

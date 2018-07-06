@@ -3,7 +3,7 @@ import {
   MethodDeclaration,
   SyntaxKind,
   NoSubstitutionTemplateLiteral,
-  TypeGuards
+  TypeGuards,
 } from 'ts-simple-ast'
 import {ComponentTemplateAnalyzer} from './component-template-analyzer'
 import {ViewBinding} from '../template-nodes/view-bindings'
@@ -119,6 +119,36 @@ export class ComponentAnalyzer {
     return isInput || isGetter || canPropBeModified(this.classDeclaration, propName)
   }
 
+  public getAllVariables (): Set<string> {
+    const result = new Set<string>()
+    for (const prop of this.getNamesOfAllPropsAndGetters()) {
+      if (this.canPropBeModified(prop)) {
+        result.add(prop)
+      }
+    }
+    return result
+  }
+
+  public getAllConstants (): Set<string> {
+    const result = new Set<string>()
+    for (const prop of this.getNamesOfAllPropsAndGetters()) {
+      if (!this.canPropBeModified(prop)) {
+        result.add(prop)
+      }
+    }
+    return result
+  }
+
+  public getConstantName (propName: string): string {
+    return `${this.getClassName()}$${propName}`
+  }
+
+  public getConstantValue (propName: string): string {
+    const declaration = this.classDeclaration.getPropertyOrThrow(propName)
+    const initializer = declaration.getInitializerOrThrow()
+    return initializer.getText()
+  }
+
   public getStyles (): string | null {
     const component = this.classDeclaration
     const styleDecorator = component.getDecorator('Style')
@@ -130,7 +160,7 @@ export class ComponentAnalyzer {
     return null
   }
 
-  public hasStyles(): boolean {
+  public hasStyles (): boolean {
     return this.getStyles() != null
   }
 

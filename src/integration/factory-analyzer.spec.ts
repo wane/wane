@@ -1446,59 +1446,58 @@ describe(`FactoryAnalyzer`, () => {
 
   describe(`hasDefinedAndResolvesTo`, () => {
 
-    describe(`01-hello-world`, () => {
-      describe(`App`, () => {
-        const app = apps.helloWorld.getFactoryTree()
-        it(`returns itself for "greeting" because it's defined as a class prop`, () => {
-          expect(app.hasDefinedAndResolvesTo(`greeting`)).toBe(`greeting`)
+    describe(`in 01-hello-world`, () => {
+      const fas = get01Factories()
+      describe(`for App`, () => {
+        it(`returns a constant for "greeting" because it's defined as a class prop which is a constant`, () => {
+          expect(fas.app.hasDefinedAndResolvesTo(`greeting`)).toBe(`__wane__constants.App$greeting`)
         })
-        it(`returns itself for "someone" because it's defined as a class prop`, () => {
-          expect(app.hasDefinedAndResolvesTo(`someone`)).toBe(`someone`)
+        it(`returns a constant for "someone" because it's defined as a class prop which is a constant`, () => {
+          expect(fas.app.hasDefinedAndResolvesTo(`someone`)).toBe(`__wane__constants.App$someone`)
         })
         it(`returns null for "foo" because it's not defined as anything`, () => {
-          expect(app.hasDefinedAndResolvesTo(`foo`)).toBe(null)
+          expect(fas.app.hasDefinedAndResolvesTo(`foo`)).toBe(null)
         })
       })
     })
 
-    describe(`02-counter`, () => {
-      const app = apps.counter.getFactoryTree()
-      const counter = app.getFirstChild()
-      describe(`CounterCmp`, () => {
+    describe(`in 02-counter`, () => {
+      const fas = get02Factories()
+      describe(`for CounterCmp`, () => {
         it(`returns itself for "value" because it's defined as an input`, () => {
-          expect(counter.hasDefinedAndResolvesTo(`value`)).toBe(`value`)
+          expect(fas.counterCmp.hasDefinedAndResolvesTo(`value`)).toBe(`__wane__data.value`)
         })
         it(`returns itself for "valueChange" because it's defined as an output`, () => {
-          expect(counter.hasDefinedAndResolvesTo(`valueChange`)).toBe(`valueChange`)
+          expect(fas.counterCmp.hasDefinedAndResolvesTo(`valueChange`)).toBe(`__wane__data.valueChange`)
         })
         it(`returns itself for "inc" because it's defined as a method`, () => {
-          expect(counter.hasDefinedAndResolvesTo(`inc`)).toBe(`inc`)
+          expect(fas.counterCmp.hasDefinedAndResolvesTo(`inc`)).toBe(`__wane__data.inc`)
         })
         it(`returns itself for "dec" because it's defined as a method`, () => {
-          expect(counter.hasDefinedAndResolvesTo(`dec`)).toBe(`dec`)
+          expect(fas.counterCmp.hasDefinedAndResolvesTo(`dec`)).toBe(`__wane__data.dec`)
         })
         it(`returns null for "count" because it's defined on the App`, () => {
-          expect(counter.hasDefinedAndResolvesTo(`count`)).toBe(null)
+          expect(fas.counterCmp.hasDefinedAndResolvesTo(`count`)).toBe(null)
         })
         it(`returns null for "onCountChange" because it's defined on App`, () => {
-          expect(counter.hasDefinedAndResolvesTo(`onCountChange`)).toBe(null)
+          expect(fas.counterCmp.hasDefinedAndResolvesTo(`onCountChange`)).toBe(null)
         })
         it(`returns null for "foo" because it's random`, () => {
-          expect(counter.hasDefinedAndResolvesTo(`foo`)).toBe(null)
+          expect(fas.counterCmp.hasDefinedAndResolvesTo(`foo`)).toBe(null)
         })
       })
-      describe(`App`, () => {
+      describe(`for App`, () => {
         it(`returns itself for "count" because it's defined as a class prop`, () => {
-          expect(app.hasDefinedAndResolvesTo(`count`)).toBe(`count`)
+          expect(fas.app.hasDefinedAndResolvesTo(`count`)).toBe(`__wane__data.count`)
         })
         it(`returns itself for "onCountChange" because it's defined as a class method`, () => {
-          expect(app.hasDefinedAndResolvesTo(`onCountChange`)).toBe(`onCountChange`)
+          expect(fas.app.hasDefinedAndResolvesTo(`onCountChange`)).toBe(`__wane__data.onCountChange`)
         })
         it(`returns null for "value", "valueChange", "inc" and "dec" because those are defined on Counter`, () => {
-          expect(app.hasDefinedAndResolvesTo(`value`)).toBe(null)
-          expect(app.hasDefinedAndResolvesTo(`valueChange`)).toBe(null)
-          expect(app.hasDefinedAndResolvesTo(`inc`)).toBe(null)
-          expect(app.hasDefinedAndResolvesTo(`dec`)).toBe(null)
+          expect(fas.app.hasDefinedAndResolvesTo(`value`)).toBe(null)
+          expect(fas.app.hasDefinedAndResolvesTo(`valueChange`)).toBe(null)
+          expect(fas.app.hasDefinedAndResolvesTo(`inc`)).toBe(null)
+          expect(fas.app.hasDefinedAndResolvesTo(`dec`)).toBe(null)
         })
       })
     })
@@ -1508,13 +1507,13 @@ describe(`FactoryAnalyzer`, () => {
       const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns itself for "value" because it's defined as class prop`, () => {
-          expect(toggleCmp.hasDefinedAndResolvesTo(`value`)).toBe(`value`)
+          expect(toggleCmp.hasDefinedAndResolvesTo(`value`)).toBe(`__wane__data.value`)
         })
         it(`returns itself for "valueChange" because it's defined as a class method`, () => {
-          expect(toggleCmp.hasDefinedAndResolvesTo(`valueChange`)).toBe(`valueChange`)
+          expect(toggleCmp.hasDefinedAndResolvesTo(`valueChange`)).toBe(`__wane__data.valueChange`)
         })
         it(`returns itself for "changeState" because it's a class method`, () => {
-          expect(toggleCmp.hasDefinedAndResolvesTo(`changeState`)).toBe(`changeState`)
+          expect(toggleCmp.hasDefinedAndResolvesTo(`changeState`)).toBe(`__wane__data.changeState`)
         })
         it(`returns null for "bool" because that's defined on the parent`, () => {
           expect(toggleCmp.hasDefinedAndResolvesTo(`bool`)).toBe(null)
@@ -1538,16 +1537,16 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`for App`, () => {
         it(`returns itself for "bool" because it's a class prop`, () => {
-          expect(app.hasDefinedAndResolvesTo(`bool`)).toBe(`bool`)
+          expect(app.hasDefinedAndResolvesTo(`bool`)).toBe(`__wane__data.bool`)
         })
         it(`returns itself for "onChange" because it's a class method`, () => {
-          expect(app.hasDefinedAndResolvesTo(`onChange`)).toBe(`onChange`)
+          expect(app.hasDefinedAndResolvesTo(`onChange`)).toBe(`__wane__data.onChange`)
         })
         it(`returns itself for "isJavaScript" because it's a class getter`, () => {
-          expect(app.hasDefinedAndResolvesTo(`isJavaScript`)).toBe(`isJavaScript`)
+          expect(app.hasDefinedAndResolvesTo(`isJavaScript`)).toBe(`__wane__data.isJavaScript`)
         })
         it(`returns itself for "isTypeScript" because it's a class getter`, () => {
-          expect(app.hasDefinedAndResolvesTo(`isTypeScript`)).toBe(`isTypeScript`)
+          expect(app.hasDefinedAndResolvesTo(`isTypeScript`)).toBe(`__wane__data.isTypeScript`)
         })
         it(`returns null for "value" because that's defined on a child`, () => {
           expect(app.hasDefinedAndResolvesTo(`value`)).toBe(null)
@@ -1591,24 +1590,24 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`for InfoCmp`, () => {
         it(`returns itself for "isLeftGreater"`, () => {
-          expect(infoCmp.hasDefinedAndResolvesTo('isLeftGreater')).toBe('isLeftGreater')
+          expect(infoCmp.hasDefinedAndResolvesTo('isLeftGreater')).toBe('__wane__data.isLeftGreater')
         })
         it(`returns itself for "areEqual"`, () => {
-          expect(infoCmp.hasDefinedAndResolvesTo('areEqual')).toBe('areEqual')
+          expect(infoCmp.hasDefinedAndResolvesTo('areEqual')).toBe('__wane__data.areEqual')
         })
         it(`returns itself for "isGreaterString"`, () => {
-          expect(infoCmp.hasDefinedAndResolvesTo('isGreaterString')).toBe('isGreaterString')
+          expect(infoCmp.hasDefinedAndResolvesTo('isGreaterString')).toBe('__wane__constants.InfoCmp$isGreaterString')
         })
       })
       describe(`for App`, () => {
         it(`returns itself for "left"`, () => {
-          expect(app.hasDefinedAndResolvesTo('left')).toBe('left')
+          expect(app.hasDefinedAndResolvesTo('left')).toBe('__wane__data.left')
         })
         it(`returns itself for "onLeftChange"`, () => {
-          expect(app.hasDefinedAndResolvesTo('onLeftChange')).toBe('onLeftChange')
+          expect(app.hasDefinedAndResolvesTo('onLeftChange')).toBe('__wane__data.onLeftChange')
         })
         it(`returns itself for "isRightGreater"`, () => {
-          expect(app.hasDefinedAndResolvesTo('isRightGreater')).toBe('isRightGreater')
+          expect(app.hasDefinedAndResolvesTo('isRightGreater')).toBe('__wane__data.isRightGreater')
         })
       })
     })
@@ -1618,20 +1617,20 @@ describe(`FactoryAnalyzer`, () => {
       describe(`for ToggleCmp components`, () => {
         describe(`first`, () => {
           it(`returns itself for "value"`, () => {
-            expect(cmps.toggleCmp1.hasDefinedAndResolvesTo('value')).toBe('value')
+            expect(cmps.toggleCmp1.hasDefinedAndResolvesTo('value')).toBe('__wane__data.value')
           })
           it(`returns itself for "changeState"`, () => {
-            expect(cmps.toggleCmp1.hasDefinedAndResolvesTo('valueChange')).toBe('valueChange')
+            expect(cmps.toggleCmp1.hasDefinedAndResolvesTo('valueChange')).toBe('__wane__data.valueChange')
           })
         })
       })
       describe(`for CounterCmp components`, () => {
         describe(`first`, () => {
           it(`returns itself for "value"`, () => {
-            expect(cmps.counterCmp1.hasDefinedAndResolvesTo('value')).toBe('value')
+            expect(cmps.counterCmp1.hasDefinedAndResolvesTo('value')).toBe('__wane__data.value')
           })
           it(`returns itself for "dec"`, () => {
-            expect(cmps.counterCmp1.hasDefinedAndResolvesTo('dec')).toBe('dec')
+            expect(cmps.counterCmp1.hasDefinedAndResolvesTo('dec')).toBe('__wane__data.dec')
           })
         })
       })
@@ -1652,13 +1651,13 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`for App component`, () => {
         it(`returns itself for "values.a"`, () => {
-          expect(cmps.app.hasDefinedAndResolvesTo('values.a')).toBe('values.a')
+          expect(cmps.app.hasDefinedAndResolvesTo('values.a')).toBe('__wane__data.values.a')
         })
         it(`returns itself for "visibility.b"`, () => {
-          expect(cmps.app.hasDefinedAndResolvesTo('visibility.b')).toBe('visibility.b')
+          expect(cmps.app.hasDefinedAndResolvesTo('visibility.b')).toBe('__wane__data.visibility.b')
         })
         it(`returns itself for "onToggle`, () => {
-          expect(cmps.app.hasDefinedAndResolvesTo('onToggle')).toBe('onToggle')
+          expect(cmps.app.hasDefinedAndResolvesTo('onToggle')).toBe('__wane__data.onToggle')
         })
       })
     })

@@ -20,12 +20,14 @@ import {WaneCompilerOptions} from '../compile'
 import {PartialViewFactoryCodegen} from './partial-view-codegen/partial-view-factory-codegen'
 import {PartialViewFactoryAnalyzer} from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
 import {StyleCodegen} from './style-codegen/style-codegen'
+import {ConstantsCodegen} from './constants-codegen'
 
 type Constructor<T> = {
   new (
     writerOptions: any,
     waneCompilerOptions: WaneCompilerOptions,
     styleCodegen: StyleCodegen,
+    constantsCodegen: ConstantsCodegen,
   ): T
 }
 
@@ -57,8 +59,9 @@ export class Codegen {
       .createTsProjectFile('bootstrap.ts', this.codegen.bootstrap.printCode(factoryTree))
       .createTsProjectFile('main.ts', this.generateMainJsFile())
       .generateFactories(factoryTree)
+      .createTsProjectFile('constants.ts', this.constantsCodegen.toString())
       .createFileOnDisk('styles.css', this.styleCodegen.getStyle())
-      .stripDecorators()
+      .transformForRuntime()
       .saveAll()
       .emit()
       .deleteAll()
@@ -79,6 +82,7 @@ export class Codegen {
   }
 
   private styleCodegen: StyleCodegen = new StyleCodegen()
+  private constantsCodegen: ConstantsCodegen = new ConstantsCodegen()
   private codegen: {
     helpers: HelpersCodegen,
     bootstrap: BootstrapCodegen,
@@ -93,11 +97,12 @@ export class Codegen {
       this.writerOptions,
       this.waneCompilerOptions,
       this.styleCodegen,
+      this.constantsCodegen,
     )
   }
 
-  private createTsProjectFile (filePath: string, writer: CodeBlockWriter): this {
-    const content = writer.toString()
+  private createTsProjectFile (filePath: string, writerOrString: CodeBlockWriter | string): this {
+    const content = writerOrString.toString()
     const fullFilePath = path.join(path.relative(process.cwd(), this.distDirectory), filePath)
     this.project.createSourceFile(fullFilePath, content)
     // console.log(`Created project file ${fullFilePath}: "${content.slice(0, 80).replace(/\s+/g, ' ')}..."`)
@@ -134,15 +139,25 @@ export class Codegen {
     return this
   }
 
-  private stripDecorators (): this {
+  private transformForRuntime (): this {
     this.analyzer
       .getAllComponentAnalyzers()
       .forEach(componentAnalyzer => {
-        componentAnalyzer
-          .classDeclaration
+        const declaration = componentAnalyzer.classDeclaration
+
+        // Strip decorators
+        declaration
           .getDescendantsOfKind(SyntaxKind.Decorator)
           .forEach(decorator => {
             decorator.remove()
+          })
+
+        const propsToRemove = [...componentAnalyzer.getAllConstants()]
+        declaration
+          .getProperties()
+          .filter(prop => propsToRemove.includes(prop.getName()))
+          .forEach(propDeclartion => {
+            propDeclartion.remove()
           })
       })
     return this

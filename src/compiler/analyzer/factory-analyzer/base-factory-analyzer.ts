@@ -555,8 +555,8 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
       })
       .map(boundValue => {
         const path = this.hasDefinedAndResolvesTo(boundValue.getRawPath())!
-        const [name] = path.split('.')
-        return name
+        const [name, secondName] = path.split('.')
+        return name == `__wane__data` ? secondName : name // TODO: Uuh...
       })
   }
 

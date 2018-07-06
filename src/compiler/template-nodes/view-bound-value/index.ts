@@ -104,13 +104,17 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
     if (resolvedName == null) {
       throw new Error(`Expected resolved name not to be null.`)
     }
-    return `__wane__data.${resolvedName}`
+    return `${resolvedName}`
   }
 
   public resolve (from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()): string {
-    const factory = this.resolveFactory(from)
     const name = this.resolveNameInFactory()
-    return `${factory}.${name}`
+    if (this.isConstant()) {
+      return name
+    } else {
+      const factory = this.resolveFactory(from)
+      return `${factory}.${name}`
+    }
   }
 
   public isConstant (): boolean {

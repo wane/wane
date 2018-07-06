@@ -216,7 +216,9 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
       .write(`) => {`)
       .newLine()
       .indentBlock(() => {
-        wr.writeLine(this.boundValue.resolve(from))
+        const path = from.printPathTo(this.getDefinitionFactory())
+        wr.writeLine(`this${path}.${this.boundValue.resolve(from)}`)
+
         const factories = this.boundValue.getDefinitionFactory()
           .getFactoriesAffectedByCalling(this.boundValue.getName())
         for (const factory of factories) {
@@ -291,7 +293,8 @@ export class ComponentOutputBinding extends ViewBinding<TemplateNodeComponentVal
       .write(`) => {`)
       .newLine()
       .indentBlock(() => {
-        wr.writeLine(this.boundValue.resolve(from))
+        const path = from.printPathTo(this.getDefinitionFactory())
+        wr.writeLine(`this${path}.${this.boundValue.resolve(from)}`)
       })
       .write(`}`)
   }

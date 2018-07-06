@@ -116,6 +116,13 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
       this.styleCodegen.addStyle(styles)
     }
 
+    const constants = fa.componentAnalyzer.getAllConstants()
+    for (const constant of constants) {
+      const name = fa.componentAnalyzer.getConstantName(constant)
+      const value = fa.componentAnalyzer.getConstantValue(constant)
+      this.constantsCodegen.addConstant(name, value)
+    }
+
     return this.writer
   }
 

@@ -1,6 +1,7 @@
 import CodeBlockWriter from 'code-block-writer'
 import {WaneCompilerOptions} from '../compile'
 import {StyleCodegen} from './style-codegen/style-codegen'
+import {ConstantsCodegen} from './constants-codegen'
 
 export abstract class BaseCodegen {
 
@@ -8,6 +9,7 @@ export abstract class BaseCodegen {
     protected writerOptions: any,
     protected waneCompilerOptions: WaneCompilerOptions,
     public styleCodegen: StyleCodegen,
+    public constantsCodegen: ConstantsCodegen,
   ) {
   }
 
