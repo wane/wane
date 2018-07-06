@@ -1,4 +1,10 @@
-import {ClassDeclaration, MethodDeclaration, SyntaxKind, NoSubstitutionTemplateLiteral} from 'ts-simple-ast'
+import {
+  ClassDeclaration,
+  MethodDeclaration,
+  SyntaxKind,
+  NoSubstitutionTemplateLiteral,
+  TypeGuards
+} from 'ts-simple-ast'
 import {ComponentTemplateAnalyzer} from './component-template-analyzer'
 import {ViewBinding} from '../template-nodes/view-bindings'
 import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
@@ -65,21 +71,12 @@ export class ComponentAnalyzer {
     if (registeredComponentsDecorator == null) return set
     const klasses = registeredComponentsDecorator.getArguments()
     klasses.forEach(klass => {
-      const className = klass.getText()
-      const sourceFile = klass.getSourceFile()
-      const classDeclarationInSameFile = sourceFile.getClass(className)
-      if (classDeclarationInSameFile != null) {
-        set.add(classDeclarationInSameFile)
-      } else {
-        // it's in different file so we look at imports and follow from there
-        // TODO
-        // const imports = sourceFile.getImportDeclarations()
-        // imports.find(anImport => {
-        //   const namedImports = anImport.getNamedImports()
-        //   const theImport = namedImports.find(namedImport => namedImport.getName() == className)
-        //   return true
-        // })
+      const declarations = klass.getType().getSymbolOrThrow().getDeclarations()
+      const classDeclaration = declarations.find(TypeGuards.isClassDeclaration)
+      if (classDeclaration == null) {
+        throw new Error(`Could not find class declaration for "${klass.getText()}".`)
       }
+      set.add(classDeclaration)
     })
     return set
   }
