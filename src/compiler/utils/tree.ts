@@ -1,3 +1,5 @@
+import { Guard, UnaryPredicate } from "./utils";
+
 export class TreeNode<V> {
 
   public clone (): TreeNode<V> {
@@ -422,8 +424,7 @@ export class Forest<V> {
     return string
   }
 
-  // public find<R extends V> (predicate: Guard<TreeNode<V>>): TreeNode<R> | null
-  // public find (predicate: UnaryPredicate<TreeNode<V>>): TreeNode<V> | null
+  public find (predicate: UnaryPredicate<TreeNode<V>>): TreeNode<V> | null
   public find (predicate: (v: any) => boolean): TreeNode<V> | null {
     for (const root of this.roots) {
       const result = root.findInDescendantsAndSelf(predicate)

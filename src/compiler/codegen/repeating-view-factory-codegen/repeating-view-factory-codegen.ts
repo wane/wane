@@ -30,7 +30,7 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
           .writeLine(`this.__wane__positions = {}`)
           .writeLine(`this.__wane__factoryChildren = {}`)
 
-        fa.getBinding().printUpdate(this.writer, 'this.__wane__data', fa)
+        fa.getBinding().printUpdate(this.writer, fa)
 
         this.writer
           .newLineIfLastNot()

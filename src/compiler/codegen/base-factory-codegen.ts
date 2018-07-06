@@ -1,11 +1,10 @@
-import {BaseCodegen} from './base-codegen'
-import {FactoryAnalyzer} from '../analyzer'
-import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
-import {ViewBinding} from '../template-nodes/view-bindings'
+import { BaseCodegen } from './base-codegen'
+import { FactoryAnalyzer } from '../analyzer'
+import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
+import { ViewBinding } from '../template-nodes/view-bindings'
 import iterare from 'iterare'
-import {ViewBoundPropertyAccess} from '../template-nodes/view-bound-value'
-import {getIntersection} from '../utils/utils'
-import {StyleCodegen} from './style-codegen/style-codegen'
+import { ViewBoundPropertyAccess } from '../template-nodes/view-bound-value'
+import { getIntersection } from '../utils/utils'
 
 export abstract class BaseFactoryCodegen extends BaseCodegen {
 
@@ -38,7 +37,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
 
     for (const binding of fa.getSelfBindings()) {
       if (!binding.isNativeHtml()) {
-        binding.printInit(this.writer, `this.__wane__data`, fa)
+        binding.printInit(this.writer, fa)
         this.writer.blankLineIfLastNot()
       }
     }
@@ -71,11 +70,9 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
     iterare(fa.getHtmlNativeDomBindings())
       .filter(predicate)
       .forEach(binding => {
-        for (const index of fa.getIndexesFor(binding.getTemplateNode())) {
-          binding.printInit(this.writer, `this.__wane__domNodes[${index}]`, fa)
-          this.writer.newLineIfLastNot()
-          isAtLeastOneLineWritten = true
-        }
+        binding.printInit(this.writer, fa)
+        this.writer.newLineIfLastNot()
+        isAtLeastOneLineWritten = true
       })
     if (!isAtLeastOneLineWritten) {
       this.writer.writeLine(`// Nothing to do here.`)
@@ -158,8 +155,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
               // to understand what CAN be written before it's written to the file.
               for (const boundValue of boundValues) {
                 const binding = boundValue.getViewBinding()
-                const instance = `this.__wane__domNodes[${domNodeIndex}]`
-                binding.printUpdate(this.writer, instance, fa)
+                binding.printUpdate(this.writer, fa)
               }
             })
             .writeLine(`}`)
@@ -192,12 +188,8 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
                  * is a direct descendant of `this`.
                  */
                 if (definitionFactory == fa.getFirstScopeBoundaryUpwardsIncludingSelf() && factoryDescendant.isChildOf(fa)) {
-                  const factoryChild = factoryDescendant // just for semantics
-                  const factoryChildIndex = factoryChild.getFactoryIndexAsChild()
-                  const factoryChildAccess = `this.__wane__factoryChildren[${factoryChildIndex} /*${factoryChild.getFactoryName()}*/]`
-                  const factoryChildDataAccess = `${factoryChildAccess}.__wane__data`
                   try {
-                    binding.printUpdate(this.writer, factoryChildDataAccess, fa)
+                    binding.printUpdate(this.writer, fa)
                   } catch (e) {
                     this.writer.writeLine(`/** ${e} */`)
                   }

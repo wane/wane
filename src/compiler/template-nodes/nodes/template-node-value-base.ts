@@ -1,5 +1,4 @@
 import { FactoryAnalyzer } from '../../analyzer'
-import CodeBlockWriter from 'code-block-writer'
 import { ViewBinding } from '../view-bindings'
 import * as himalaya from 'himalaya'
 
@@ -53,5 +52,38 @@ export abstract class TemplateNodeValue {
   public abstract printDomInit (from: FactoryAnalyzer<TemplateNodeValue>): string[]
 
   public abstract toString (): string
+
+  public resolveAccessToDomNodes (from: FactoryAnalyzer<TemplateNodeValue>): string[] {
+    const to = this.getResponsibleFactory()
+    const path = from.printPathTo(to)
+    const results: string[] = []
+    for (const index of this.getIndexes()) {
+      results.push(`this${path}.__wane__domNodes[${index}]`)
+    }
+    return results
+  }
+
+  public resolveAccessToSingleDomNode (from: FactoryAnalyzer<TemplateNodeValue>): string {
+    const result = this.resolveAccessToDomNodes(from)
+    if (result.length != 1) {
+      throw new Error(`Expected length to to be 1.`)
+    }
+    return result[0]
+  }
+
+  public getFactoryWhichThisIsAnchorFor (): FactoryAnalyzer<TemplateNodeValue> {
+    const responsibleFactory = this.getResponsibleFactory()
+    const treeNode = responsibleFactory.view.find(t => t.getValueOrThrow() == this)
+    if (treeNode == null) {
+      throw new Error(`Expected to find tree node.`)
+    }
+    const childFactory = [...responsibleFactory.getChildrenFactories()].find(f => {
+      return f.getAnchorViewNode().getValueOrThrow() == treeNode.getValueOrThrow()
+    })
+    if (childFactory == null) {
+      throw new Error(`Expected to find child factory.`)
+    }
+    return childFactory
+  }
 
 }

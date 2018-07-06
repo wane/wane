@@ -38,7 +38,7 @@ export class ConditionalViewFactoryCodegen extends BaseFactoryCodegen {
           .writeLine(`this.__wane__closingCommentOutlet = this.__wane__factoryParent.__wane__domNodes[${closingIndex}]`)
           .writeLine(`this.__wane__factoryChildren = []`)
 
-        fa.getBinding().printInit(this.writer, `this`, fa)
+        fa.getBinding().printInit(this.writer, fa)
 
         this.writer
           .writeLine(`if (this.__wane__data) {`)
