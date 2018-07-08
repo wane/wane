@@ -7,11 +7,13 @@ import { ViewBinding } from '../template-nodes/view-bindings'
 import { TemplateNodeComponentValue } from '../template-nodes/nodes/component-node'
 import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
 import iterare from 'iterare'
+import { echoize } from '../utils/echoize'
 
 export class ComponentTemplateAnalyzer {
 
   private _componentCompilerNode: ComponentAnalyzer | undefined
 
+  @echoize()
   public getDefinition (): Forest<TemplateNodeValue> {
     const decorators = this.klass.getDecorators()
     const templateDecorator = decorators.find(deco => deco.getFullName() == 'Template')
@@ -27,6 +29,7 @@ export class ComponentTemplateAnalyzer {
 
   private _bindings: Set<ViewBinding<TemplateNodeValue>> | undefined
 
+  @echoize()
   private _getBindings (): Set<ViewBinding<TemplateNodeValue>> {
     const result = new Set<ViewBinding<TemplateNodeValue>>()
     this.forEach(node => {
@@ -38,6 +41,7 @@ export class ComponentTemplateAnalyzer {
     return result
   }
 
+  @echoize()
   public getNamesOfBoundProperties (): Set<ViewBinding<TemplateNodeValue>> {
     if (this._bindings == null) {
       this._bindings = this._getBindings()
@@ -83,24 +87,28 @@ export class ComponentTemplateAnalyzer {
     return set
   }
 
+  @echoize()
   public textNodes () {
     return this.filter<TemplateNodeInterpolationValue>(node => {
       return node.getValueOrThrow() instanceof TemplateNodeInterpolationValue
     })
   }
 
+  @echoize()
   public interpolationNodes () {
     return this.filter<TemplateNodeInterpolationValue>(node => {
       return node.getValueOrThrow() instanceof TemplateNodeInterpolationValue
     })
   }
 
+  @echoize()
   public htmlNodes () {
     return this.filter<TemplateNodeHtmlValue>(node => {
       return node.getValueOrThrow() instanceof TemplateNodeHtmlValue
     })
   }
 
+  @echoize()
   public componentNodes () {
     return this.filter<TemplateNodeComponentValue>(node => {
       return node.getValueOrThrow() instanceof TemplateNodeComponentValue
@@ -112,8 +120,7 @@ export class ComponentTemplateAnalyzer {
   //   return value.getNamesOfBoundMethods()
   // }
 
-  private _componentNames: Set<string> | undefined
-
+  @echoize()
   private getComponentNames (): Set<string> {
     const componentNames = new Set<string>()
     this.forEach(node => {
@@ -125,13 +132,7 @@ export class ComponentTemplateAnalyzer {
     return componentNames
   }
 
-  public get componentNames (): Set<string> {
-    if (this._componentNames == null) {
-      this._componentNames = this.getComponentNames()
-    }
-    return this._componentNames
-  }
-
+  @echoize()
   public toString () {
     return iterare(this.getDefinition())
       .map(tree => tree.printIndented())

@@ -6,6 +6,7 @@ import { RepeatingViewBinding } from '../../template-nodes/view-bindings'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
 import { PartialViewFactoryAnalyzer } from './partial-view-factory-analyzer'
+import { echoize } from '../../utils/echoize'
 
 export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<TemplateNodeRepeatingViewValue> {
 
@@ -19,6 +20,7 @@ export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Templ
     super(uniqueId, parentFactory, anchorViewNode, templateDefinition, partialViewFactoryAnalyzer)
   }
 
+  @echoize()
   public getBinding (): RepeatingViewBinding {
     const bindings = new Set(this.getAnchorViewNode().getValueOrThrow().viewBindings)
     if (bindings.size != 1) {
@@ -31,20 +33,24 @@ export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Templ
     return binding
   }
 
+  @echoize()
   public hasDefinedAndResolvesTo (propAccessPath: string): string | null {
     return null
   }
 
+  @echoize()
   public getFactoryName (): string {
     const boundValue = this.getBinding().boundValue as ViewBoundPropertyAccess
     const path = boundValue.getRawPath().replace(/\./g, '-')
     return `RepeatingView_${path}_${this.uniqueId}`
   }
 
+  @echoize()
   public toString (): string {
     return `ConditionalViewFactoryAnalyzer#${this.getFactoryName()}`
   }
 
+  @echoize()
   public getNeighbors (): FactoryAnalyzer<TemplateNodeValue>[] {
     const neighbors: FactoryAnalyzer<TemplateNodeValue>[] = []
 

@@ -5,6 +5,7 @@ import { DirectiveFactoryAnalyzer } from './directive-factory-analyzer'
 import CodeBlockWriter from 'code-block-writer'
 import { ConditionalViewFactoryAnalyzer } from './conditional-view-factory-analyzer'
 import { RepeatingViewFactoryAnalyzer } from './repeating-view-factory-analyzer'
+import { echoize } from '../../utils/echoize'
 
 export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValue> {
 
@@ -51,10 +52,12 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
     this.templateDefinition = templateDefinition
   }
 
+  @echoize()
   getPropsBoundToView (): Map<string, string> {
     return new Map<string, string>()
   }
 
+  @echoize()
   hasDefinedAndResolvesTo (propAccessPath: string): string | null {
     const directiveFa = this.getDirectiveFactoryAnalyzer()
     if (directiveFa instanceof ConditionalViewFactoryAnalyzer) {
@@ -90,14 +93,17 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
     return wr
   }
 
+  @echoize()
   getFactoryName (): string {
     return `PartialView_${this.getDirectiveFactoryAnalyzer().getFactoryName()}_${this.uniqueId}`
   }
 
+  @echoize()
   public isHopToParent (to: FactoryAnalyzer<TemplateNodeValue>): boolean {
     return to == this.getDirectiveFactoryAnalyzer()
   }
 
+  @echoize()
   public toString (): string {
     return `ComponentFactoryAnalyzer#${this.getFactoryName()}`
   }

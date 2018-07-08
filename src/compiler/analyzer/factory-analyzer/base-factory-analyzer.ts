@@ -7,6 +7,7 @@ import { ViewBoundMethodCall, ViewBoundPropertyAccess } from '../../template-nod
 import { paramCase } from 'change-case'
 import { ComponentFactoryAnalyzer } from './component-factory-analyzer'
 import { getPath, printTreePath } from '../../utils/graph'
+import { echoize } from '../../utils/echoize'
 
 export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
@@ -34,6 +35,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
   public abstract getPartialViewFactoryAnalyzer (): FactoryAnalyzer<TemplateNodeValue>
 
+  @echoize()
   public getFirstScopeBoundaryUpwardsIncludingSelf (): ComponentFactoryAnalyzer {
     let current: FactoryAnalyzer<TemplateNodeValue> = this
     while (!current.isScopeBoundary()) {
@@ -96,15 +98,18 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return this.getChildren().values()
   }
 
+  @echoize()
   public getFirstChild<T extends FactoryAnalyzer<TemplateNodeValue> = FactoryAnalyzer<TemplateNodeValue>> (): T {
     return Array.from(this.children.values())[0] as T
   }
 
+  @echoize()
   public getLastChild (): FactoryAnalyzer<TemplateNodeValue> {
     const array = Array.from(this.children.values())
     return array[array.length - 1]
   }
 
+  @echoize()
   public getChildAtIndex (index: number): FactoryAnalyzer<TemplateNodeValue> {
     const array = Array.from(this.children.values())
     const factory = array[index]
@@ -114,6 +119,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return factory
   }
 
+  @echoize()
   public hasChildren (): boolean {
     return this.getChildren().size > 0
   }
@@ -141,6 +147,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
    * @param {FactoryAnalyzer<TemplateNodeValue>} fa The factory to reach.
    * @returns {FactoryAnalyzer<TemplateNodeValue>[]} The path, including both start and end.
    */
+  @echoize()
   public getPathTo (fa: FactoryAnalyzer<TemplateNodeValue>): FactoryAnalyzer<TemplateNodeValue>[] {
     return getPath<FactoryAnalyzer<TemplateNodeValue>>(
       f => f.getNeighbors(),
@@ -149,20 +156,23 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     )
   }
 
+  @echoize()
   public isHopToParent (to: FactoryAnalyzer<TemplateNodeValue>): boolean {
     return this.getParentOrUndefined() == to
   }
 
+  @echoize()
   public printHopToParent (isStartingHop: boolean, isEndingHop: boolean): string {
     return `__wane__factoryParent`
   }
 
+  @echoize()
   public printHopToChild (to: FactoryAnalyzer<TemplateNodeValue>): string {
     return `__wane__factoryChildren[${to.getFactoryIndexAsChild()} /*${to.getFactoryName()}*/]`
   }
 
+  @echoize()
   public printPathTo (fa: FactoryAnalyzer<TemplateNodeValue>): string {
-    // console.log(` Path from ${this.getFactoryName()} to ${fa.getFactoryName()}`)
     const isHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
       from.isHopToParent(to)
     const printHopToParent = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>, isStartingHop: boolean, isEndingHop: boolean) => {
@@ -171,10 +181,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     const printHopToChild = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
       from.printHopToChild(to)
     const path = this.getPathTo(fa)
-    // console.log(path.map(p => p.getFactoryName()).join(` -> `))
-    const printed = printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
-    // console.log(printed)
-    return printed
+    return printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
   }
 
   /**
@@ -230,6 +237,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
    *
    * @returns {Set<ViewBinding>}
    */
+  @echoize()
   public getSelfBindings (): Iterable<ViewBinding<Anchor>> {
     const anchor = this.getAnchorViewNodeOrUndefined()
     if (anchor == null) {
@@ -246,6 +254,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
    * They count as bindings, but they are a constant.
    * @returns {Set<ViewBinding<TemplateNodeValue>>}
    */
+  @echoize()
   public getHtmlNativeDomBindings (): Set<ViewBinding<TemplateNodeValue>> {
     const result = new Set<ViewBinding<TemplateNodeValue>>()
     for (const node of this.view) {
@@ -282,6 +291,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
    * @param {string} methodName
    * @returns {Iterable<FactoryAnalyzer<TemplateNodeValue>>}
    */
+  @echoize()
   public getFactoriesAffectedByCalling (methodName: string): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
     const resolved = this.getFirstScopeBoundaryUpwardsIncludingSelf().hasDefinedAndResolvesTo(methodName)
     if (resolved == null) {
@@ -333,6 +343,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return [...fa.getChildrenFactories()].includes(this)
   }
 
+  @echoize()
   public getFactoryIndexAsChild (): number {
     if (this.parent == null) {
       throw new Error(`A root ("${this.getFactoryName()}") cannot have a factory index because it is not a child.`)
@@ -347,6 +358,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return index
   }
 
+  @echoize()
   public getIndexesFor (templateNode: TemplateNodeValue): number[] {
     const indexes: number[] = []
     const flatNodes = this.getSavedNodes()
@@ -364,6 +376,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return indexes
   }
 
+  @echoize()
   public getSingleIndexFor (templateNode: TemplateNodeValue): number {
     const indexes = this.getIndexesFor(templateNode)
     if (indexes.length != 1) {
@@ -372,6 +385,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return indexes[0]
   }
 
+  @echoize()
   public getSavedNodes (): TemplateNodeValue[] {
     const flat: TemplateNodeValue[] = []
     for (const node of this.getPartialViewFactoryAnalyzer().view) {
@@ -385,6 +399,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
   public abstract printAssemblingDomNodes (wr: CodeBlockWriter): CodeBlockWriter
 
+  @echoize()
   private _printAssemblingDomNodesGeneric (wr: CodeBlockWriter,
                                            node: TreeNode<TemplateNodeValue>): CodeBlockWriter {
     const indexes = this.getIndexesFor(node.getValueOrThrow())
@@ -405,6 +420,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return wr
   }
 
+  @echoize()
   protected printAssemblingDomNodesGeneric (wr: CodeBlockWriter): CodeBlockWriter {
     for (const root of this.view.getRoots()) {
       this._printAssemblingDomNodesGeneric(wr, root)
@@ -414,6 +430,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
   public abstract printRootDomNodeAssignment (wr: CodeBlockWriter): CodeBlockWriter
 
+  @echoize()
   public factoryAnalyzersInScope (options: Partial<{ skipSelf: boolean }> = {}): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
     const { skipSelf = false } = options
     const self = this
@@ -435,6 +452,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     }
   }
 
+  @echoize()
   public domNodesInScope (): Iterable<TemplateNodeValue> {
     const self = this
     return {
@@ -453,6 +471,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
    *
    * @returns {Map<number, Set<ViewBoundPropertyAccess>>}
    */
+  @echoize()
   public getDomDiffMap (): Map<number, Set<ViewBoundPropertyAccess>> {
     const result = new Map<number, Set<ViewBoundPropertyAccess>>()
     for (const node of this.domNodesInScope()) {
@@ -470,6 +489,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return result
   }
 
+  @echoize()
   public getFaDiffMap (): Map<FactoryAnalyzer<TemplateNodeValue>, Set<ViewBoundPropertyAccess>> {
     const result = new Map<FactoryAnalyzer<TemplateNodeValue>, Set<ViewBoundPropertyAccess>>()
 
@@ -496,6 +516,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return result
   }
 
+  @echoize()
   public responsibleFor (): Set<ViewBoundPropertyAccess> {
     const result = new Set<ViewBoundPropertyAccess>()
 
@@ -521,6 +542,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     return result
   }
 
+  @echoize()
   public getNeighbors (): FactoryAnalyzer<TemplateNodeValue>[] {
     const neighbors: FactoryAnalyzer<TemplateNodeValue>[] = []
     const parent = this.getParentOrUndefined()
@@ -533,6 +555,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
    * Includes self.
    * @returns {FactoryAnalyzer<TemplateNodeValue>[]}
    */
+  @echoize()
   public getPathToRoot (): FactoryAnalyzer<TemplateNodeValue>[] {
     const result: Array<FactoryAnalyzer<TemplateNodeValue>> = [this]
     let current = this.getParentOrUndefined()
@@ -547,6 +570,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
    * Get everything that should be diffed in this factory's diff method.
    * @returns {Iterable<string>}
    */
+  @echoize()
   public getDiffablePropNames (): Iterable<string> {
     return [...this.responsibleFor()]
       .filter(boundValue => {

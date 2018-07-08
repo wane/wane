@@ -9,6 +9,7 @@ import {ViewBoundValue} from '../../template-nodes/view-bound-value'
 import CodeBlockWriter from 'code-block-writer'
 import {pascal, pascalCase} from 'change-case'
 import parseStyle from '../../style-parser'
+import { echoize } from '../../utils/echoize'
 
 export class ComponentFactoryIdentifier {
 
@@ -34,6 +35,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     return this.identifier.name
   }
 
+  @echoize()
   public getComponentAbsoluteFilePathWithoutExtension (): string {
     const sourceFile = this.componentAnalyzer.classDeclaration.getSourceFile()
     return `${sourceFile.getDirectoryPath()}/${sourceFile.getBaseNameWithoutExtension()}`
@@ -56,18 +58,22 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     this.componentAnalyzer = componentAnalyzer
   }
 
+  @echoize()
   public canUpdatePropInThisComponentInstanceByCalling (methodName: string): boolean {
     return this.componentAnalyzer.getPropsWhichCanBeModifiedBy(methodName).size != 0
   }
 
+  @echoize()
   public getPropAndGetterNames (): Set<string> {
     return this.componentAnalyzer.getNamesOfAllPropsAndGetters()
   }
 
+  @echoize()
   public getMethodNames (): Set<string> {
     return this.componentAnalyzer.getNamesOfAllMethods()
   }
 
+  @echoize()
   public hasDefinedAndResolvesTo (identifierAccessorPath: string): string | null {
     const allVariables = this.componentAnalyzer.getAllVariables()
     const allConstants = this.componentAnalyzer.getAllConstants()
@@ -89,6 +95,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     return true
   }
 
+  @echoize()
   private _getBoundValuesTo (scopeFactory: FactoryAnalyzer<TemplateNodeValue>,
                              currentFactory: FactoryAnalyzer<TemplateNodeValue>): Set<ViewBoundValue> {
     const result = new Set<ViewBoundValue>()
@@ -114,10 +121,12 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     return result
   }
 
+  @echoize()
   public getFactoryName (): string {
     return `${this.componentAnalyzer.getClassName()}${this.uniqueId}`
   }
 
+  @echoize()
   public printAssemblingDomNodes (wr: CodeBlockWriter): CodeBlockWriter {
     return wr
       .newLineIfLastNot()
@@ -126,6 +135,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
       .writeLine(`])`)
   }
 
+  @echoize()
   public printRootDomNodeAssignment (wr: CodeBlockWriter): CodeBlockWriter {
     const left = `this.__wane__root`
     if (this.isRoot()) {
@@ -136,6 +146,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     }
   }
 
+  @echoize()
   public isAffectedByCalling (methodName: string): boolean {
     // all methods which can be invoked when methodName is invoked
     const allMethods = this.componentAnalyzer.getMethodsCalledFrom(methodName)
@@ -154,6 +165,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     return Array.from(intersection).length > 0
   }
 
+  @echoize()
   public getPropsBoundToView (): Map<string, string> {
     const result = new Map<string, string>()
     for (const prop of this.getPropAndGetterNames()) {
@@ -170,10 +182,12 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
    * (meaning they cannot be changed from within the component).
    * @returns {Iterable<string>}
    */
+  @echoize()
   public getDiffablePropNames (): Iterable<string> {
     return this.componentAnalyzer.getAllVariables()
   }
 
+  @echoize()
   public domTagName (): string {
     if (this.isRoot()) {
       return `body`
@@ -182,6 +196,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     }
   }
 
+  @echoize()
   public getStyles (): string | null {
     const uniqueId = this.identifier.id
     const tagName = this.domTagName()
@@ -190,10 +205,12 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     return parseStyle(uniqueId, tagName, cssString)
   }
 
+  @echoize()
   public hasStyles (): boolean {
     return this.componentAnalyzer.hasStyles()
   }
 
+  @echoize()
   public toString (): string {
     return `ComponentFactoryAnalyzer#${this.getFactoryName()}`
   }

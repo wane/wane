@@ -10,7 +10,8 @@ import { TemplateNodeRepeatingViewValue } from '../../template-nodes/nodes/repea
 import { ViewBinding } from '../../template-nodes/view-bindings'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import CodeBlockWriter from 'code-block-writer'
-import { PartialViewFactoryAnalyzer } from "./partial-view-factory-analyzer";
+import { PartialViewFactoryAnalyzer } from './partial-view-factory-analyzer'
+import { echoize } from '../../utils/echoize'
 
 export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialViewValue = TemplateNodePartialViewValue> extends FactoryAnalyzer<T> {
 
@@ -25,12 +26,13 @@ export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialView
     return this.partialViewFa
   }
 
-  public getChildren(): Map<TreeNode<TemplateNodeValue>, FactoryAnalyzer<TemplateNodeValue>> {
+  @echoize()
+  public getChildren (): Map<TreeNode<TemplateNodeValue>, FactoryAnalyzer<TemplateNodeValue>> {
     return new Map<TreeNode<TemplateNodeValue>, FactoryAnalyzer<TemplateNodeValue>>([
       [
         this.getAnchorViewNode(),
         this.getPartialViewFactoryAnalyzer(),
-      ]
+      ],
     ])
   }
 
@@ -51,6 +53,7 @@ export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialView
     return false
   }
 
+  @echoize()
   private _getNamesOfPropsToWatch (node: TreeNode<TemplateNodeValue>, result: Set<ViewBinding<TemplateNodeValue>>): void {
     const bindings = node.getValueOrThrow().viewBindings
     for (const binding of bindings) {
@@ -67,6 +70,7 @@ export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialView
     }
   }
 
+  @echoize()
   public getBindingsToWatch (): Set<ViewBinding<TemplateNodeValue>> {
     const result = new Set<ViewBinding<TemplateNodeValue>>()
     this.view.forEach((node: TreeNode<TemplateNodeValue>) => {
@@ -75,6 +79,7 @@ export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialView
     return result
   }
 
+  @echoize()
   public getBindingsWhichUseViewScope (): Set<ViewBinding<TemplateNodeValue>> {
     const result = new Set<ViewBinding<TemplateNodeValue>>()
     for (const selfBinding of this.getSelfBindings()) {

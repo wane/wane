@@ -6,6 +6,7 @@ import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-valu
 import { ConditionalViewBinding } from '../../template-nodes/view-bindings'
 import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
 import { PartialViewFactoryAnalyzer } from "./partial-view-factory-analyzer";
+import { echoize } from '../../utils/echoize'
 
 export class ConditionalViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<TemplateNodeConditionalViewValue> {
 
@@ -19,6 +20,7 @@ export class ConditionalViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Tem
     super(uniqueId, parentFactory, anchorViewNode, templateDefinition, partialViewFactoryAnalyzer)
   }
 
+  @echoize()
   public getBinding (): ConditionalViewBinding {
     const bindings = new Set(this.getAnchorViewNode().getValueOrThrow().viewBindings)
     if (bindings.size != 1) {

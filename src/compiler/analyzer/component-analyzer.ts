@@ -9,6 +9,7 @@ import {ComponentTemplateAnalyzer} from './component-template-analyzer'
 import {ViewBinding} from '../template-nodes/view-bindings'
 import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
 import {canPropBeModified, getMethodsCalledFrom, getPropsWhichCanBeModifiedBy} from './utils'
+import { echoize } from '../utils/echoize'
 
 export class ComponentAnalyzer {
 
@@ -20,6 +21,7 @@ export class ComponentAnalyzer {
     this.componentTemplateAnalyzer = new ComponentTemplateAnalyzer(classDeclaration, this)
   }
 
+  @echoize()
   public getFilePath (): string {
     const sourceFile = this.classDeclaration.getSourceFile()
     const path = sourceFile.getFilePath()
@@ -27,10 +29,12 @@ export class ComponentAnalyzer {
     return `${path}/${fileName}`
   }
 
+  @echoize()
   public getClassName (): string {
     return this.classDeclaration.getNameOrThrow()
   }
 
+  @echoize()
   public getFullName () {
     const sourceFile = this.classDeclaration.getSourceFile()
     const path = sourceFile.getFilePath()
@@ -39,6 +43,7 @@ export class ComponentAnalyzer {
     return `${path}/${fileName}#${className}`
   }
 
+  @echoize()
   public getNamesOfAllPropsAndGetters (): Set<string> {
     return new Set([
       ...this.classDeclaration.getProperties(),
@@ -46,24 +51,29 @@ export class ComponentAnalyzer {
     ].map(x => x.getName()))
   }
 
+  @echoize()
   public getNamesOfAllMethods (): Set<string> {
     return new Set(this.classDeclaration.getMethods().map(x => x.getName()))
   }
 
+  @echoize()
   public getNamesOfInputs (): Iterable<string> {
     return [...this.classDeclaration.getProperties()]
       .filter(prop => prop.hasModifier(SyntaxKind.PublicKeyword))
       .map(prop => prop.getName())
   }
 
+  @echoize()
   public getMethodDeclaration (methodName: string): MethodDeclaration {
     return this.classDeclaration.getMethodOrThrow(methodName)
   }
 
+  @echoize()
   public getNamesOfPropertiesBoundToTemplate (): Set<ViewBinding<TemplateNodeValue>> {
     return this.componentTemplateAnalyzer.getNamesOfBoundProperties()
   }
 
+  @echoize()
   public getRegisteredComponentsDeclarations (): Set<ClassDeclaration> {
     const component = this.classDeclaration
     const set = new Set<ClassDeclaration>()
@@ -81,6 +91,7 @@ export class ComponentAnalyzer {
     return set
   }
 
+  @echoize()
   public getRegisteredComponentDeclaration (componentName: string): ClassDeclaration {
     for (const klass of this.getRegisteredComponentsDeclarations()) {
       if (klass.getName() == componentName) {
@@ -90,10 +101,12 @@ export class ComponentAnalyzer {
     throw new Error(`Component "${componentName}" not registered in component "${this.getFullName()}".`)
   }
 
+  @echoize()
   public getMethodsCalledFrom (methodName: string): Set<string> {
     return getMethodsCalledFrom(this.classDeclaration, methodName)
   }
 
+  @echoize()
   public getPropsWhichCanBeModifiedBy (methodName: string): Set<string> {
     return getPropsWhichCanBeModifiedBy(this.classDeclaration, methodName)
   }
@@ -109,6 +122,7 @@ export class ComponentAnalyzer {
    * @param {string} propName
    * @returns {boolean}
    */
+  @echoize()
   public canPropBeModified (propName: string): boolean {
     const allGetters = this.classDeclaration.getGetAccessors()
       .map(getAccessor => getAccessor.getName())
@@ -119,6 +133,7 @@ export class ComponentAnalyzer {
     return isInput || isGetter || canPropBeModified(this.classDeclaration, propName)
   }
 
+  @echoize()
   public getAllVariables (): Set<string> {
     const result = new Set<string>()
     for (const prop of this.getNamesOfAllPropsAndGetters()) {
@@ -129,6 +144,7 @@ export class ComponentAnalyzer {
     return result
   }
 
+  @echoize()
   public getAllConstants (): Set<string> {
     const result = new Set<string>()
     for (const prop of this.getNamesOfAllPropsAndGetters()) {
@@ -139,16 +155,19 @@ export class ComponentAnalyzer {
     return result
   }
 
+  @echoize()
   public getConstantName (propName: string): string {
     return `${this.getClassName()}$${propName}`
   }
 
+  @echoize()
   public getConstantValue (propName: string): string {
     const declaration = this.classDeclaration.getPropertyOrThrow(propName)
     const initializer = declaration.getInitializerOrThrow()
     return initializer.getText()
   }
 
+  @echoize()
   public getStyles (): string | null {
     const component = this.classDeclaration
     const styleDecorator = component.getDecorator('Style')
@@ -160,6 +179,7 @@ export class ComponentAnalyzer {
     return null
   }
 
+  @echoize()
   public hasStyles (): boolean {
     return this.getStyles() != null
   }
