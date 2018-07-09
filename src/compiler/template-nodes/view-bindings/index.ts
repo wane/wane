@@ -1,12 +1,14 @@
-import { TemplateNodeValue } from '../nodes/template-node-value-base'
-import { TemplateNodeHtmlValue, TemplateNodeInterpolationValue } from '..'
-import { TemplateNodeComponentValue } from '../nodes/component-node'
-import { ViewBoundConstant, ViewBoundMethodCall, ViewBoundPropertyAccess, ViewBoundValue } from '../view-bound-value'
+import {TemplateNodeValue} from '../nodes/template-node-value-base'
+import {TemplateNodeHtmlValue, TemplateNodeInterpolationValue} from '..'
+import {TemplateNodeComponentValue} from '../nodes/component-node'
+import {ViewBoundConstant, ViewBoundMethodCall, ViewBoundPropertyAccess, ViewBoundValue} from '../view-bound-value'
 import CodeBlockWriter from 'code-block-writer'
-import { TemplateNodeConditionalViewValue } from '../nodes/conditional-view-node'
-import { TemplateNodeRepeatingViewValue } from '../nodes/repeating-view-node'
-import { FactoryAnalyzer } from '../../analyzer'
-import { TemplateNodeTextValue } from "../nodes/text-node";
+import {TemplateNodeConditionalViewValue} from '../nodes/conditional-view-node'
+import {TemplateNodeRepeatingViewValue} from '../nodes/repeating-view-node'
+import {FactoryAnalyzer} from '../../analyzer'
+import {TemplateNodeTextValue} from "../nodes/text-node"
+import {Type} from 'ts-simple-ast'
+import {ComponentFactoryAnalyzer} from '../../analyzer/factory-analyzer/component-factory-analyzer'
 
 export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
 
@@ -47,6 +49,12 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
    * @returns {boolean}
    */
   public abstract isNativeHtml (): boolean
+
+  /**
+   * We type check templates. Each of the bindings has an expected type that will be
+   * checked against when a concrete value is given.
+   */
+  // public abstract getExpectedType (): Type
 
   /**
    * In a component named Cmp with a "foo" class property, we can have the following template.
@@ -93,18 +101,22 @@ export class TextBinding extends ViewBinding<TemplateNodeTextValue> {
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()
+                    from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory(),
   ): CodeBlockWriter {
     // Already been initialized when the DOM node was created.
     return wr
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()
+                      from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory(),
   ): CodeBlockWriter {
     // Always constant, nothing to update.
     return wr
   }
+
+  // public getExpectedType (): Type {
+  //   return
+  // }
 
 }
 
@@ -115,14 +127,14 @@ export class InterpolationBinding extends ViewBinding<TemplateNodeInterpolationV
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     // it has already been initialized when the DOM node was created
     return wr
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue>
+                      from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     if (this.boundValue.isConstant()) {
       return wr
@@ -151,7 +163,7 @@ export class AttributeBinding extends ViewBinding<TemplateNodeHtmlValue> {
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     const instance = this.getTemplateNode().resolveAccessToSingleDomNode(from)
     const name = `'${this.attributeName}'`
@@ -253,19 +265,23 @@ export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValu
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     return wr.write(`this.__wane__data.${this.inputName} = ${this.boundValue.resolve(from)}`)
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue>
+                      from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     const childFactory = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
     const path = from.printPathTo(childFactory)
     return wr.write(`${path}.__wane__data.${this.inputName} = ${this.boundValue.resolve(from)}`)
   }
 
+  public getExpectedType (): Type {
+    const inputName = this.getName()
+    const componentFa = this.getDefinitionFactory()
+  }
 
 }
 
@@ -285,7 +301,7 @@ export class ComponentOutputBinding extends ViewBinding<TemplateNodeComponentVal
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     return wr
       .write(`this.__wane__data.${this.outputName} = (`)
@@ -317,7 +333,7 @@ export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalV
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     return wr.write(`this.__wane__data = this.__wane__prevData = `)
       .conditionalWrite(this.isNegated, `!`)
@@ -325,7 +341,7 @@ export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalV
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue>
+                      from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     const factoryChild = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
     const path = from.printPathTo(factoryChild)
@@ -362,7 +378,7 @@ export class RepeatingViewBinding extends ViewBinding<TemplateNodeRepeatingViewV
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue>
+                      from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     const factoryChild = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
     const instance = from.printPathTo(factoryChild)

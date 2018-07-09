@@ -8,6 +8,7 @@ import { paramCase } from 'change-case'
 import { ComponentFactoryAnalyzer } from './component-factory-analyzer'
 import { getPath, printTreePath } from '../../utils/graph'
 import { echoize } from '../../utils/echoize'
+import {ProjectAnalyzer} from '../project-analyzer'
 
 export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
@@ -49,6 +50,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   }
 
   constructor (
+    public projectAnalyzer: ProjectAnalyzer,
     uniqueId: number,
     parent: FactoryAnalyzer<TemplateNodeValue> | undefined,
     anchorViewNode: TreeNode<Anchor> | undefined,

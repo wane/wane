@@ -1,22 +1,28 @@
 import {
   ClassDeclaration,
   MethodDeclaration,
-  SyntaxKind,
   NoSubstitutionTemplateLiteral,
+  PropertyDeclaration,
+  SyntaxKind,
+  Type,
   TypeGuards,
 } from 'ts-simple-ast'
 import {ComponentTemplateAnalyzer} from './component-template-analyzer'
 import {ViewBinding} from '../template-nodes/view-bindings'
 import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
 import {canPropBeModified, getMethodsCalledFrom, getPropsWhichCanBeModifiedBy} from './utils'
-import { echoize } from '../utils/echoize'
+import {echoize} from '../utils/echoize'
+import {ProjectAnalyzer} from './project-analyzer'
 
 export class ComponentAnalyzer {
 
   public readonly componentTemplateAnalyzer: ComponentTemplateAnalyzer
   public classDeclaration: ClassDeclaration
 
-  constructor (classDeclaration: ClassDeclaration) {
+  constructor (
+    public readonly projectAnalyzer: ProjectAnalyzer,
+    classDeclaration: ClassDeclaration,
+  ) {
     this.classDeclaration = classDeclaration
     this.componentTemplateAnalyzer = new ComponentTemplateAnalyzer(classDeclaration, this)
   }
@@ -57,10 +63,23 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
-  public getNamesOfInputs (): Iterable<string> {
+  public getInputs (): Iterable<PropertyDeclaration> {
     return [...this.classDeclaration.getProperties()]
       .filter(prop => prop.hasModifier(SyntaxKind.PublicKeyword))
-      .map(prop => prop.getName())
+  }
+
+  @echoize()
+  public getInputNames (): Iterable<string> {
+    return [...this.getInputs()].map(prop => prop.getName())
+  }
+
+  @echoize()
+  public getInputType (inputName: string): Type {
+    const input = [...this.getInputs()].find(input => input.getName() == inputName)
+    if (input == null) {
+      throw new Error(`Expected to find input "${inputName}" in "${this.getClassName()}".`)
+    }
+    return input.getType()
   }
 
   @echoize()
@@ -128,7 +147,7 @@ export class ComponentAnalyzer {
       .map(getAccessor => getAccessor.getName())
     const isGetter = allGetters.includes(propName)
 
-    const isInput = [...this.getNamesOfInputs()].includes(propName)
+    const isInput = [...this.getInputNames()].includes(propName)
 
     return isInput || isGetter || canPropBeModified(this.classDeclaration, propName)
   }

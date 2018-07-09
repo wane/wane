@@ -310,8 +310,8 @@ export class TreeNode<V> {
 
 }
 
-export function isTreeNodeValue<T> (predicate: (value: T) => boolean): (treeNode: TreeNode<T>) => boolean
 export function isTreeNodeValue<T, R extends T> (predicate: (value: T) => value is R): (treeNode: TreeNode<T>) => treeNode is TreeNode<R>
+export function isTreeNodeValue<T> (predicate: (value: T) => boolean): (treeNode: TreeNode<T>) => boolean
 export function isTreeNodeValue<T> (predicate: (value: T) => boolean) {
   return (treeNode: TreeNode<T>) => {
     return predicate(treeNode.getValueOrThrow())
