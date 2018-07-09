@@ -58,7 +58,7 @@ export abstract class TemplateNodeValue {
     const path = from.printPathTo(to)
     const results: string[] = []
     for (const index of this.getIndexes()) {
-      results.push(`this${path}.__wane__domNodes[${index}]`)
+      results.push(`${path}.__wane__domNodes[${index}]`)
     }
     return results
   }

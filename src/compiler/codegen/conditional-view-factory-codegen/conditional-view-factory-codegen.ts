@@ -33,7 +33,7 @@ export class ConditionalViewFactoryCodegen extends BaseFactoryCodegen {
         ] = fa.getParent().getIndexesFor(fa.getAnchorViewNode().getValueOrThrow())
 
         this.writer
-          .writeLine(`this.__wane__contextFactory = this${path}`)
+          .writeLine(`this.__wane__contextFactory = ${path}`)
           .writeLine(`this.__wane__openingCommentOutlet = this.__wane__factoryParent.__wane__domNodes[${openingIndex}]`)
           .writeLine(`this.__wane__closingCommentOutlet = this.__wane__factoryParent.__wane__domNodes[${closingIndex}]`)
           .writeLine(`this.__wane__factoryChildren = []`)

@@ -217,13 +217,13 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
       .newLine()
       .indentBlock(() => {
         const path = from.printPathTo(this.getDefinitionFactory())
-        wr.writeLine(`this${path}.${this.boundValue.resolve(from)}`)
+        wr.writeLine(`${path}.${this.boundValue.resolve(from)}`)
 
         const factories = this.boundValue.getDefinitionFactory()
           .getFactoriesAffectedByCalling(this.boundValue.getName())
         for (const factory of factories) {
           const pathToAncestor: string = from.printPathTo(factory)
-          wr.writeLine(`this${pathToAncestor}.__wane__update()`)
+          wr.writeLine(`${pathToAncestor}.__wane__update()`)
         }
       })
       .write(`})`)
@@ -263,7 +263,7 @@ export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValu
   ): CodeBlockWriter {
     const childFactory = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
     const path = from.printPathTo(childFactory)
-    return wr.write(`this${path}.__wane__data.${this.inputName} = ${this.boundValue.resolve(from)}`)
+    return wr.write(`${path}.__wane__data.${this.inputName} = ${this.boundValue.resolve(from)}`)
   }
 
 
@@ -294,7 +294,7 @@ export class ComponentOutputBinding extends ViewBinding<TemplateNodeComponentVal
       .newLine()
       .indentBlock(() => {
         const path = from.printPathTo(this.getDefinitionFactory())
-        wr.writeLine(`this${path}.${this.boundValue.resolve(from)}`)
+        wr.writeLine(`${path}.${this.boundValue.resolve(from)}`)
       })
       .write(`}`)
   }
@@ -329,7 +329,7 @@ export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalV
   ): CodeBlockWriter {
     const factoryChild = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
     const path = from.printPathTo(factoryChild)
-    return wr.write(`this${path}.__wane__data = `)
+    return wr.write(`${path}.__wane__data = `)
       .conditionalWrite(this.isNegated, `!`)
       .write(this.boundValue.resolve(from))
   }
@@ -358,7 +358,7 @@ export class RepeatingViewBinding extends ViewBinding<TemplateNodeRepeatingViewV
                     from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     const instance = from.printPathTo(this.getResponsibleFactory())
-    return wr.write(`this${instance}.__wane__data = ${this.boundValue.resolve(from)}`)
+    return wr.write(`${instance}.__wane__data = ${this.boundValue.resolve(from)}`)
   }
 
   public printUpdate (wr: CodeBlockWriter,
@@ -366,7 +366,7 @@ export class RepeatingViewBinding extends ViewBinding<TemplateNodeRepeatingViewV
   ): CodeBlockWriter {
     const factoryChild = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
     const instance = from.printPathTo(factoryChild)
-    return wr.write(`this${instance}.__wane__data = ${this.boundValue.resolve(from)}`)
+    return wr.write(`${instance}.__wane__data = ${this.boundValue.resolve(from)}`)
   }
 
   public getKeyFunction (): string {

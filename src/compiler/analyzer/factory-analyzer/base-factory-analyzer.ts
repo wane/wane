@@ -181,7 +181,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     const printHopToChild = (from: FactoryAnalyzer<TemplateNodeValue>, to: FactoryAnalyzer<TemplateNodeValue>) =>
       from.printHopToChild(to)
     const path = this.getPathTo(fa)
-    return printTreePath(isHopToParent, printHopToParent, printHopToChild, path)
+    return `this${printTreePath(isHopToParent, printHopToParent, printHopToChild, path)}`
   }
 
   /**

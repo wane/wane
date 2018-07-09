@@ -11,10 +11,10 @@ describe(`InterpolationBinding`, () => {
       const [[greeting], [_comma], [someone]] = helloWorldBindings
       it(`prints an empty string for {{ greeting }} and {{ someone }} because it is already initialized when dom is created`, () => {
         const wr = new CodeBlockWriter()
-        greeting.printInit(wr, `xxx`)
+        greeting.printInit(wr, greeting.getResponsibleFactory())
         expect(wr.toString()).toBe(``)
         const wr2 = new CodeBlockWriter()
-        someone.printInit(wr, `xxx`)
+        someone.printInit(wr, greeting.getResponsibleFactory())
         expect(wr2.toString()).toBe(``)
       })
     })
