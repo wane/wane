@@ -326,7 +326,7 @@ export function isLastChild<T> (node: TreeNode<T>): boolean {
   return node.getLastChild() == null
 }
 
-function fill (length: number, char: string = ' '): string {
+export function fill (length: number, char: string = ' '): string {
   let s = ''
   for (let i = 0; i < length; i++) {
     s += char
