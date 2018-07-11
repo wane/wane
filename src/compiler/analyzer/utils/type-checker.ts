@@ -44,7 +44,7 @@ type AssignableReport = {
  * reason by two more spaces.
  * @param arg
  */
-function prettyPrintError (arg: string | DiagnosticMessageChain): string {
+export function prettyPrintError (arg: string | DiagnosticMessageChain): string {
   if (typeof arg == 'string') {
     return arg
   }

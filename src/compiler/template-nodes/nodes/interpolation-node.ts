@@ -35,7 +35,7 @@ export class TemplateNodeInterpolationValue extends TemplateNodeValue {
     if (boundValue.isConstant()) {
       return boundValue.resolve()
     } else {
-      return (boundValue as ViewBoundPropertyAccess).getRawPath()
+      return (boundValue as ViewBoundPropertyAccess).getRaw()
     }
   }
 

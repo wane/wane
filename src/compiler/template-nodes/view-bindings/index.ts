@@ -7,7 +7,8 @@ import {TemplateNodeConditionalViewValue} from '../nodes/conditional-view-node'
 import {TemplateNodeRepeatingViewValue} from '../nodes/repeating-view-node'
 import {FactoryAnalyzer} from '../../analyzer'
 import {TemplateNodeTextValue} from "../nodes/text-node"
-import {Type} from 'ts-simple-ast'
+import {getPropInfoByPropName} from '../../analyzer/utils/prop-info'
+import {isInstance} from '../../utils/utils'
 import {ComponentFactoryAnalyzer} from '../../analyzer/factory-analyzer/component-factory-analyzer'
 
 export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
@@ -54,7 +55,13 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
    * We type check templates. Each of the bindings has an expected type that will be
    * checked against when a concrete value is given.
    */
-  // public abstract getExpectedType (): Type
+  public abstract getExpectedType (): string
+
+  /**
+   * Used in error reporting. Prints it in such a way that user
+   * should recognize it quickly.
+   */
+  public abstract toString (): string
 
   /**
    * In a component named Cmp with a "foo" class property, we can have the following template.
@@ -80,6 +87,7 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
     return this.boundValue.getResponsibleFactory()
   }
 
+  // TODO: Isn't this always a component factory?
   public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
     return this.boundValue.getDefinitionFactory()
   }
@@ -89,6 +97,7 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
   }
 
 }
+
 
 export class TextBinding extends ViewBinding<TemplateNodeTextValue> {
 
@@ -114,9 +123,13 @@ export class TextBinding extends ViewBinding<TemplateNodeTextValue> {
     return wr
   }
 
-  // public getExpectedType (): Type {
-  //   return
-  // }
+  public getExpectedType (): string {
+    return 'string'
+  }
+
+  public toString (): string {
+    return `"${this.boundValue.resolve()}"`
+  }
 
 }
 
@@ -143,6 +156,15 @@ export class InterpolationBinding extends ViewBinding<TemplateNodeInterpolationV
       const instance = this.getTemplateNode().resolveAccessToSingleDomNode(from)
       return wr.write(`${instance}.data = ${this.boundValue.resolve(from)}`)
     }
+  }
+
+  public getExpectedType (): string {
+    return 'string'
+  }
+
+  public toString (): string {
+    const boundValue = this.boundValue
+    return `{{ ${boundValue.getRaw()} }}`
   }
 
 }
@@ -177,6 +199,14 @@ export class AttributeBinding extends ViewBinding<TemplateNodeHtmlValue> {
     return this.printInit(wr, from)
   }
 
+  public getExpectedType (): string {
+    return 'string'
+  }
+
+  public toString (): string {
+    return `[attr.${this.attributeName}]="${this.boundValue.getRaw()}"`
+  }
+
 }
 
 export class HtmlElementPropBinding extends ViewBinding<TemplateNodeHtmlValue> {
@@ -202,6 +232,17 @@ export class HtmlElementPropBinding extends ViewBinding<TemplateNodeHtmlValue> {
   ): CodeBlockWriter {
     const instance = this.getTemplateNode().resolveAccessToSingleDomNode(from)
     return this.printInit(wr, from)
+  }
+
+  public getExpectedType (): string {
+    const propInfo = getPropInfoByPropName(this.propName)
+    if (propInfo.boolean) return 'boolean'
+    if (propInfo.numeric || propInfo.positiveNumeric) return 'number'
+    return 'string'
+  }
+
+  public toString (): string {
+    return `[${this.propName}]="${this.boundValue.getRaw()}"`
   }
 
 }
@@ -247,6 +288,15 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
     return wr
   }
 
+  // TODO: add type info for events
+  public getExpectedType (): string {
+    return 'any'
+  }
+
+  public toString (): string {
+    return `(${this.eventName})="${this.boundValue.getRaw()}"`
+  }
+
 }
 
 export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValue> {
@@ -278,9 +328,22 @@ export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValu
     return wr.write(`${path}.__wane__data.${this.inputName} = ${this.boundValue.resolve(from)}`)
   }
 
-  public getExpectedType (): Type {
+  public getExpectedType (): string {
     const inputName = this.getName()
-    const componentFa = this.getDefinitionFactory()
+    const componentFa = this.getResponsibleFactory()
+
+    // TODO: when is this not true?
+    if (isInstance(ComponentFactoryAnalyzer)(componentFa)) {
+      const componentAnalyzer = componentFa.componentAnalyzer
+      const inputType = componentAnalyzer.getInputType(inputName)
+      return inputType.getText()
+    } else {
+      return 'any'
+    }
+  }
+
+  public toString (): string {
+    return `TODO`
   }
 
 }
@@ -319,6 +382,15 @@ export class ComponentOutputBinding extends ViewBinding<TemplateNodeComponentVal
     return wr
   }
 
+  // TODO: type arguments
+  public getExpectedType (): string {
+    return 'any'
+  }
+
+  public toString (): string {
+    return 'TODO'
+  }
+
 }
 
 export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalViewValue> {
@@ -352,7 +424,15 @@ export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalV
 
   public getRaw (): string {
     const boundValue = this.boundValue as ViewBoundPropertyAccess
-    return boundValue.getRawPath()
+    return boundValue.getRaw()
+  }
+
+  public getExpectedType (): string {
+    return 'boolean'
+  }
+
+  public toString (): string {
+    return 'TODO'
   }
 
 }
@@ -387,6 +467,14 @@ export class RepeatingViewBinding extends ViewBinding<TemplateNodeRepeatingViewV
 
   public getKeyFunction (): string {
     return this.keyAccessorPath == null ? `item => item` : `item => item.${this.keyAccessorPath}`
+  }
+
+  public getExpectedType (): string {
+    return 'Array<any>'
+  }
+
+  public toString (): string {
+    return 'TODO'
   }
 
 }

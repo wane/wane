@@ -43,7 +43,7 @@ export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Templ
   @echoize()
   public getFactoryName (): string {
     const boundValue = this.getBinding().boundValue as ViewBoundPropertyAccess
-    const path = boundValue.getRawPath().replace(/\./g, '-')
+    const path = boundValue.getRaw().replace(/\./g, '-')
     return `RepeatingView_${path}_${this.uniqueId}`
   }
 

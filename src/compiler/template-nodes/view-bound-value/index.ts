@@ -1,8 +1,8 @@
-import { ViewBinding } from '../view-bindings'
-import { TemplateNodeValue } from '../nodes/template-node-value-base'
-import { FactoryAnalyzer } from '../../analyzer'
-import { isInstance } from '../../utils/utils'
-import { ComponentFactoryAnalyzer } from '../../analyzer/factory-analyzer/component-factory-analyzer'
+import {ViewBinding} from '../view-bindings'
+import {TemplateNodeValue} from '../nodes/template-node-value-base'
+import {FactoryAnalyzer} from '../../analyzer'
+import {isInstance} from '../../utils/utils'
+import {ComponentFactoryAnalyzer} from '../../analyzer/factory-analyzer/component-factory-analyzer'
 
 export abstract class ViewBoundValue {
 
@@ -44,6 +44,14 @@ export abstract class ViewBoundValue {
 
   public abstract isConstant (): boolean
 
+  /**
+   * How user wrote it in the template. Useful for error reports when we
+   * want to show it in the way that user can recognize it.
+   */
+  public abstract getRaw (): string
+
+  public abstract getType (): string
+
 }
 
 export class ViewBoundConstant extends ViewBoundValue {
@@ -64,21 +72,28 @@ export class ViewBoundConstant extends ViewBoundValue {
     return true
   }
 
+  public getRaw () {
+    return this.value
+  }
+
+  public getType () {
+    if (this.value == 'undefined') return 'undefined'
+    if (this.value == 'null') return 'null'
+    if (this.value == 'true' || this.value == 'false') return 'boolean'
+    if (this.value.startsWith(`'`)
+      || this.value.startsWith(`"`)
+      || this.value.startsWith('`')) {
+      return 'string'
+    }
+    return 'number'
+  }
+
 }
 
 export class ViewBoundPropertyAccess extends ViewBoundValue {
 
   constructor (protected path: string) {
     super()
-  }
-
-  public getName (): string {
-    const [name] = this.path.split('.')
-    return name
-  }
-
-  public getRawPath (): string {
-    return this.path
   }
 
   public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
@@ -125,6 +140,29 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
     return false
   }
 
+  public getRaw (): string {
+    return this.path
+  }
+
+  public getType (): string {
+    const definitionFactory = this.getDefinitionFactory()
+    if (definitionFactory instanceof ComponentFactoryAnalyzer) {
+      const ca = definitionFactory.componentAnalyzer
+      // TODO: This will get the wrong type when prop is "foo" and we're binding "foo.bar"
+      // (will be `typeof foo` instead of `typeof foo['bar']`)
+      const propType = ca.getPropType(this.getName())
+      return propType.getText()
+    } else {
+      // TODO
+      return 'any'
+    }
+  }
+
+  public getName (): string {
+    const [name] = this.path.split('.')
+    return name
+  }
+
   public static printCondition (boundValues: Iterable<ViewBoundPropertyAccess>) {
     return Array.from(boundValues)
       .map(boundValue => `diff.${boundValue.getName()}`)
@@ -159,6 +197,12 @@ export class ViewBoundMethodCall extends ViewBoundPropertyAccess {
     return super.getDefinitionFactory() as ComponentFactoryAnalyzer
   }
 
+  public getRaw (): string {
+    const methodName = super.getRaw()
+    const args = this.args.map(arg => arg.getRaw())
+    return `${methodName}(${args.join(', ')})`
+  }
+
 }
 
 export class ViewBoundPlaceholder extends ViewBoundValue {
@@ -173,6 +217,15 @@ export class ViewBoundPlaceholder extends ViewBoundValue {
 
   public isConstant (): boolean {
     return true
+  }
+
+  public getRaw (): string {
+    return '#'
+  }
+
+  // TODO
+  public getType (): string {
+    return 'any'
   }
 
 }

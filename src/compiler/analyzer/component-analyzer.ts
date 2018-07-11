@@ -74,6 +74,12 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
+  public getPropType (propName: string): Type {
+    const prop = this.classDeclaration.getPropertyOrThrow(propName)
+    return prop.getType()
+  }
+
+  @echoize()
   public getInputType (inputName: string): Type {
     const input = [...this.getInputs()].find(input => input.getName() == inputName)
     if (input == null) {

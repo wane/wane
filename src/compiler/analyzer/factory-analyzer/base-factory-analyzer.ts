@@ -576,11 +576,11 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   public getDiffablePropNames (): Iterable<string> {
     return [...this.responsibleFor()]
       .filter(boundValue => {
-        const path = this.hasDefinedAndResolvesTo(boundValue.getRawPath())
+        const path = this.hasDefinedAndResolvesTo(boundValue.getRaw())
         return path != null
       })
       .map(boundValue => {
-        const path = this.hasDefinedAndResolvesTo(boundValue.getRawPath())!
+        const path = this.hasDefinedAndResolvesTo(boundValue.getRaw())!
         const [name, secondName] = path.split('.')
         return name == `__wane__data` ? secondName : name // TODO: Uuh...
       })

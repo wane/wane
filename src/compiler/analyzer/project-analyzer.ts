@@ -246,7 +246,7 @@ export class ProjectAnalyzer {
     return this._factoryTree
   }
 
-  public factories () {
+  public getAllFactories () {
     const rootFa = this.getFactoryTree()
     return {
       * [Symbol.iterator] () {
@@ -264,7 +264,7 @@ export class ProjectAnalyzer {
   }
 
   public getFactoryByName (factoryName: string): FactoryAnalyzer<TemplateNodeValue> {
-    for (const factory of this.factories()) {
+    for (const factory of this.getAllFactories()) {
       if (factory.getFactoryName() == factoryName) {
         return factory
       }
