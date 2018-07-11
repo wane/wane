@@ -330,12 +330,12 @@ export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValu
 
   public getExpectedType (): string {
     const inputName = this.getName()
-    const componentFa = this.getResponsibleFactory()
+    const componentFa = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
 
     // TODO: when is this not true?
     if (isInstance(ComponentFactoryAnalyzer)(componentFa)) {
       const componentAnalyzer = componentFa.componentAnalyzer
-      const inputType = componentAnalyzer.getInputType(inputName)
+      const inputType = componentAnalyzer.getPropType(inputName)
       return inputType.getText()
     } else {
       return 'any'

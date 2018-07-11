@@ -8,7 +8,7 @@ function dom (text: string) {
     h.script({ src: 'index.js' }),
     h.p( shadow, [text]),
     h.label(shadow, [
-      h.span(shadow, ['Name']),
+      h.span({ ...shadow, class: 'test' }, ['Name']),
       h.input({ ...shadow, type: 'text' }),
     ]),
   ])

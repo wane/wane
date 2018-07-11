@@ -150,7 +150,7 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
       const ca = definitionFactory.componentAnalyzer
       // TODO: This will get the wrong type when prop is "foo" and we're binding "foo.bar"
       // (will be `typeof foo` instead of `typeof foo['bar']`)
-      const propType = ca.getPropType(this.getName())
+      const propType = ca.getPropOrMethodType(this.getName())
       return propType.getText()
     } else {
       // TODO

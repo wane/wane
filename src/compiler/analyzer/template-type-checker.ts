@@ -65,6 +65,8 @@ function typeCheckAll (project: Project, atoms: Array<TemplateTypeCheckAtom>): b
     content += `const a_${i}: ${expectedType} = 0 as any as ${actualType}\n`
   }
 
+  console.log(`===`)
+  console.log(content)
   const file = project.createSourceFile(FILENAME, content, {overwrite: true})
   const diagnostics = file.getDiagnostics()
 

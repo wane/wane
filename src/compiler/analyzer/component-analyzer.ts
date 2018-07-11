@@ -80,6 +80,18 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
+  public getPropOrMethodType (propOrMethodName: string): Type {
+    const prop = [...this.getNamesOfAllPropsAndGetters()].find(p => p == propOrMethodName)
+    if (prop != null) {
+      return this.classDeclaration.getPropertyOrThrow(propOrMethodName).getType()
+    }
+    const method = [...this.getNamesOfAllMethods()].find(m => m == propOrMethodName)
+    if (method != null) {
+      return this.classDeclaration.getMethodOrThrow(propOrMethodName).getType()
+    }
+  }
+
+  @echoize()
   public getInputType (inputName: string): Type {
     const input = [...this.getInputs()].find(input => input.getName() == inputName)
     if (input == null) {

@@ -42,7 +42,8 @@ declare module 'property-information' {
 
   interface Val {
     (name: string): PropInfo
-    all: PropInfo[]
+
+    all: { [attrName: string]: PropInfo }
   }
 
   const val: Val
