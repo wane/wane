@@ -17,7 +17,7 @@ import { Entry, Template, Register } from 'wane'
     +10  
   </button>
   
-  <span>{{ value }}</span>
+  <span>{{ valueString }}</span>
 `)
 export class CounterCmp {
 
@@ -26,6 +26,10 @@ export class CounterCmp {
 
   public value!: number
   public valueChange(value: number) {}
+
+  private get valueString () {
+    return this.value.toString()
+  }
 
   private valueChangeBy(delta: number) {
     this.valueChange(this.value + delta)

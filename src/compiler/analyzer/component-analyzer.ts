@@ -74,21 +74,29 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
-  public getPropType (propName: string): Type {
-    const prop = this.classDeclaration.getPropertyOrThrow(propName)
-    return prop.getType()
+  public getPropOrGetterType (propOrGetterName: string): Type {
+    const prop = this.classDeclaration.getProperty(propOrGetterName)
+    if (prop != null) {
+      return prop.getType()
+    }
+    const getter = this.classDeclaration.getGetAccessor(propOrGetterName)
+    if (getter != null) {
+      return getter.getType()
+    }
+    throw new Error(`Expected to find prop or getter named "${propOrGetterName}".`)
   }
 
   @echoize()
-  public getPropOrMethodType (propOrMethodName: string): Type {
+  public getPropOrGetterOrMethodType (propOrMethodName: string): Type {
     const prop = [...this.getNamesOfAllPropsAndGetters()].find(p => p == propOrMethodName)
     if (prop != null) {
-      return this.classDeclaration.getPropertyOrThrow(propOrMethodName).getType()
+      return this.getPropOrGetterType(propOrMethodName)
     }
     const method = [...this.getNamesOfAllMethods()].find(m => m == propOrMethodName)
     if (method != null) {
       return this.classDeclaration.getMethodOrThrow(propOrMethodName).getType()
     }
+    throw new Error(`Expected to find prop or getter or method named "${propOrMethodName}".`)
   }
 
   @echoize()

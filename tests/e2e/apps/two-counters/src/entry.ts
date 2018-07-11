@@ -5,7 +5,7 @@ import { Entry, Register, Template } from 'wane'
     Decrement
   </button>
   
-  <span>{{ value }}</span>
+  <span>{{ valueString }}</span>
   
   <button (click)="inc()">
     Increment
@@ -13,6 +13,10 @@ import { Entry, Register, Template } from 'wane'
 `)
 export class CounterCmp {
   public value!: number
+
+  private get valueString (): string {
+    return this.value.toString()
+  }
 
   public valueChange (value: number): void {
   }
@@ -29,7 +33,7 @@ export class CounterCmp {
 @Entry()
 @Register(CounterCmp)
 @Template(`
-  <p>Left is {{ left }}, right is {{ right }}.</p>
+  <p>Left is {{ leftString }}, right is {{ rightString }}.</p>
 
   <counter-cmp
     [value]="left"
@@ -44,6 +48,14 @@ export class CounterCmp {
 export class AppCmp {
   private left = 42
   private right = 21
+
+  private get leftString (): string {
+    return this.left.toString()
+  }
+
+  private get rightString (): string {
+    return this.right.toString()
+  }
 
   private onLeftChange (val: number): void {
     this.left = val

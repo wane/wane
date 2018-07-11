@@ -335,7 +335,7 @@ export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValu
     // TODO: when is this not true?
     if (isInstance(ComponentFactoryAnalyzer)(componentFa)) {
       const componentAnalyzer = componentFa.componentAnalyzer
-      const inputType = componentAnalyzer.getPropType(inputName)
+      const inputType = componentAnalyzer.getPropOrGetterType(inputName)
       return inputType.getText()
     } else {
       return 'any'
