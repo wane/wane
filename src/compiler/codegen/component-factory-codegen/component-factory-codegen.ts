@@ -1,12 +1,12 @@
 import CodeBlockWriter from 'code-block-writer'
-import {ComponentFactoryAnalyzer} from '../../analyzer/factory-analyzer/component-factory-analyzer'
-import {paramCase} from 'change-case'
-import {BaseFactoryCodegen} from '../base-factory-codegen'
+import { ComponentFactoryAnalyzer } from '../../analyzer/factory-analyzer/component-factory-analyzer'
+import { paramCase } from 'change-case'
+import { BaseFactoryCodegen } from '../base-factory-codegen'
 import * as path from 'path'
-import {or} from '../../template-nodes/nodes/utils'
-import {isInstance} from '../../utils/utils'
-import {TemplateNodeHtmlValue} from '../../template-nodes'
-import {TemplateNodeComponentValue} from '../../template-nodes/nodes/component-node'
+import { or } from '../../template-nodes/nodes/utils'
+import { isInstance } from '../../utils/utils'
+import { TemplateNodeHtmlValue } from '../../template-nodes'
+import { TemplateNodeComponentValue } from '../../template-nodes/nodes/component-node'
 
 export class ComponentFactoryCodegen extends BaseFactoryCodegen {
 
@@ -29,10 +29,18 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
       .writeLine(`__wane__init() {`)
       .indentBlock(() => {
         fa.printRootDomNodeAssignment(this.writer)
+
+        // If there is async code in the component, we need to inject
+        // the reference to this component factory so it can call the
+        // relevant async update function.
+        const constructorParameter = fa.componentAnalyzer.hasAsyncBlocksWhichCauseUpdate()
+          ? `this`
+          : ``
+
         this.writer
           .conditionalWriteLine(
             fa.componentAnalyzer.getAllVariables().size > 0 || fa.componentAnalyzer.getNamesOfAllMethods().size > 0,
-            `this.${this.names.data} = new ${className}()`,
+            `this.${this.names.data} = new ${className}(${constructorParameter})`,
           )
         this
           .printTakeValuesFromAncestors(fa)
@@ -41,6 +49,7 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
           .printAssembleFactoryChildren(fa)
           .printDomPropsInit(fa)
           .printStylesEncapsulationAttributes(fa)
+          .printUpdateAsyncArray(fa)
         this.writer
           .writeLine(`this.${this.names.diff}() // to populate the previous state`)
       })
@@ -76,6 +85,28 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
           .writeLine(`}`)
       })
       .writeLine(`},`)
+    return this
+  }
+
+  private printUpdateAsyncArray (fa: ComponentFactoryAnalyzer): this {
+    this.writer
+      .writeLine(`this.__wane__updateAsync = [`)
+      .indentBlock(() => {
+        fa.componentAnalyzer.getAsyncBlocksWhichCauseUpdate().forEach((block, index) => {
+          this.writer
+            .writeLine(`// ${index}`)
+            .writeLine(`() => {`)
+            .indentBlock(() => {
+              const factories = fa.getFirstScopeBoundaryUpwardsIncludingSelf().getFactoriesAffectedByCalling(block)
+              for (const factory of factories) {
+                const pathToAccessor = fa.printPathTo(factory)
+                this.writer.writeLine(`${pathToAccessor}.__wane__update()`)
+              }
+            })
+            .writeLine(`},`)
+        })
+      })
+      .writeLine(`]`)
     return this
   }
 

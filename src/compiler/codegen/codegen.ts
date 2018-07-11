@@ -2,25 +2,27 @@ import * as path from 'path'
 import * as del from 'del'
 import * as fs from 'fs'
 import chalk from 'chalk'
-import {rollup} from 'rollup'
+import { rollup } from 'rollup'
 import CodeBlockWriter from 'code-block-writer'
-import {FactoryAnalyzer, ProjectAnalyzer} from '../analyzer'
-import {ComponentFactoryCodegen} from './component-factory-codegen/component-factory-codegen'
-import {ConditionalViewFactoryCodegen} from './conditional-view-factory-codegen/conditional-view-factory-codegen'
-import {RepeatingViewFactoryCodegen} from './repeating-view-factory-codegen/repeating-view-factory-codegen'
-import {HelpersCodegen} from './helpers-codegen/helpers-codegen'
-import {BootstrapCodegen} from './bootstrap-codegen/bootstrap-codegen'
-import {Project, SyntaxKind} from 'ts-simple-ast'
-import {ComponentFactoryAnalyzer} from '../analyzer/factory-analyzer/component-factory-analyzer'
-import {ConditionalViewFactoryAnalyzer} from '../analyzer/factory-analyzer/conditional-view-factory-analyzer'
-import {RepeatingViewFactoryAnalyzer} from '../analyzer/factory-analyzer/repeating-view-factory-analyzer'
-import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
+import { FactoryAnalyzer, ProjectAnalyzer } from '../analyzer'
+import { ComponentFactoryCodegen } from './component-factory-codegen/component-factory-codegen'
+import { ConditionalViewFactoryCodegen } from './conditional-view-factory-codegen/conditional-view-factory-codegen'
+import { RepeatingViewFactoryCodegen } from './repeating-view-factory-codegen/repeating-view-factory-codegen'
+import { HelpersCodegen } from './helpers-codegen/helpers-codegen'
+import { BootstrapCodegen } from './bootstrap-codegen/bootstrap-codegen'
+import { Project, SyntaxKind } from 'ts-simple-ast'
+import { ComponentFactoryAnalyzer } from '../analyzer/factory-analyzer/component-factory-analyzer'
+import { ConditionalViewFactoryAnalyzer } from '../analyzer/factory-analyzer/conditional-view-factory-analyzer'
+import { RepeatingViewFactoryAnalyzer } from '../analyzer/factory-analyzer/repeating-view-factory-analyzer'
+import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
 import * as rollupPluginUglify from 'rollup-plugin-uglify'
-import {WaneCompilerOptions} from '../compile'
-import {PartialViewFactoryCodegen} from './partial-view-codegen/partial-view-factory-codegen'
-import {PartialViewFactoryAnalyzer} from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
-import {StyleCodegen} from './style-codegen/style-codegen'
-import {ConstantsCodegen} from './constants-codegen'
+import { WaneCompilerOptions } from '../compile'
+import { PartialViewFactoryCodegen } from './partial-view-codegen/partial-view-factory-codegen'
+import { PartialViewFactoryAnalyzer } from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
+import { StyleCodegen } from './style-codegen/style-codegen'
+import { ConstantsCodegen } from './constants-codegen'
+import { wrapAsyncCode } from "./wrap-async-code";
+import { getPropNamesWhichCanBeModifiedBy } from "../analyzer/utils";
 
 type Constructor<T> = {
   new (
@@ -58,10 +60,11 @@ export class Codegen {
       .createTsProjectFile('util.ts', this.codegen.helpers.printCode())
       .createTsProjectFile('bootstrap.ts', this.codegen.bootstrap.printCode(factoryTree))
       .createTsProjectFile('main.ts', this.generateMainJsFile())
+      .preProcessComponents()
       .generateFactories(factoryTree)
       .createTsProjectFile('constants.ts', this.constantsCodegen.toString())
       .createFileOnDisk('styles.css', this.styleCodegen.getStyle())
-      .transformForRuntime()
+      .postProcessComponents()
       .saveAll()
       .emit()
       .deleteAll()
@@ -111,7 +114,7 @@ export class Codegen {
 
   private createFileOnDisk (filePath: string, content: string): this {
     const fullFilePath = path.join(this.distDirectory, filePath)
-    fs.writeFileSync(fullFilePath, content, {encoding: 'utf8'})
+    fs.writeFileSync(fullFilePath, content, { encoding: 'utf8' })
     // console.log(`Created file on disk ${fullFilePath}: "${content.slice(0, 80).replace(/\s+/g, ' ')}..."`)
     return this
   }
@@ -139,7 +142,7 @@ export class Codegen {
     return this
   }
 
-  private transformForRuntime (): this {
+  private postProcessComponents (): this {
     this.analyzer
       .getAllComponentAnalyzers()
       .forEach(componentAnalyzer => {
@@ -152,6 +155,7 @@ export class Codegen {
             decorator.remove()
           })
 
+        // Remove props which were moved to "constants" file
         const propsToRemove = [...componentAnalyzer.getAllConstants()]
         declaration
           .getProperties()
@@ -160,6 +164,30 @@ export class Codegen {
             propDeclartion.remove()
           })
       })
+    return this
+  }
+
+  private preProcessComponents (): this {
+    this.analyzer
+      .getAllComponentAnalyzers()
+      .forEach((componentAnalyzer, index) => {
+        const declaration = componentAnalyzer.classDeclaration
+
+        // Inject lines for async code
+        wrapAsyncCode(declaration, (block, index) => writer => {
+          const propNamesWhichCanBeModified = getPropNamesWhichCanBeModifiedBy(block)
+          if (propNamesWhichCanBeModified.size == 0) {
+            return false
+          } else {
+            const syntaxList = block.getFirstAncestorByKindOrThrow(SyntaxKind.SyntaxList)
+            componentAnalyzer.registerAsyncBlockWhichCausesUpdate(index, syntaxList)
+            writer.writeLine(`this.__wane__factory.__wane__updateAsync[${index}]()`)
+            return true
+          }
+        })
+
+      })
+
     return this
   }
 
@@ -220,7 +248,7 @@ export class Codegen {
       return this
     } catch (error) {
       if (error.code == 'PARSE_ERROR') {
-        const {loc: {file, line, column}, frame} = error
+        const { loc: { file, line, column }, frame } = error
         const [dirname, filename] = [path.dirname(file), path.basename(file)]
         const formattedFile = path.join(dirname, chalk.bold(filename))
         console.error(chalk.red(`Error during bundling in ${formattedFile} (${line}:${column}).`))

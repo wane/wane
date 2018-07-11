@@ -33,7 +33,7 @@ function getMethodNamesCalledDirectlyFrom (
 export function getMethodNamesCalledFrom (
   methodBody: Block,
 ): Set<string> {
-  const method = methodBody.getParentIfKindOrThrow(SyntaxKind.MethodDeclaration)
+  const method = methodBody.getFirstAncestorByKindOrThrow(SyntaxKind.MethodDeclaration)
   const methodName = method.getName()
   const classDeclaration = method.getFirstAncestorByKindOrThrow(SyntaxKind.ClassDeclaration)
 
