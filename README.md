@@ -1,3 +1,7 @@
+<p align=center>
+  <img align=center src="logo.svg" alt="Wane" width=200>
+</p>
+
 # Wane
 
 **Wane** is a framework, compiler and a bundler: all at the same time.
