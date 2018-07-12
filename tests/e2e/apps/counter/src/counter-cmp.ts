@@ -6,7 +6,7 @@ import { Template } from 'wane'
     Decrement
   </button>
   
-  <span>{{ value }}</span>
+  <span>{{ valueString }}</span>
   
   <button (click)="inc()">
     Increment
@@ -14,6 +14,11 @@ import { Template } from 'wane'
 `)
 export class CounterCmp {
   public value!: number
+
+  // TODO: change when we implement formatters
+  private get valueString (): string {
+    return this.value.toString()
+  }
 
   public valueChange (value: number): void {
   }

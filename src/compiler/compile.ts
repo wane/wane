@@ -1,8 +1,10 @@
 import * as path from 'path'
 import * as fs from 'fs-extra'
-import Project, { ModuleKind, ScriptTarget } from 'ts-simple-ast'
-import { ProjectAnalyzer } from './analyzer'
-import { Codegen } from './codegen'
+import Project, {ModuleKind, ScriptTarget} from 'ts-simple-ast'
+import {ProjectAnalyzer} from './analyzer'
+import {Codegen} from './codegen'
+import {typeCheckTemplatesInProject} from './analyzer/template-type-checker'
+import chalk from 'chalk'
 
 export interface WaneCompilerOptions {
   dir: string
@@ -26,8 +28,8 @@ export function expandCompilerOptions (options: Partial<WaneCompilerOptions>): W
 }
 
 function getDirs (options: Partial<WaneCompilerOptions> = {}): { srcDir: string, distDir: string } {
-  const { input, output } = expandCompilerOptions(options)
-  return { srcDir: input, distDir: output }
+  const {input, output} = expandCompilerOptions(options)
+  return {srcDir: input, distDir: output}
 }
 
 export function getProjectAnalyzer (waneCompilerOptions: Partial<WaneCompilerOptions> = {}): ProjectAnalyzer {
@@ -40,7 +42,7 @@ export function getProjectAnalyzer (waneCompilerOptions: Partial<WaneCompilerOpt
    * Then we manipulate the copies of files.
    */
 
-  const { srcDir, distDir } = getDirs(waneCompilerOptions)
+  const {srcDir, distDir} = getDirs(waneCompilerOptions)
 
   fs.removeSync(distDir)
   fs.mkdirpSync(distDir)
@@ -86,15 +88,25 @@ export function getProjectAnalyzer (waneCompilerOptions: Partial<WaneCompilerOpt
 
 export async function compile (options: Partial<WaneCompilerOptions> = {}) {
 
-  const { distDir } = getDirs(options)
+  const {distDir} = getDirs(options)
   const projectAnalyzer = getProjectAnalyzer(options)
-  const codegen = new Codegen(projectAnalyzer, expandCompilerOptions(options))
 
   /**
    * We can now tell code generator to start the process of generating files.
    * It will use and existing Project that it grabs from the Analyzer.
    */
 
+  const typeCheckErrors = typeCheckTemplatesInProject(projectAnalyzer)
+  if (typeCheckErrors.length > 0) {
+    for (const error of typeCheckErrors) {
+      console.error(chalk.red(error))
+    }
+    throw new Error(`Type checking returned an error.`)
+  } else {
+    console.log(chalk.green`Type checking complete.`)
+  }
+
+  const codegen = new Codegen(projectAnalyzer, expandCompilerOptions(options))
   await codegen.generateCode()
 
   const html = `<!DOCTYPE html>

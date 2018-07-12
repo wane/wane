@@ -10,6 +10,7 @@ import CodeBlockWriter from 'code-block-writer'
 import {pascal, pascalCase} from 'change-case'
 import parseStyle from '../../style-parser'
 import { echoize } from '../../utils/echoize'
+import {ProjectAnalyzer} from '../project-analyzer'
 
 export class ComponentFactoryIdentifier {
 
@@ -27,6 +28,20 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   public identifier: ComponentFactoryIdentifier
   public componentAnalyzer: ComponentAnalyzer
 
+  constructor (
+    projectAnalyzer: ProjectAnalyzer,
+    uniqueId: number,
+    parentFactory: FactoryAnalyzer<TemplateNodeValue> | undefined,
+    anchorViewNode: TreeNode<TemplateNodeComponentValue> | undefined,
+    componentAnalyzer: ComponentAnalyzer,
+  ) {
+    super(projectAnalyzer, uniqueId, parentFactory, anchorViewNode)
+    const path = componentAnalyzer.getFilePath()
+    const name = componentAnalyzer.getClassName()
+    this.identifier = new ComponentFactoryIdentifier(path, name, uniqueId)
+    this.componentAnalyzer = componentAnalyzer
+  }
+
   public getPartialViewFactoryAnalyzer (): this {
     return this
   }
@@ -43,19 +58,6 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
 
   public get templateDefinition (): Forest<TemplateNodeValue> {
     return this.componentAnalyzer.componentTemplateAnalyzer.getDefinition()
-  }
-
-  constructor (
-    uniqueId: number,
-    parentFactory: FactoryAnalyzer<TemplateNodeValue> | undefined,
-    anchorViewNode: TreeNode<TemplateNodeComponentValue> | undefined,
-    componentAnalyzer: ComponentAnalyzer,
-  ) {
-    super(uniqueId, parentFactory, anchorViewNode)
-    const path = componentAnalyzer.getFilePath()
-    const name = componentAnalyzer.getClassName()
-    this.identifier = new ComponentFactoryIdentifier(path, name, uniqueId)
-    this.componentAnalyzer = componentAnalyzer
   }
 
   @echoize()

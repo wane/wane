@@ -1,12 +1,15 @@
-import { TemplateNodeValue } from '../nodes/template-node-value-base'
-import { TemplateNodeHtmlValue, TemplateNodeInterpolationValue } from '..'
-import { TemplateNodeComponentValue } from '../nodes/component-node'
-import { ViewBoundConstant, ViewBoundMethodCall, ViewBoundPropertyAccess, ViewBoundValue } from '../view-bound-value'
+import {TemplateNodeValue} from '../nodes/template-node-value-base'
+import {TemplateNodeHtmlValue, TemplateNodeInterpolationValue} from '..'
+import {TemplateNodeComponentValue} from '../nodes/component-node'
+import {ViewBoundConstant, ViewBoundMethodCall, ViewBoundPropertyAccess, ViewBoundValue} from '../view-bound-value'
 import CodeBlockWriter from 'code-block-writer'
-import { TemplateNodeConditionalViewValue } from '../nodes/conditional-view-node'
-import { TemplateNodeRepeatingViewValue } from '../nodes/repeating-view-node'
-import { FactoryAnalyzer } from '../../analyzer'
-import { TemplateNodeTextValue } from "../nodes/text-node";
+import {TemplateNodeConditionalViewValue} from '../nodes/conditional-view-node'
+import {TemplateNodeRepeatingViewValue} from '../nodes/repeating-view-node'
+import {FactoryAnalyzer} from '../../analyzer'
+import {TemplateNodeTextValue} from "../nodes/text-node"
+import {getPropInfoByPropName} from '../../analyzer/utils/prop-info'
+import {isInstance} from '../../utils/utils'
+import {ComponentFactoryAnalyzer} from '../../analyzer/factory-analyzer/component-factory-analyzer'
 
 export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
 
@@ -49,6 +52,18 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
   public abstract isNativeHtml (): boolean
 
   /**
+   * We type check templates. Each of the bindings has an expected type that will be
+   * checked against when a concrete value is given.
+   */
+  public abstract getExpectedType (): string
+
+  /**
+   * Used in error reporting. Prints it in such a way that user
+   * should recognize it quickly.
+   */
+  public abstract toString (): string
+
+  /**
    * In a component named Cmp with a "foo" class property, we can have the following template.
    *
    * ```
@@ -72,6 +87,7 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
     return this.boundValue.getResponsibleFactory()
   }
 
+  // TODO: Isn't this always a component factory?
   public getDefinitionFactory (): FactoryAnalyzer<TemplateNodeValue> {
     return this.boundValue.getDefinitionFactory()
   }
@@ -81,6 +97,7 @@ export abstract class ViewBinding<NodeType extends TemplateNodeValue> {
   }
 
 }
+
 
 export class TextBinding extends ViewBinding<TemplateNodeTextValue> {
 
@@ -93,17 +110,25 @@ export class TextBinding extends ViewBinding<TemplateNodeTextValue> {
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()
+                    from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory(),
   ): CodeBlockWriter {
     // Already been initialized when the DOM node was created.
     return wr
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory()
+                      from: FactoryAnalyzer<TemplateNodeValue> = this.getResponsibleFactory(),
   ): CodeBlockWriter {
     // Always constant, nothing to update.
     return wr
+  }
+
+  public getExpectedType (): string {
+    return 'string'
+  }
+
+  public toString (): string {
+    return `"${this.boundValue.resolve()}"`
   }
 
 }
@@ -115,14 +140,14 @@ export class InterpolationBinding extends ViewBinding<TemplateNodeInterpolationV
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     // it has already been initialized when the DOM node was created
     return wr
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue>
+                      from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     if (this.boundValue.isConstant()) {
       return wr
@@ -131,6 +156,15 @@ export class InterpolationBinding extends ViewBinding<TemplateNodeInterpolationV
       const instance = this.getTemplateNode().resolveAccessToSingleDomNode(from)
       return wr.write(`${instance}.data = ${this.boundValue.resolve(from)}`)
     }
+  }
+
+  public getExpectedType (): string {
+    return 'string'
+  }
+
+  public toString (): string {
+    const boundValue = this.boundValue
+    return `{{ ${boundValue.getRaw()} }}`
   }
 
 }
@@ -151,7 +185,7 @@ export class AttributeBinding extends ViewBinding<TemplateNodeHtmlValue> {
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     const instance = this.getTemplateNode().resolveAccessToSingleDomNode(from)
     const name = `'${this.attributeName}'`
@@ -163,6 +197,14 @@ export class AttributeBinding extends ViewBinding<TemplateNodeHtmlValue> {
                       from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     return this.printInit(wr, from)
+  }
+
+  public getExpectedType (): string {
+    return 'string'
+  }
+
+  public toString (): string {
+    return `[attr.${this.attributeName}]="${this.boundValue.getRaw()}"`
   }
 
 }
@@ -190,6 +232,17 @@ export class HtmlElementPropBinding extends ViewBinding<TemplateNodeHtmlValue> {
   ): CodeBlockWriter {
     const instance = this.getTemplateNode().resolveAccessToSingleDomNode(from)
     return this.printInit(wr, from)
+  }
+
+  public getExpectedType (): string {
+    const propInfo = getPropInfoByPropName(this.propName)
+    if (propInfo.boolean) return 'boolean'
+    if (propInfo.numeric || propInfo.positiveNumeric) return 'number'
+    return 'string'
+  }
+
+  public toString (): string {
+    return `[${this.propName}]="${this.boundValue.getRaw()}"`
   }
 
 }
@@ -235,6 +288,15 @@ export class HtmlElementEventBinding extends ViewBinding<TemplateNodeHtmlValue> 
     return wr
   }
 
+  // TODO: add type info for events
+  public getExpectedType (): string {
+    return 'any'
+  }
+
+  public toString (): string {
+    return `(${this.eventName})="${this.boundValue.getRaw()}"`
+  }
+
 }
 
 export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValue> {
@@ -253,19 +315,36 @@ export class ComponentInputBinding extends ViewBinding<TemplateNodeComponentValu
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     return wr.write(`this.__wane__data.${this.inputName} = ${this.boundValue.resolve(from)}`)
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue>
+                      from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     const childFactory = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
     const path = from.printPathTo(childFactory)
     return wr.write(`${path}.__wane__data.${this.inputName} = ${this.boundValue.resolve(from)}`)
   }
 
+  public getExpectedType (): string {
+    const inputName = this.getName()
+    const componentFa = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
+
+    // TODO: when is this not true?
+    if (isInstance(ComponentFactoryAnalyzer)(componentFa)) {
+      const componentAnalyzer = componentFa.componentAnalyzer
+      const inputType = componentAnalyzer.getPropOrGetterType(inputName)
+      return inputType.getText()
+    } else {
+      return 'any'
+    }
+  }
+
+  public toString (): string {
+    return `TODO`
+  }
 
 }
 
@@ -285,7 +364,7 @@ export class ComponentOutputBinding extends ViewBinding<TemplateNodeComponentVal
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     return wr
       .write(`this.__wane__data.${this.outputName} = (`)
@@ -303,6 +382,15 @@ export class ComponentOutputBinding extends ViewBinding<TemplateNodeComponentVal
     return wr
   }
 
+  // TODO: type arguments
+  public getExpectedType (): string {
+    return 'any'
+  }
+
+  public toString (): string {
+    return 'TODO'
+  }
+
 }
 
 export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalViewValue> {
@@ -317,7 +405,7 @@ export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalV
   }
 
   public printInit (wr: CodeBlockWriter,
-                    from: FactoryAnalyzer<TemplateNodeValue>
+                    from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     return wr.write(`this.__wane__data = this.__wane__prevData = `)
       .conditionalWrite(this.isNegated, `!`)
@@ -325,7 +413,7 @@ export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalV
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue>
+                      from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     const factoryChild = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
     const path = from.printPathTo(factoryChild)
@@ -336,7 +424,15 @@ export class ConditionalViewBinding extends ViewBinding<TemplateNodeConditionalV
 
   public getRaw (): string {
     const boundValue = this.boundValue as ViewBoundPropertyAccess
-    return boundValue.getRawPath()
+    return boundValue.getRaw()
+  }
+
+  public getExpectedType (): string {
+    return 'boolean'
+  }
+
+  public toString (): string {
+    return 'TODO'
   }
 
 }
@@ -362,7 +458,7 @@ export class RepeatingViewBinding extends ViewBinding<TemplateNodeRepeatingViewV
   }
 
   public printUpdate (wr: CodeBlockWriter,
-                      from: FactoryAnalyzer<TemplateNodeValue>
+                      from: FactoryAnalyzer<TemplateNodeValue>,
   ): CodeBlockWriter {
     const factoryChild = this.getTemplateNode().getFactoryWhichThisIsAnchorFor()
     const instance = from.printPathTo(factoryChild)
@@ -371,6 +467,14 @@ export class RepeatingViewBinding extends ViewBinding<TemplateNodeRepeatingViewV
 
   public getKeyFunction (): string {
     return this.keyAccessorPath == null ? `item => item` : `item => item.${this.keyAccessorPath}`
+  }
+
+  public getExpectedType (): string {
+    return 'Array<any>'
+  }
+
+  public toString (): string {
+    return 'TODO'
   }
 
 }

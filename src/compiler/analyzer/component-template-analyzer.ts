@@ -1,17 +1,36 @@
-import { Forest, TreeNode } from '../utils/tree'
-import { TemplateNodeHtmlValue, TemplateNodeInterpolationValue } from '../template-nodes'
-import { ComponentAnalyzer } from './component-analyzer'
-import { ClassDeclaration, TypeGuards } from 'ts-simple-ast'
+import {Forest, isTreeNodeValue, TreeNode} from '../utils/tree'
+import {TemplateNodeHtmlValue, TemplateNodeInterpolationValue} from '../template-nodes'
+import {ComponentAnalyzer} from './component-analyzer'
+import {ClassDeclaration, Type, TypeGuards} from 'ts-simple-ast'
 import parseTemplate from '../template-parser/html'
-import { ViewBinding } from '../template-nodes/view-bindings'
-import { TemplateNodeComponentValue } from '../template-nodes/nodes/component-node'
-import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
+import {ViewBinding} from '../template-nodes/view-bindings'
+import {TemplateNodeComponentValue} from '../template-nodes/nodes/component-node'
+import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
 import iterare from 'iterare'
-import { echoize } from '../utils/echoize'
+import {echoize} from '../utils/echoize'
+import * as ts from 'typescript'
+import {isInstance} from '../utils/utils'
+
+interface TemplateTypeError {
+  position: {
+    start: {
+      index: number
+      line: number
+      column: number
+    }
+    end: {
+      index: number
+      line: number
+      column: number
+    }
+  }
+  expectedType: Type
+  actualType: Type
+}
 
 export class ComponentTemplateAnalyzer {
 
-  private _componentCompilerNode: ComponentAnalyzer | undefined
+  private _componentCompilerNode: ComponentAnalyzer
 
   @echoize()
   public getDefinition (): Forest<TemplateNodeValue> {
@@ -64,6 +83,26 @@ export class ComponentTemplateAnalyzer {
     this._componentCompilerNode = componentCompilerNode
   }
 
+  public typeCheck () {
+    const project = this._componentCompilerNode.projectAnalyzer.getProject()
+    const typeChecker = project.getTypeChecker()
+    const type = ts.TypeFlags
+    // this.forEach(node => {
+    //   const templateNodeValue = node.getValueOrThrow()
+    //   const bindings = templateNodeValue.viewBindings
+    //   for (const binding of bindings) {
+    //
+    //   }
+    // })
+    this.componentNodes().forEach(node => {
+      const componentNode = node.getValueOrThrow()
+      const inputBindings = [...componentNode.getInputBindings()]
+      inputBindings.forEach(inputBinding => {
+        const type = inputBinding.getExpectedType()
+      })
+    })
+  }
+
   private _klass: ClassDeclaration | undefined
   private get klass (): ClassDeclaration {
     if (this._klass == null) throw new Error(`Attempted to use a ComponentTemplateCompilerNode without loading it with a class.`)
@@ -77,6 +116,7 @@ export class ComponentTemplateAnalyzer {
     }
   }
 
+  public filter<T extends TemplateNodeValue> (predicate: (node: TreeNode<any>) => node is TreeNode<T>): Set<TreeNode<T>>
   public filter<T extends TemplateNodeValue> (predicate: (node: TreeNode<any>) => boolean): Set<TreeNode<T>> {
     const set = new Set<TreeNode<T>>()
     this.forEach(node => {
@@ -89,30 +129,26 @@ export class ComponentTemplateAnalyzer {
 
   @echoize()
   public textNodes () {
-    return this.filter<TemplateNodeInterpolationValue>(node => {
-      return node.getValueOrThrow() instanceof TemplateNodeInterpolationValue
-    })
+    const predicate = isTreeNodeValue(isInstance(TemplateNodeInterpolationValue))
+    return this.filter(predicate)
   }
 
   @echoize()
   public interpolationNodes () {
-    return this.filter<TemplateNodeInterpolationValue>(node => {
-      return node.getValueOrThrow() instanceof TemplateNodeInterpolationValue
-    })
+    const predicate = isTreeNodeValue(isInstance(TemplateNodeInterpolationValue))
+    return this.filter(predicate)
   }
 
   @echoize()
   public htmlNodes () {
-    return this.filter<TemplateNodeHtmlValue>(node => {
-      return node.getValueOrThrow() instanceof TemplateNodeHtmlValue
-    })
+    const predicate = isTreeNodeValue(isInstance(TemplateNodeHtmlValue))
+    return this.filter(predicate)
   }
 
   @echoize()
   public componentNodes () {
-    return this.filter<TemplateNodeComponentValue>(node => {
-      return node.getValueOrThrow() instanceof TemplateNodeComponentValue
-    })
+    const predicate = isTreeNodeValue(isInstance(TemplateNodeComponentValue))
+    return this.filter(predicate)
   }
 
   // public getNamesOfMethodsBoundToNode (node: TreeNode<TemplateNodeValue>): Set<string> {

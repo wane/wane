@@ -1,15 +1,5 @@
-import Project, { ClassDeclaration } from 'ts-simple-ast'
-import * as path from 'path'
-import { canPropBeModified, getMethodsCalledFrom, getPropsWhichCanBeModifiedBy } from '../index'
-
-const loadClassFromFile = (filename: string) => (className: string): ClassDeclaration => {
-  const dir = path.join(__dirname.replace(`/dist/`, `/src/`), 'files')
-  const file = path.join(dir, filename)
-  const project = new Project()
-  project.addExistingSourceFile(file)
-  const source = project.getSourceFile(file)!
-  return source.getClassOrThrow(className)
-}
+import {canPropBeModified, getMethodsCalledFrom, getPropsWhichCanBeModifiedBy} from '../index'
+import {loadClassFromFile} from './utils'
 
 describe(`Analyzer Utils`, () => {
   const loadClass = loadClassFromFile(`01.ts`)

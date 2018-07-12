@@ -33,7 +33,7 @@ import { Entry, Template, Style } from 'wane'
   <p>Hello, {{ name }}!</p>
   
   <label>
-    <span class="test">Name</span>
+    <span className="test">Name</span>
     <input type="text" [value]="name" (input)="onNameChange(#)">
   </label>
 `)

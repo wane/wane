@@ -1,9 +1,10 @@
 class TestClass01 {
 
-  p1 = 1
-  p2 = 2
-  p3 = 3
-  p4 = 4
+  p1: number = 1
+  p2: string = '2'
+  p3: number | string = 3
+  p3b: string | number = 0b1
+  p4: number | null = 4
 
   m1 () {
     this.m2()
@@ -12,7 +13,7 @@ class TestClass01 {
 
   m2 () {
     this.m3()
-    this.p2 = 2
+    this.p2 = '2'
   }
 
   m3 () {
@@ -186,5 +187,33 @@ class TestClass07 {
   // m10 () {
   //   this.p1 < (this.p2 = this.p3)
   // }
+
+}
+
+interface User {
+  id: number
+  name: string
+  age: number
+}
+
+interface UserFakeExtended {
+  id: number
+  name: string
+  age: number
+  details: string
+}
+
+interface UserReallyExtended extends User {
+  details: string
+}
+
+type QuackUser = { id: number } & { name: string, age: Exclude<string | number, number> }
+
+class CrazyTypes {
+
+  p1!: User
+  p2!: UserFakeExtended
+  p3!: UserReallyExtended
+  p4!: QuackUser
 
 }

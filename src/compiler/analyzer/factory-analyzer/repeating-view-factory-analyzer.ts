@@ -7,17 +7,19 @@ import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-valu
 import { ViewBoundPropertyAccess } from '../../template-nodes/view-bound-value'
 import { PartialViewFactoryAnalyzer } from './partial-view-factory-analyzer'
 import { echoize } from '../../utils/echoize'
+import {ProjectAnalyzer} from '../project-analyzer'
 
 export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<TemplateNodeRepeatingViewValue> {
 
   constructor (
+    projectAnalyzer: ProjectAnalyzer,
     uniqueId: number,
     parentFactory: FactoryAnalyzer<TemplateNodeValue>,
     anchorViewNode: TreeNode<TemplateNodeRepeatingViewValue>,
     templateDefinition: Forest<TemplateNodeValue>,
     partialViewFactoryAnalyzer: PartialViewFactoryAnalyzer,
   ) {
-    super(uniqueId, parentFactory, anchorViewNode, templateDefinition, partialViewFactoryAnalyzer)
+    super(projectAnalyzer, uniqueId, parentFactory, anchorViewNode, templateDefinition, partialViewFactoryAnalyzer)
   }
 
   @echoize()
@@ -41,7 +43,7 @@ export class RepeatingViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Templ
   @echoize()
   public getFactoryName (): string {
     const boundValue = this.getBinding().boundValue as ViewBoundPropertyAccess
-    const path = boundValue.getRawPath().replace(/\./g, '-')
+    const path = boundValue.getRaw().replace(/\./g, '-')
     return `RepeatingView_${path}_${this.uniqueId}`
   }
 

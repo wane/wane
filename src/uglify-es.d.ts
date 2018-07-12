@@ -24,3 +24,29 @@ declare module 'css-tree' {
   const val: any
   export = val
 }
+
+declare module 'property-information' {
+
+  export interface PropInfo {
+    name: string,
+    propertyName: string,
+    mustUseAttribute: boolean,
+    mustUseProperty: boolean,
+    boolean: boolean,
+    overloadedBoolean: boolean,
+    numeric: boolean,
+    positiveNumeric: boolean,
+    commaSeparated: boolean,
+    spaceSeparated: boolean
+  }
+
+  interface Val {
+    (name: string): PropInfo
+
+    all: { [attrName: string]: PropInfo }
+  }
+
+  const val: Val
+  export = val
+
+}

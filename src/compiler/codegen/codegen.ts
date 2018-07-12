@@ -182,7 +182,7 @@ export class Codegen {
   }
 
   private async deleteAll (): Promise<this> {
-    this.project.getSourceFiles().forEach(file => file.delete())
+    // this.project.getSourceFiles().forEach(file => file.delete())
     await del(path.join(this.distDirectory, `/**/!(index).js`))
     await del(path.join(this.distDirectory, `/**/*.d.ts`))
     return this

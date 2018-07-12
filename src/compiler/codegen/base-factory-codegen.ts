@@ -177,7 +177,7 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
                 const definitionFactory = boundValue.getFirstScopeBoundaryUpwardsIncludingSelf()
                 const path = factoryDescendant.getPathTo(definitionFactory)
 
-                // if (boundValue instanceof ViewBoundPropertyAccess && boundValue.getRawPath().startsWith('item.')) {
+                // if (boundValue instanceof ViewBoundPropertyAccess && boundValue.getRaw().startsWith('item.')) {
                 //   console.log(path.map(x => x.getFactoryName()))
                 // }
 

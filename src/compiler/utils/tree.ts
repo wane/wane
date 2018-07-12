@@ -310,8 +310,8 @@ export class TreeNode<V> {
 
 }
 
-export function isTreeNodeValue<T> (predicate: (value: T) => boolean): (treeNode: TreeNode<T>) => boolean
 export function isTreeNodeValue<T, R extends T> (predicate: (value: T) => value is R): (treeNode: TreeNode<T>) => treeNode is TreeNode<R>
+export function isTreeNodeValue<T> (predicate: (value: T) => boolean): (treeNode: TreeNode<T>) => boolean
 export function isTreeNodeValue<T> (predicate: (value: T) => boolean) {
   return (treeNode: TreeNode<T>) => {
     return predicate(treeNode.getValueOrThrow())
@@ -326,7 +326,7 @@ export function isLastChild<T> (node: TreeNode<T>): boolean {
   return node.getLastChild() == null
 }
 
-function fill (length: number, char: string = ' '): string {
+export function fill (length: number, char: string = ' '): string {
   let s = ''
   for (let i = 0; i < length; i++) {
     s += char
