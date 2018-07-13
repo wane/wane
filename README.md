@@ -11,7 +11,7 @@ See what makes it special after the Hello World introduction below.
 
 **WARNING!** This is still just an early prototype.
 Beware of super experimental stuff ahead, including bugs and obvious missing features.
-Feel free to play around, ask question and report bugs in the issues section.
+Feel free to play around, ask questions and report bugs in the issues section.
 
 ## Hello World
 
@@ -49,7 +49,7 @@ If everything went fine, you should see the success message in green:
 ✔ Compiled successfully.
 ```
 
-The built app it contained within the newly created `dist` folder.
+The built app is contained within the newly created `dist` folder.
 Open the `dist/index.html` file from your browser to see the app in action.
 
 The generated JavaScript file is only **580 bytes**.
@@ -92,4 +92,4 @@ When a new feature is implemented, you could just run the compiler again over th
 
 ## How to explore
 
-Until I (or someone else) gets around to writing examples and tutorials, your best shot a seeing what is currently implemented are apps created for end-to-end tests under `tests/e2e/apps`.
+Until I (or someone else) gets around to writing examples and tutorials, your best shot at seeing what is currently implemented are apps created for end-to-end tests under `tests/e2e/apps`.
