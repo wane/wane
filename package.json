@@ -8,6 +8,7 @@
     "wane": "dist/compiler/index.js"
   },
   "scripts": {
+    "build": "tsc",
     "tsc:w": "tsc -w",
     "test": "jasmine --config=jasmine.json",
     "test:w": "nodemon -w ./dist -e jasmine -- --config=jasmine.json",
