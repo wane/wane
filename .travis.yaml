@@ -1,0 +1,9 @@
+language: node_js
+node_js:
+  "node"
+cache:
+  directories:
+    - "node_modules"
+scripts:
+- yarn test
+- yarn e2e
