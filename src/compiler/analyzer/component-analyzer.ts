@@ -3,12 +3,17 @@ import {
   MethodDeclaration,
   SyntaxKind,
   NoSubstitutionTemplateLiteral,
-  TypeGuards,
+  TypeGuards, Block,
 } from 'ts-simple-ast'
 import {ComponentTemplateAnalyzer} from './component-template-analyzer'
 import {ViewBinding} from '../template-nodes/view-bindings'
 import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
-import {canPropBeModified, getMethodsCalledFrom, getPropsWhichCanBeModifiedBy} from './utils'
+import {
+  canPropBeModifiedInClass,
+  getMethodBody,
+  getMethodNamesCalledFrom,
+  getPropNamesWhichCanBeModifiedBy
+} from './utils'
 import { echoize } from '../utils/echoize'
 
 export class ComponentAnalyzer {
@@ -102,13 +107,18 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
+  public getBodyForMethod (methodName: string): Block {
+    return getMethodBody(this.classDeclaration, methodName)
+  }
+
+  @echoize()
   public getMethodsCalledFrom (methodName: string): Set<string> {
-    return getMethodsCalledFrom(this.classDeclaration, methodName)
+    return getMethodNamesCalledFrom(this.getBodyForMethod(methodName))
   }
 
   @echoize()
   public getPropsWhichCanBeModifiedBy (methodName: string): Set<string> {
-    return getPropsWhichCanBeModifiedBy(this.classDeclaration, methodName)
+    return getPropNamesWhichCanBeModifiedBy(this.getBodyForMethod(methodName))
   }
 
   /**
@@ -130,7 +140,7 @@ export class ComponentAnalyzer {
 
     const isInput = [...this.getNamesOfInputs()].includes(propName)
 
-    return isInput || isGetter || canPropBeModified(this.classDeclaration, propName)
+    return isInput || isGetter || canPropBeModifiedInClass(propName, this.classDeclaration)
   }
 
   @echoize()

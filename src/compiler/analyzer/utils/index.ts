@@ -1,11 +1,9 @@
-import { ClassDeclaration, Expression, SyntaxKind, TypeGuards } from 'ts-simple-ast'
+import { Block, ClassDeclaration, Expression, SyntaxKind, TypeGuards } from 'ts-simple-ast'
 
-function getMethodsCalledDirectlyFrom (
+export function getMethodBody (
   classDeclaration: ClassDeclaration,
   methodName: string,
-): Set<string> {
-  const result = new Set<string>()
-
+): Block {
   const methodDeclaration = classDeclaration.getMethod(methodName)
 
   if (methodDeclaration == null) {
@@ -13,9 +11,16 @@ function getMethodsCalledDirectlyFrom (
     throw new Error(`Expected to find method "${methodName}" in class "${className}".`)
   }
 
-  const block = methodDeclaration.getChildrenOfKind(SyntaxKind.Block)[0]
+  return methodDeclaration.getFirstChildOrThrow(TypeGuards.isBlock) as Block
+}
 
-  for (const callExpression of block.getDescendantsOfKind(SyntaxKind.CallExpression)) {
+function getMethodNamesCalledDirectlyFrom (
+  functionBody: Block,
+): Set<string> {
+  const result = new Set<string>()
+
+  const callExpressions = functionBody.getDescendantsOfKind(SyntaxKind.CallExpression)
+  for (const callExpression of callExpressions) {
     const expression = callExpression.getExpression()
     if (!TypeGuards.isPropertyAccessExpression(expression)) continue
     if (expression.getExpression().getKind() != SyntaxKind.ThisKeyword) continue
@@ -25,10 +30,13 @@ function getMethodsCalledDirectlyFrom (
   return result
 }
 
-export function getMethodsCalledFrom (
-  classDeclaration: ClassDeclaration,
-  methodName: string,
+export function getMethodNamesCalledFrom (
+  methodBody: Block,
 ): Set<string> {
+  const method = methodBody.getParentIfKindOrThrow(SyntaxKind.MethodDeclaration)
+  const methodName = method.getName()
+  const classDeclaration = method.getFirstAncestorByKindOrThrow(SyntaxKind.ClassDeclaration)
+
   const result = new Set<string>()
   const visited = new Set<string>([methodName])
   const stack: string[] = [methodName]
@@ -36,19 +44,20 @@ export function getMethodsCalledFrom (
   while (stack.length > 0) {
     const current = stack.pop()!
 
-    for (const methodCalledDirectly of getMethodsCalledDirectlyFrom(classDeclaration, current)) {
-      if (visited.has(methodCalledDirectly)) continue
-      result.add(methodCalledDirectly)
-      visited.add(methodCalledDirectly)
-      stack.push(methodCalledDirectly)
+    const methodBody = getMethodBody(classDeclaration, current)
+    const methodNamesCalledDirectly = getMethodNamesCalledDirectlyFrom(methodBody)
+    for (const methodNamedCalledDirectly of methodNamesCalledDirectly) {
+      if (visited.has(methodNamedCalledDirectly)) continue
+      result.add(methodNamedCalledDirectly)
+      visited.add(methodNamedCalledDirectly)
+      stack.push(methodNamedCalledDirectly)
     }
   }
 
   return result
 }
 
-function getPropertyModifiedByThisExpressionIfAny (
-  classDeclaration: ClassDeclaration,
+function getPropertyNameModifiedByThisExpressionIfAny (
   expression: Expression,
 ): string | undefined {
 
@@ -86,23 +95,14 @@ function getPropertyModifiedByThisExpressionIfAny (
   return undefined
 }
 
-function getPropsWhichCanBeModifiedDirectlyBy (
-  classDeclaration: ClassDeclaration,
-  methodName: string,
+function getPropsNamesWhichCanBeModifiedDirectlyBy (
+  functionBody: Block
 ): Set<string> {
   const result = new Set<string>()
 
-  const methodDeclaration = classDeclaration.getMethod(methodName)
-
-  if (methodDeclaration == null) {
-    const className = classDeclaration.getName()
-    throw new Error(`Expected to find method "${methodName}" in class "${className}".`)
-  }
-
-  const block = methodDeclaration.getChildrenOfKind(SyntaxKind.Block)[0]
-
-  for (const expression of block.getDescendantsOfKind(SyntaxKind.ExpressionStatement)) {
-    const prop = getPropertyModifiedByThisExpressionIfAny(classDeclaration, expression.getExpression())
+  const expressions = functionBody.getDescendantsOfKind(SyntaxKind.ExpressionStatement)
+  for (const expression of expressions) {
+    const prop = getPropertyNameModifiedByThisExpressionIfAny(expression.getExpression())
     if (prop == null) continue
     result.add(prop)
   }
@@ -110,20 +110,22 @@ function getPropsWhichCanBeModifiedDirectlyBy (
   return result
 }
 
-export function getPropsWhichCanBeModifiedBy (
-  classDeclaration: ClassDeclaration,
-  methodName: string,
+export function getPropNamesWhichCanBeModifiedBy (
+  functionBody: Block,
 ): Set<string> {
+  const classDeclaration = functionBody.getFirstAncestorByKindOrThrow(SyntaxKind.ClassDeclaration)
+
   const result = new Set<string>()
 
   // Directly...
-  for (const prop of getPropsWhichCanBeModifiedDirectlyBy(classDeclaration, methodName)) {
+  for (const prop of getPropsNamesWhichCanBeModifiedDirectlyBy(functionBody)) {
     result.add(prop)
   }
 
   // And indirectly...
-  for (const method of getMethodsCalledFrom(classDeclaration, methodName)) {
-    for (const prop of getPropsWhichCanBeModifiedDirectlyBy(classDeclaration, method)) {
+  for (const method of getMethodNamesCalledFrom(functionBody)) {
+    const indirectMethodBody = getMethodBody(classDeclaration, method)
+    for (const prop of getPropsNamesWhichCanBeModifiedDirectlyBy(indirectMethodBody)) {
       result.add(prop)
     }
   }
@@ -131,20 +133,21 @@ export function getPropsWhichCanBeModifiedBy (
   return result
 }
 
-function canPropBeModifiedByMethod (
-  classDeclaration: ClassDeclaration,
+function canPropBeModifiedByMethodInClass (
   propName: string,
   methodName: string,
+  classDeclaration: ClassDeclaration,
 ): boolean {
-  const props = getPropsWhichCanBeModifiedBy(classDeclaration, methodName)
+  const body = getMethodBody(classDeclaration, methodName)
+  const props = getPropNamesWhichCanBeModifiedBy(body)
   return props.has(propName)
 }
 
-export function canPropBeModified (
-  classDeclaration: ClassDeclaration,
+export function canPropBeModifiedInClass (
   propName: string,
+  classDeclaration: ClassDeclaration,
 ): boolean {
   const methodNames = classDeclaration.getMethods()
     .map(methodDeclaration => methodDeclaration.getName())
-  return methodNames.some(methodName => canPropBeModifiedByMethod(classDeclaration, propName, methodName))
+  return methodNames.some(methodName => canPropBeModifiedByMethodInClass(propName, methodName, classDeclaration))
 }
