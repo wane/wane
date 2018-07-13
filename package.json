@@ -50,6 +50,7 @@
     "fs-extra": "^6.0.1",
     "gzip-size": "^4.1.0",
     "himalaya": "^1.1.0",
+    "is-travis": "^2.0.0",
     "iterare": "^0.0.8",
     "lodash": "^4.17.10",
     "magic-string": "^0.24.0",
