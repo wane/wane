@@ -3,6 +3,7 @@ import { expectDomStructure, h } from './vdom'
 import * as puppeteer from 'puppeteer'
 import { spawn } from 'child_process'
 import * as path from 'path'
+import * as isTravis from 'is-travis'
 
 export async function compileTestApp (opts: Partial<WaneCompilerOptions>) {
   await compile({ pretty: false, ...opts })
@@ -12,7 +13,11 @@ export async function runTest (__dirname: string, test: (page: puppeteer.Page) =
   let browser: puppeteer.Browser | undefined
   let page: puppeteer.Page | undefined
   try {
-    browser = await puppeteer.launch()
+    if (isTravis) {
+      browser = await puppeteer.launch({ args: ['--no-sandbox'] })
+    } else {
+      browser = await puppeteer.launch()
+    }
     await compileTestApp({ dir: __dirname })
     page = await browser.newPage()
     await page.goto(`file:///${__dirname}/dist/index.html`)

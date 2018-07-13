@@ -24,3 +24,8 @@ declare module 'css-tree' {
   const val: any
   export = val
 }
+
+declare module 'is-travis' {
+  const val: boolean
+  export = val
+}
