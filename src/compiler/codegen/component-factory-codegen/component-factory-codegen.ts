@@ -7,6 +7,7 @@ import { or } from '../../template-nodes/nodes/utils'
 import { isInstance } from '../../utils/utils'
 import { TemplateNodeHtmlValue } from '../../template-nodes'
 import { TemplateNodeComponentValue } from '../../template-nodes/nodes/component-node'
+import { SyntaxKind } from "ts-simple-ast";
 
 export class ComponentFactoryCodegen extends BaseFactoryCodegen {
 
@@ -92,11 +93,12 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
     this.writer
       .writeLine(`this.__wane__updateAsync = [`)
       .indentBlock(() => {
-        fa.componentAnalyzer.getAsyncBlocksWhichCauseUpdate().forEach((block, index) => {
+        fa.componentAnalyzer.getAsyncBlocksWhichCauseUpdate().forEach((syntaxList, index) => {
           this.writer
             .writeLine(`// ${index}`)
             .writeLine(`() => {`)
             .indentBlock(() => {
+              const block = syntaxList.getFirstDescendantByKindOrThrow(SyntaxKind.Block)
               const factories = fa.getFirstScopeBoundaryUpwardsIncludingSelf().getFactoriesAffectedByCalling(block)
               for (const factory of factories) {
                 const pathToAccessor = fa.printPathTo(factory)
