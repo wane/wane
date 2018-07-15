@@ -13,6 +13,7 @@ import { TemplateNodeConditionalViewValue } from '../template-nodes/nodes/condit
 import { TemplateNodeRepeatingViewValue } from '../template-nodes/nodes/repeating-view-node'
 import { WaneCompilerOptions } from '../compile'
 import { PartialViewFactoryAnalyzer } from './factory-analyzer/partial-view-factory-analyzer'
+import { echoize } from "../utils/echoize";
 
 function spaces(n: number, space: string = '~') {
   return Array.from({length: n}).fill(space).join('')
@@ -108,13 +109,16 @@ export class ProjectAnalyzer {
     return this.getRegisteredComponentsDeclarationsRecursivelyIn(this.getEntryComponentDeclaration())
   }
 
-  public getAllComponentAnalyzers (): Map<ClassDeclaration, ComponentAnalyzer> {
-    const componentDeclarations = this.getAllRegisteredComponentsDeclarations()
-    const result = new Map<ClassDeclaration, ComponentAnalyzer>()
-    for (const classDeclaration of componentDeclarations) {
-      const componentCompilerNode = new ComponentAnalyzer(classDeclaration)
-      const componentFullName = componentCompilerNode.getFullName()
-      result.set(classDeclaration, componentCompilerNode)
+  public getAllComponentAnalyzers (): Set<ComponentAnalyzer> {
+    const result = new Set<ComponentAnalyzer>()
+    const tree = this.getFactoryTree()
+    const queue: FactoryAnalyzer<TemplateNodeValue>[] = [tree]
+    while (queue.length > 0) {
+      const current = queue.pop()!
+      queue.push(...[...current.getChildrenFactories()])
+      if (current instanceof ComponentFactoryAnalyzer) {
+        result.add(current.componentAnalyzer)
+      }
     }
     return result
   }

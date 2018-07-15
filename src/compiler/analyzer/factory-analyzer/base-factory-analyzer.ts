@@ -8,6 +8,8 @@ import { paramCase } from 'change-case'
 import { ComponentFactoryAnalyzer } from './component-factory-analyzer'
 import { getPath, printTreePath } from '../../utils/graph'
 import { echoize } from '../../utils/echoize'
+import { Block, SyntaxKind } from "ts-simple-ast";
+import { oneLine } from "common-tags";
 
 export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
@@ -80,8 +82,8 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
   public getParent (): FactoryAnalyzer<TemplateNodeValue> {
     if (this.parent == null) {
-      throw new Error(`Factory Analyzer "${this.uniqueId}" has no parent. ` +
-        `It's either root or it hasn't been set properly.`)
+      throw new Error(oneLine`Factory Analyzer "${this.getFactoryName()}" has no parent.
+        It's either root or it hasn't been set properly.`)
     }
     return this.parent
   }
@@ -288,11 +290,29 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   /**
    * These are only ancestor factories... I think.
    *
-   * @param {string} methodName
-   * @returns {Iterable<FactoryAnalyzer<TemplateNodeValue>>}
+   * @param methodNameOrFunctionBody
+   * @returns
    */
   @echoize()
-  public getFactoriesAffectedByCalling (methodName: string): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
+  public getFactoriesAffectedByCalling (methodNameOrFunctionBody: string | Block): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
+    if (typeof methodNameOrFunctionBody != 'string' && !this.isScopeBoundary()) {
+      throw new Error(`Using Block as parameter type is possible only on ComponentFactoryAnalyzer.`)
+    }
+
+    let methodName: string
+    let functionBody: Block
+
+    if (typeof methodNameOrFunctionBody == 'string') {
+      methodName = methodNameOrFunctionBody
+      const methodDeclaration = (this.getFirstScopeBoundaryUpwardsIncludingSelf()).componentAnalyzer.getMethodDeclaration(methodName)
+      functionBody = methodDeclaration.getFirstDescendantByKindOrThrow(SyntaxKind.Block)
+    } else {
+      const methodDeclaration = methodNameOrFunctionBody.getFirstAncestorByKindOrThrow(SyntaxKind.MethodDeclaration)
+      methodName = methodDeclaration.getName()
+      functionBody = methodNameOrFunctionBody
+    }
+
+
     const resolved = this.getFirstScopeBoundaryUpwardsIncludingSelf().hasDefinedAndResolvesTo(methodName)
     if (resolved == null) {
       throw new Error(`Method named "${methodName}" is not defined on factory "${this.getFactoryName()}".`)
@@ -314,7 +334,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           // we skip this binding if it cannot be called when methodName is invoked...
           const allMethods = this.getFirstScopeBoundaryUpwardsIncludingSelf()
             .componentAnalyzer
-            .getMethodsCalledFrom(methodName)
+            .getMethodsCalledFrom(functionBody)
           allMethods.add(methodName) // ...including itself, of course
 
           if (!allMethods.has(outputName)) {
@@ -345,14 +365,15 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
   @echoize()
   public getFactoryIndexAsChild (): number {
-    if (this.parent == null) {
+    const parent = this.getParentOrUndefined()
+    if (parent == null) {
       throw new Error(`A root ("${this.getFactoryName()}") cannot have a factory index because it is not a child.`)
     }
-    const siblings = [...this.parent.children.values()]
+    const siblings = [...parent.children.values()]
     const index = siblings.findIndex(f => f == this)
     if (index == -1) {
       const thisName = this.getFactoryName()
-      const parentName = this.parent.getFactoryName()
+      const parentName = parent.getFactoryName()
       throw new Error(`Could not find self ("${thisName}") in the children of parent ("${parentName}").`)
     }
     return index

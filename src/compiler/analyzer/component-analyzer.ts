@@ -1,13 +1,14 @@
 import {
+  Block,
   ClassDeclaration,
   MethodDeclaration,
-  SyntaxKind,
   NoSubstitutionTemplateLiteral,
-  TypeGuards, Block,
+  SyntaxKind, SyntaxList,
+  TypeGuards,
 } from 'ts-simple-ast'
-import {ComponentTemplateAnalyzer} from './component-template-analyzer'
-import {ViewBinding} from '../template-nodes/view-bindings'
-import {TemplateNodeValue} from '../template-nodes/nodes/template-node-value-base'
+import { ComponentTemplateAnalyzer } from './component-template-analyzer'
+import { ViewBinding } from '../template-nodes/view-bindings'
+import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
 import {
   canPropBeModifiedInClass,
   getMethodBody,
@@ -112,8 +113,11 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
-  public getMethodsCalledFrom (methodName: string): Set<string> {
-    return getMethodNamesCalledFrom(this.getBodyForMethod(methodName))
+  public getMethodsCalledFrom (methodNameOrBody: string | Block): Set<string> {
+    const body = typeof methodNameOrBody == 'string'
+      ? this.getBodyForMethod(methodNameOrBody)
+      : methodNameOrBody
+    return getMethodNamesCalledFrom(body)
   }
 
   @echoize()
@@ -192,6 +196,20 @@ export class ComponentAnalyzer {
   @echoize()
   public hasStyles (): boolean {
     return this.getStyles() != null
+  }
+
+  private asyncBlocksWhichCauseUpdate = new Map<number, SyntaxList>()
+
+  public registerAsyncBlockWhichCausesUpdate (index: number, syntaxList: SyntaxList): void {
+    this.asyncBlocksWhichCauseUpdate.set(index, syntaxList)
+  }
+
+  public getAsyncBlocksWhichCauseUpdate () {
+    return this.asyncBlocksWhichCauseUpdate
+  }
+
+  public hasAsyncBlocksWhichCauseUpdate () {
+    return this.getAsyncBlocksWhichCauseUpdate().size > 0
   }
 
 }

@@ -5,6 +5,8 @@ import { ViewBinding } from '../template-nodes/view-bindings'
 import iterare from 'iterare'
 import { ViewBoundPropertyAccess } from '../template-nodes/view-bound-value'
 import { getIntersection } from '../utils/utils'
+import chalk from "chalk";
+import { oneLine } from "common-tags";
 
 export abstract class BaseFactoryCodegen extends BaseCodegen {
 
@@ -192,6 +194,8 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
                   try {
                     binding.printUpdate(this.writer, fa)
                   } catch (e) {
+                    console.warn(chalk.yellow(oneLine`There was an error while generating updateView
+                      method for ${fa.getFactoryName()}.`))
                     this.writer.writeLine(`/** ${e} */`)
                   }
                 }
