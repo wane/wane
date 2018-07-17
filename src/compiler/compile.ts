@@ -60,9 +60,8 @@ export function getProjectAnalyzer (waneCompilerOptions: Partial<WaneCompilerOpt
       noFallthroughCasesInSwitch: true,
       noImplicitReturns: true,
       removeComments: false,
-      declaration: true,
       lib: [
-        'es2015',
+        'es2017',
         'dom',
       ],
     },
