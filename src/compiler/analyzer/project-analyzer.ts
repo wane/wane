@@ -13,10 +13,9 @@ import { TemplateNodeConditionalViewValue } from '../template-nodes/nodes/condit
 import { TemplateNodeRepeatingViewValue } from '../template-nodes/nodes/repeating-view-node'
 import { WaneCompilerOptions } from '../compile'
 import { PartialViewFactoryAnalyzer } from './factory-analyzer/partial-view-factory-analyzer'
-import { echoize } from "../utils/echoize";
 
-function spaces(n: number, space: string = '~') {
-  return Array.from({length: n}).fill(space).join('')
+function spaces (n: number, space: string = '~') {
+  return Array.from({ length: n }).fill(space).join('')
 }
 
 export class ProjectAnalyzer {
@@ -28,7 +27,7 @@ export class ProjectAnalyzer {
   private _registeredComponents = new Map<ClassDeclaration, Set<ClassDeclaration>>()
 
   constructor (private tsSimpleAstProject: Project,
-               private compilerOptions: WaneCompilerOptions) {
+               public compilerOptions: WaneCompilerOptions) {
     this._sourceFiles = tsSimpleAstProject.getSourceFiles()
   }
 
@@ -125,6 +124,7 @@ export class ProjectAnalyzer {
 
   private factoryNodeIndentation = 0
   private templateNodeIndentation = 0
+
   private get totalIndentation () {
     return this.factoryNodeIndentation = this.templateNodeIndentation
   }
@@ -155,6 +155,7 @@ export class ProjectAnalyzer {
         const componentDeclaration = definitionFactory.componentAnalyzer.getRegisteredComponentDeclaration(componentClassName)
         const componentCompilerNode = new ComponentAnalyzer(componentDeclaration)
         const childFactory = new ComponentFactoryAnalyzer(
+          this,
           this.counter.next().value,
           responsibleFactory,
           viewNode as TreeNode<TemplateNodeComponentValue>,
@@ -164,10 +165,12 @@ export class ProjectAnalyzer {
         this._generateFactoryTree(childFactory, definitionFactory)
       } else if (isInstance(TemplateNodeConditionalViewValue)(value)) {
         const partialView = new PartialViewFactoryAnalyzer(
+          this,
           this.counter.next().value,
           new Forest(templateNode.getChildren()),
         )
         const childFactory = new ConditionalViewFactoryAnalyzer(
+          this,
           this.counter.next().value,
           responsibleFactory,
           viewNode as TreeNode<TemplateNodeConditionalViewValue>,
@@ -178,10 +181,12 @@ export class ProjectAnalyzer {
         this._generateFactoryTree(partialView, definitionFactory)
       } else if (isInstance(TemplateNodeRepeatingViewValue)(value)) {
         const partialView = new PartialViewFactoryAnalyzer(
+          this,
           this.counter.next().value,
           new Forest(templateNode.getChildren()),
         )
         const childFactory = new RepeatingViewFactoryAnalyzer(
+          this,
           this.counter.next().value,
           responsibleFactory,
           viewNode as TreeNode<TemplateNodeRepeatingViewValue>,
@@ -232,6 +237,7 @@ export class ProjectAnalyzer {
     debugger
     const entryComponentCompilerNode = new ComponentAnalyzer(this.getEntryComponentDeclaration())
     const entryFactory = new ComponentFactoryAnalyzer(
+      this,
       this.counter.next().value,
       undefined,
       undefined,

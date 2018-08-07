@@ -12,6 +12,7 @@ import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-valu
 import CodeBlockWriter from 'code-block-writer'
 import { PartialViewFactoryAnalyzer } from './partial-view-factory-analyzer'
 import { echoize } from '../../utils/echoize'
+import { ProjectAnalyzer } from '../project-analyzer'
 
 export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialViewValue = TemplateNodePartialViewValue> extends FactoryAnalyzer<T> {
 
@@ -37,13 +38,14 @@ export abstract class DirectiveFactoryAnalyzer<T extends TemplateNodePartialView
   }
 
   constructor (
+    projectAnalyzer: ProjectAnalyzer,
     uniqueId: number,
     parentFactory: FactoryAnalyzer<TemplateNodeValue>,
     anchorViewNode: TreeNode<T>,
     templateDefinition: Forest<TemplateNodeValue>,
     partialViewFactoryAnalyzer: PartialViewFactoryAnalyzer,
   ) {
-    super(uniqueId, parentFactory, anchorViewNode)
+    super(projectAnalyzer, uniqueId, parentFactory, anchorViewNode)
     this.templateDefinition = templateDefinition
     this.partialViewFa = partialViewFactoryAnalyzer
     this.partialViewFa.registerDirectiveFactoryAnalyzer(this)

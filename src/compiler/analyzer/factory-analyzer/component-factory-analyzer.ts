@@ -10,6 +10,7 @@ import CodeBlockWriter from 'code-block-writer'
 import { pascalCase } from 'change-case'
 import parseStyle from '../../style-parser'
 import { echoize } from '../../utils/echoize'
+import { ProjectAnalyzer } from '../project-analyzer'
 
 export class ComponentFactoryIdentifier {
 
@@ -46,12 +47,13 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   }
 
   constructor (
+    projectAnalyzer: ProjectAnalyzer,
     uniqueId: number,
     parentFactory: FactoryAnalyzer<TemplateNodeValue> | undefined,
     anchorViewNode: TreeNode<TemplateNodeComponentValue> | undefined,
     componentAnalyzer: ComponentAnalyzer,
   ) {
-    super(uniqueId, parentFactory, anchorViewNode)
+    super(projectAnalyzer, uniqueId, parentFactory, anchorViewNode)
     const path = componentAnalyzer.getFilePath()
     const name = componentAnalyzer.getClassName()
     this.identifier = new ComponentFactoryIdentifier(path, name, uniqueId)
@@ -198,11 +200,12 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
 
   @echoize()
   public getStyles (): string | null {
+    const inputDir = this.projectAnalyzer.compilerOptions.input
     const uniqueId = this.identifier.id
     const tagName = this.domTagName()
     const cssString = this.componentAnalyzer.getStyles()
     if (cssString == null) return null
-    return parseStyle(uniqueId, tagName, cssString)
+    return parseStyle(uniqueId, tagName, cssString, inputDir)
   }
 
   @echoize()

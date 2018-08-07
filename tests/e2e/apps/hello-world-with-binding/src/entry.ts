@@ -3,13 +3,16 @@ import { Entry, Template, Style } from 'wane'
 
 @Entry()
 @Style(`
+  @import './styles/vars';
+  @import '~/styles/label';
+
   :host {
     font-family: sans-serif;
     background-color: yellow;
   }
 
   p {
-    color: hotpink;
+    color: $color;
     font-weight: bold;
   }
   
@@ -17,12 +20,7 @@ import { Entry, Template, Style } from 'wane'
    * Very pretty label.
    */
   label {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  label span {
-    font-style: italic;
+    @include label;
   }
   
   input {

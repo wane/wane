@@ -1,0 +1,8 @@
+@mixin label {
+  display: flex;
+  flex-direction: column;
+
+  span {
+    font-style: italic;
+  }
+}

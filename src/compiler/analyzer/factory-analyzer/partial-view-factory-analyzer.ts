@@ -6,6 +6,7 @@ import CodeBlockWriter from 'code-block-writer'
 import { ConditionalViewFactoryAnalyzer } from './conditional-view-factory-analyzer'
 import { RepeatingViewFactoryAnalyzer } from './repeating-view-factory-analyzer'
 import { echoize } from '../../utils/echoize'
+import { ProjectAnalyzer } from '../project-analyzer'
 
 export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValue> {
 
@@ -45,10 +46,11 @@ export class PartialViewFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeValu
   }
 
   constructor (
+    projectAnalyzer: ProjectAnalyzer,
     uniqueId: number,
     templateDefinition: Forest<TemplateNodeValue>,
   ) {
-    super(uniqueId, undefined, undefined)
+    super(projectAnalyzer, uniqueId, undefined, undefined)
     this.templateDefinition = templateDefinition
   }
 
