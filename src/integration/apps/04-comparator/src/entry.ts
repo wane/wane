@@ -1,5 +1,5 @@
 // @ts-ignore
-import { Entry, Template, Register } from 'wane'
+import { Template, Register } from 'wane'
 
 @Template(`
   <button (click)="dec()">Decrement</button>
@@ -37,7 +37,6 @@ export class InfoCmp {
   private isGreaterString = `is greater`
 }
 
-@Entry()
 @Register(CounterCmp, InfoCmp)
 @Template(`
   <span>Left number</span>
@@ -58,7 +57,7 @@ export class InfoCmp {
     [isRightGreater]="isRightGreater"
   />
 `)
-export class App {
+export default class App {
   private left: number = 2
   private right: number = 1
 

@@ -3,7 +3,8 @@ import {
   ClassDeclaration,
   MethodDeclaration,
   NoSubstitutionTemplateLiteral,
-  SyntaxKind, SyntaxList,
+  SyntaxKind,
+  SyntaxList,
   TypeGuards,
 } from 'ts-simple-ast'
 import { ComponentTemplateAnalyzer } from './component-template-analyzer'
@@ -13,7 +14,7 @@ import {
   canPropBeModifiedInClass,
   getMethodBody,
   getMethodNamesCalledFrom,
-  getPropNamesWhichCanBeModifiedBy
+  getPropNamesWhichCanBeModifiedBy,
 } from './utils'
 import { echoize } from '../utils/echoize'
 
@@ -210,6 +211,10 @@ export class ComponentAnalyzer {
 
   public hasAsyncBlocksWhichCauseUpdate () {
     return this.getAsyncBlocksWhichCauseUpdate().size > 0
+  }
+
+  public isDefaultExport (): boolean {
+    return this.classDeclaration.getDescendantsOfKind(SyntaxKind.DefaultKeyword).length > 0
   }
 
 }

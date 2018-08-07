@@ -1,6 +1,6 @@
-import { Entry, Template } from 'wane'
+// @ts-ignore
+import { Template } from 'wane'
 
-@Entry()
 @Template(`
   <input
     type="text"
@@ -16,7 +16,7 @@ import { Entry, Template } from 'wane'
     Nah, this is <strong>not</strong> a palindrome.  
   </w:if>
 `)
-export class App {
+export default class App {
 
   private value: string = ''
 

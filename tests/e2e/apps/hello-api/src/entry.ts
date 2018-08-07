@@ -1,8 +1,7 @@
 // @ts-ignore
-import { Template, Entry, Style } from 'wane'
+import { Template, Style } from 'wane'
 import { getAnswer } from './mock-api'
 
-@Entry()
 @Style(`
   .loading {
     opacity: .6;
@@ -26,7 +25,7 @@ import { getAnswer } from './mock-api'
     </w:if>  
   </w:if>
 `)
-export class App {
+export default class App {
 
   private answer: string | undefined
   private isLoading: boolean = false

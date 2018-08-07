@@ -1,4 +1,5 @@
-import { Entry, Register, Template } from 'wane'
+// @ts-ignore
+import { Register, Template } from 'wane'
 
 let id: number = 1001
 
@@ -72,7 +73,6 @@ export class FormCmp {
 
 }
 
-@Entry()
 @Register(EmptyStateCmp, FormCmp)
 @Template(`
   <w:if isDataEmpty>
@@ -109,7 +109,7 @@ export class FormCmp {
     <form-cmp [initialValue]="itemSelectedForEdit" (submit)="edit(#)" (close)="closeEditForm()"/>  
   </w:if>
 `)
-export class App {
+export default class App {
 
   private data: Item[] = [
     { id: id++, name: `John Doe`, age: 42, continent: `Africa` },

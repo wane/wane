@@ -1,5 +1,5 @@
 // @ts-ignore
-import { Entry, Template, Register } from 'wane'
+import { Template, Register } from 'wane'
 
 @Template(`
   <button (click)="changeState()">Toggle (currently {{ value }})</button>
@@ -15,7 +15,6 @@ export class ToggleCmp {
   }
 }
 
-@Entry()
 @Register(ToggleCmp)
 @Template(`
   <toggle-cmp
@@ -33,7 +32,7 @@ export class ToggleCmp {
     <span style="font-style: italic">TypeScript!</span>
   </w:if>
 `)
-export class App {
+export default class App {
   private bool: boolean = false
 
   private onChange (newBool: boolean): void {

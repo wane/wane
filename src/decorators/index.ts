@@ -16,12 +16,6 @@ export function Description (s: string) {
   }
 }
 
-export function Entry () {
-  return function (target: any) {
-    return target
-  }
-}
-
 export function Style (css: string) {
   return function (target: any) {
     return target

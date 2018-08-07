@@ -1,4 +1,4 @@
-import Project, { ClassDeclaration, SourceFile } from 'ts-simple-ast'
+import Project, { ClassDeclaration, SourceFile, TypeGuards } from 'ts-simple-ast'
 import { Forest, TreeNode } from '../utils/tree'
 import { ComponentAnalyzer } from './component-analyzer'
 import { FactoryAnalyzer } from './factory-analyzer/base-factory-analyzer'
@@ -13,6 +13,8 @@ import { TemplateNodeConditionalViewValue } from '../template-nodes/nodes/condit
 import { TemplateNodeRepeatingViewValue } from '../template-nodes/nodes/repeating-view-node'
 import { WaneCompilerOptions } from '../compile'
 import { PartialViewFactoryAnalyzer } from './factory-analyzer/partial-view-factory-analyzer'
+import { oneLine } from 'common-tags'
+import * as path from 'path'
 
 function spaces (n: number, space: string = '~') {
   return Array.from({ length: n }).fill(space).join('')
@@ -35,32 +37,33 @@ export class ProjectAnalyzer {
     return this.tsSimpleAstProject
   }
 
+  /**
+   * Entry component is a default export from the src/entry.ts file.
+   */
   public getEntryComponentDeclaration (): ClassDeclaration {
-    for (const sourceFile of this._sourceFiles) {
-      const klasses = sourceFile.getClasses()
-      for (const klass of klasses) {
-        const decorators = klass.getDecorators()
-        const entryDecorator = decorators.find(decorator => {
-          return decorator.getName() == 'Entry'
-        })
-        if (entryDecorator != null) {
-          return klass
-        }
-      }
+    const entryFilePath = path.join(this.compilerOptions.output, 'entry.ts')
+    const entryFile = this.getProject().getSourceFile(entryFilePath)
+    if (entryFile == null) {
+      throw new Error(`The entry file not found.`)
     }
 
-    const filesAndClasses = this._sourceFiles
-      .filter(file => file.getClasses().length != 0)
-      .map(file => ({
-        fileName: `${file.getFilePath()}.${file.getBaseNameWithoutExtension()}`,
-        classNames: file.getClasses().map(klass => klass.getName()),
-      }))
-      .map(({ fileName, classNames }) => {
-        return classNames.map(className => `${fileName}#${className}`)
-      })
-      .join(`, `)
-    throw new Error(`No entry component found for the project. ` +
-      `The following classes were examined: ${filesAndClasses}`)
+    const defaultExportSymbol = entryFile.getDefaultExportSymbol()
+    if (defaultExportSymbol == null) {
+      throw new Error(`The entry file must have a default export.`)
+    }
+    const declarations = defaultExportSymbol.getDeclarations()
+
+    if (declarations.length == 0) {
+      throw new Error(oneLine`No declarations of the exported
+        symbol ${defaultExportSymbol.getName()}.`)
+    }
+
+    const classDeclaration = declarations.find(TypeGuards.isClassDeclaration)
+    if (classDeclaration == null) {
+      throw new Error(oneLine`The default export from the entry file is not a class.`)
+    }
+
+    return classDeclaration
   }
 
   private _isAllComponentCompilerNodesReady: boolean = false
@@ -234,7 +237,6 @@ export class ProjectAnalyzer {
     if (this._factoryTree != null) {
       return this._factoryTree
     }
-    debugger
     const entryComponentCompilerNode = new ComponentAnalyzer(this.getEntryComponentDeclaration())
     const entryFactory = new ComponentFactoryAnalyzer(
       this,

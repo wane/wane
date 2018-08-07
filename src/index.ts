@@ -1,1 +1,1 @@
-export { Entry, Register, Template, HostAttribute } from './decorators/index'
+export { Register, Template, HostAttribute } from './decorators/index'

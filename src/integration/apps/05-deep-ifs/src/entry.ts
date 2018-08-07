@@ -1,5 +1,5 @@
 // @ts-ignore
-import { Template, Entry, Register } from 'wane'
+import { Template, Register } from 'wane'
 
 export type Letters = 'a' | 'b' | 'c'
 
@@ -37,7 +37,6 @@ export class CounterCmp {
   }
 }
 
-@Entry()
 @Register(CounterCmp, ToggleCmp)
 @Template(`
   <div>
@@ -62,7 +61,7 @@ export class CounterCmp {
     </w:if>
   </w:if>
 `)
-export class App {
+export default class App {
   public values: { [key in Letters]: number } = {
     a: 1,
     b: 2,

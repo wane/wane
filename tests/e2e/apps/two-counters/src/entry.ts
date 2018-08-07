@@ -1,4 +1,5 @@
-import { Entry, Register, Template } from 'wane'
+// @ts-ignore
+import { Register, Template } from 'wane'
 
 @Template(`
   <button (click)="dec()">
@@ -26,7 +27,6 @@ export class CounterCmp {
   }
 }
 
-@Entry()
 @Register(CounterCmp)
 @Template(`
   <p>Left is {{ left }}, right is {{ right }}.</p>
@@ -41,7 +41,7 @@ export class CounterCmp {
     (valueChange)="onRightChange(#)"
   />
 `)
-export class AppCmp {
+export default class AppCmp {
   private left = 42
   private right = 21
 

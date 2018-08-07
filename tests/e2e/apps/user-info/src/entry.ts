@@ -1,4 +1,5 @@
-import { Entry, Register, Template } from 'wane'
+// @ts-ignore
+import { Register, Template } from 'wane'
 
 @Template(`
   <h2>{{ title }}</h2>
@@ -82,7 +83,6 @@ export class TextBoxEditCmp {
   }
 }
 
-@Entry()
 @Register(TextBoxEditCmp, NumberBoxEditCmp)
 @Template(`
   <h1>User info</h1>
@@ -128,7 +128,7 @@ export class TextBoxEditCmp {
     />
   </w:if>
 `)
-export class App {
+export default class App {
 
   private user = {
     name: 'John Doe',

@@ -1,5 +1,5 @@
 // @ts-ignore
-import { Entry, Template, Register } from 'wane'
+import { Template, Register } from 'wane'
 
 @Template(`
   <button (click)="dec()">Decrement</button>
@@ -21,7 +21,6 @@ export class CounterCmp {
   }
 }
 
-@Entry()
 @Register(CounterCmp)
 @Template(`
   <counter-cmp
@@ -29,7 +28,7 @@ export class CounterCmp {
     (valueChange)="onCountChange(#)"
   />
 `)
-export class App {
+export default class App {
   private count: number = 21
 
   private onCountChange (newCount: number): void {

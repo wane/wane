@@ -1,8 +1,7 @@
 // @ts-ignore
-import { Entry, Register, Template } from 'wane'
+import { Register, Template } from 'wane'
 import { CounterCmp } from './counter-cmp'
 
-@Entry()
 @Register(CounterCmp)
 @Template(`
   <counter-cmp
@@ -10,7 +9,7 @@ import { CounterCmp } from './counter-cmp'
     (valueChange)="onCountChange(#)"
   />
 `)
-export class AppCmp {
+export default class AppCmp {
   private count = 42
 
   private onCountChange (newCount: number): void {

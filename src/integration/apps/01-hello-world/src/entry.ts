@@ -1,11 +1,10 @@
 // @ts-ignore
-import { Entry, Template } from 'wane'
+import { Template } from 'wane'
 
-@Entry()
 @Template(`
   {{ greeting }}, {{ someone }}!
 `)
-export class App {
+export default class App {
   private greeting: string = `Hello`
   private someone: string = `World`
 }

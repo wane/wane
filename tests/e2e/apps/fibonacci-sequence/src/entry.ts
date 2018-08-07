@@ -1,4 +1,5 @@
-import { Entry, Register, Template } from 'wane'
+// @ts-ignore
+import { Register, Template } from 'wane'
 
 function* fibonacci (n: number) {
   let current = 1
@@ -19,7 +20,6 @@ export class SequenceCmp {
   public numbers!: number[]
 }
 
-@Entry()
 @Register(SequenceCmp)
 @Template(`
   <form (submit)="onFormSubmit(#)">
@@ -39,7 +39,7 @@ export class SequenceCmp {
   <h1>First {{ numberOfElements }} Fibonacci numbers</h1>
   <sequence-cmp [numbers]="fibonacciSequence"/>
 `)
-export class App {
+export default class App {
 
   private numberOfElements: number = 5
 

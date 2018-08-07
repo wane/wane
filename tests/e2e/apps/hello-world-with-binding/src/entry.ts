@@ -1,7 +1,6 @@
 // @ts-ignore
-import { Entry, Template, Style } from 'wane'
+import { Template, Style } from 'wane'
 
-@Entry()
 @Style(`
   @import './styles/vars';
   @import '~/styles/label';
@@ -35,7 +34,7 @@ import { Entry, Template, Style } from 'wane'
     <input type="text" [value]="name" (input)="onNameChange(#)">
   </label>
 `)
-export class MainCmp {
+export default class MainCmp {
   private name: string = 'World'
   private onNameChange(event: Event) {
     const target = event.target as HTMLInputElement

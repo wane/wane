@@ -1,4 +1,5 @@
-import { Entry, Template, Register } from 'wane'
+// @ts-ignore
+import { Template, Register } from 'wane'
 
 @Template(`
   <button (click)="dec10()" [disabled]="isDec10Disabled">
@@ -66,7 +67,6 @@ export class CounterCmp {
 
 }
 
-@Entry()
 @Register(CounterCmp)
 @Template(`
   <counter-cmp
@@ -74,7 +74,7 @@ export class CounterCmp {
     (valueChange)="onValueChange(#)"
   />
 `)
-export class AppCmp {
+export default class AppCmp {
 
   private value = 25
   private onValueChange(value: number): void {

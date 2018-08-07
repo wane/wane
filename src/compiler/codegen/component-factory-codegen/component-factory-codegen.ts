@@ -8,6 +8,7 @@ import { isInstance } from '../../utils/utils'
 import { TemplateNodeHtmlValue } from '../../template-nodes'
 import { TemplateNodeComponentValue } from '../../template-nodes/nodes/component-node'
 import { SyntaxKind } from "ts-simple-ast";
+import { oneLine } from 'common-tags'
 
 export class ComponentFactoryCodegen extends BaseFactoryCodegen {
 
@@ -177,8 +178,10 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
   protected printAdditionalImports (fa: ComponentFactoryAnalyzer): this {
     const absoluteFilePath = fa.getComponentAbsoluteFilePathWithoutExtension()
     const importPath = path.relative(this.waneCompilerOptions.output, absoluteFilePath)
+    const isDefaultExport = fa.componentAnalyzer.isDefaultExport()
+    const importClause = `${isDefaultExport ? '' : '{ '}${fa.getClassName()}${isDefaultExport ? '' : ' }'}`
     this.writer
-      .writeLine(`import { ${fa.getClassName()} } from './${importPath}'`)
+      .writeLine(`import ${importClause} from './${importPath}'`)
     return this
   }
 
