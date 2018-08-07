@@ -28,6 +28,8 @@ const APP_NAMES = [
   // Basic usages of async code
   'hello-api',
   'counter-async',
+  // Real-life apps
+  'wedium',
 ]
 
 const RESULT_DATA: Record<string, CompilationResult | null> = {}
