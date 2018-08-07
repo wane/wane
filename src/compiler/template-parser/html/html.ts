@@ -7,7 +7,8 @@ import {
   HtmlElementEventBinding,
   HtmlElementPropBinding,
   InterpolationBinding,
-  RepeatingViewBinding, TextBinding,
+  RepeatingViewBinding,
+  TextBinding,
 } from '../../template-nodes/view-bindings'
 import {
   ViewBoundConstant,
@@ -21,7 +22,8 @@ import { TemplateNodeRepeatingViewValue } from '../../template-nodes/nodes/repea
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { TemplateNodeComponentValue } from '../../template-nodes/nodes/component-node'
 import { Forest, TreeNode } from '../../utils/tree'
-import { TemplateNodeTextValue } from "../../template-nodes/nodes/text-node";
+import { TemplateNodeTextValue } from '../../template-nodes/nodes/text-node'
+import { startsWithCapitalLetter } from '../../utils/utils'
 
 function assert (test: boolean, ...message: any[]): void {
   if (!test) {
@@ -171,11 +173,11 @@ export function getAttributeName (htmlAttribute: himalaya.Attribute): string {
 }
 
 export function isDirective (tagName: string): boolean {
-  return tagName.toLowerCase().startsWith(`w:`)
+  return tagName.startsWith(`w:`)
 }
 
 export function isComponent (tagName: string): boolean {
-  return tagName.includes('-')
+  return startsWithCapitalLetter(tagName)
 }
 
 export function handleDirectiveIf (htmlNode: himalaya.Element): TemplateNodeConditionalViewValue {

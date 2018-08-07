@@ -19,7 +19,7 @@ export class ComponentTemplateAnalyzer {
   public getDefinition (): Forest<TemplateNodeValue> {
     const decorators = this.klass.getDecorators() as Decorator[]
 
-    const templateDecorator = decorators.find(deco => deco.getFullName() == 'Template')
+    const templateDecorator = decorators.find(deco => deco.getName() == 'Template')
     if (templateDecorator == null) {
       throw new Error(oneLine`Component ${this.klass.getName()} does not have
         a @Template decorator.`)
@@ -137,7 +137,7 @@ export class ComponentTemplateAnalyzer {
     this.forEach(node => {
       const value = node.getValueOrThrow()
       if (value instanceof TemplateNodeComponentValue) {
-        componentNames.add(value.getTagName())
+        componentNames.add(value.getRegisteredName())
       }
     })
     return componentNames

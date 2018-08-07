@@ -16,11 +16,11 @@ function* fibonacci (n: number) {
     {{ number }}{{' '}}
   </w:for>
 `)
-export class SequenceCmp {
+export class Sequence {
   public numbers!: number[]
 }
 
-@Register(SequenceCmp)
+@Register(Sequence)
 @Template(`
   <form (submit)="onFormSubmit(#)">
     <label>
@@ -37,7 +37,7 @@ export class SequenceCmp {
   <hr>
   
   <h1>First {{ numberOfElements }} Fibonacci numbers</h1>
-  <sequence-cmp [numbers]="fibonacciSequence"/>
+  <Sequence [numbers]="fibonacciSequence"/>
 `)
 export default class App {
 

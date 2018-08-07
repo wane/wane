@@ -14,7 +14,7 @@ interface DomParams {
 }
 
 function changeName (isSaveVisible: boolean) {
-  return h('text-box-edit-cmp', [
+  return h('w-text-box-edit-cmp', [
     h.h2(`Change name`),
     h.form([
       h.input({ type: 'text' }),
@@ -24,7 +24,7 @@ function changeName (isSaveVisible: boolean) {
 }
 
 function changeAge (isSaveVisible: boolean) {
-  return h('number-box-edit-cmp', [
+  return h('w-number-box-edit-cmp', [
     h.h2(`Change age`),
     h.input({ type: 'number' }),
     !isSaveVisible
@@ -112,11 +112,11 @@ export default async function runTests () {
     expect(await getValue(page, 'input')).to.eql(`43`)
 
     // Clicking on save returns the span instead of the button and updates the user info
-    await page.click(`number-box-edit-cmp > button:first-of-type`)
+    await page.click(`w-number-box-edit-cmp > button:first-of-type`)
     await testDom({ info: { name: `Jane Doe`, age: 43 }, isChangeAgeOn: true })
 
     // Clicking on Close closes the dialog
-    await page.click(`number-box-edit-cmp > button:first-of-type`)
+    await page.click(`w-number-box-edit-cmp > button:first-of-type`)
     await testDom({ info: { name: `Jane Doe`, age: 43 } })
 
   })

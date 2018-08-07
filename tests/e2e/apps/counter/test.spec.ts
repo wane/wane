@@ -1,16 +1,21 @@
 import { expectDomStructure, h, runTest } from '../../utils'
 import { expect } from 'chai'
 
-const BUTTON_DEC = 'body > counter-cmp > button:nth-child(1)'
-const BUTTON_INC = 'body > counter-cmp > button:nth-child(3)'
+const BUTTON_DEC = 'body > w-counter > button:nth-child(1)'
+const BUTTON_INC = 'body > w-counter > button:nth-child(3)'
+
+const appShadow = {'data-w-0': ''}
+const counterShadow = {'data-w-1': ''}
 
 function dom (value: number) {
   return h.body([
     h.script({ src: 'index.js' }),
-    h('counter-cmp', [
-      h.button('Decrement'),
-      h.span(value.toString()),
-      h.button('Increment'),
+    h('w-counter', appShadow, [
+      h.button(counterShadow, ['Decrement']),
+      h.div(counterShadow, [
+        h.span(counterShadow, [value.toString()])
+      ]),
+      h.button(counterShadow, ['Increment']),
     ]),
   ])
 }

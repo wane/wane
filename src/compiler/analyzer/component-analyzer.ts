@@ -18,11 +18,13 @@ import {
 } from './utils'
 import { echoize } from '../utils/echoize'
 import { ProjectAnalyzer } from './project-analyzer'
+import { paramCase } from 'change-case'
+import { oneLine } from 'common-tags'
 
 export class ComponentAnalyzer {
 
   public readonly componentTemplateAnalyzer: ComponentTemplateAnalyzer
-  public classDeclaration: ClassDeclaration
+  public readonly classDeclaration: ClassDeclaration
 
   constructor (public projectAnalyzer: ProjectAnalyzer,
                classDeclaration: ClassDeclaration) {
@@ -42,6 +44,11 @@ export class ComponentAnalyzer {
   @echoize()
   public getClassName (): string {
     return this.classDeclaration.getNameOrThrow()
+  }
+
+  @echoize()
+  public getDomTagName (): string {
+    return 'w-' + paramCase(this.getClassName())
   }
 
   @echoize()
@@ -84,31 +91,44 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
-  public getRegisteredComponentsDeclarations (): Set<ClassDeclaration> {
+  public getRegisteredComponentsDeclarations (): Map<string, ClassDeclaration> {
     const component = this.classDeclaration
-    const set = new Set<ClassDeclaration>()
+    const result = new Map<string, ClassDeclaration>()
+
     const registeredComponentsDecorator = component.getDecorator('Register')
-    if (registeredComponentsDecorator == null) return set
-    const klasses = registeredComponentsDecorator.getArguments()
-    klasses.forEach(klass => {
-      const declarations = klass.getType().getSymbolOrThrow().getDeclarations()
+    if (registeredComponentsDecorator == null) return result
+
+    const argNodes = registeredComponentsDecorator.getArguments()
+    argNodes.forEach(argNode => {
+      const registeredName = argNode.getText()
+      const declarations = argNode.getType().getSymbolOrThrow().getDeclarations()
       const classDeclaration = declarations.find(TypeGuards.isClassDeclaration)
       if (classDeclaration == null) {
-        throw new Error(`Could not find class declaration for "${klass.getText()}".`)
+        throw new Error(`Could not find class declaration for "${registeredName}".`)
       }
-      set.add(classDeclaration)
+      result.set(registeredName, classDeclaration)
     })
-    return set
+    return result
   }
 
   @echoize()
-  public getRegisteredComponentDeclaration (componentName: string): ClassDeclaration {
-    for (const klass of this.getRegisteredComponentsDeclarations()) {
-      if (klass.getName() == componentName) {
-        return klass
+  public getRegisteredClassDeclaration (registeredName: string): ClassDeclaration | undefined {
+    for (const [name, classDeclaration] of this.getRegisteredComponentsDeclarations()) {
+      if (name == registeredName) {
+        return classDeclaration
       }
     }
-    throw new Error(`Component "${componentName}" not registered in component "${this.getFullName()}".`)
+    return undefined
+  }
+
+  @echoize()
+  public getRegisteredClassDeclarationOrThrow (registeredName: string): ClassDeclaration {
+    const result = this.getRegisteredClassDeclaration(registeredName)
+    if (result == null) {
+      throw new Error(oneLine`Component "${registeredName}" not registered
+        in component "${this.getFullName()}".`)
+    }
+    return result
   }
 
   @echoize()

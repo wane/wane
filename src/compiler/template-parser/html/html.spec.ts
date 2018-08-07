@@ -332,11 +332,13 @@ describe(`isDirective`, () => {
 })
 
 describe(`isComponent`, () => {
-  it(`says that tag name is a component if it contains a dash`, () => {
-    expect(isComponent(`tag-name`)).toBe(true)
+  it(`says that tag name is a component if it starts with a capital letter`, () => {
+    expect(isComponent(`TagName`)).toBe(true)
+    expect(isComponent(`Div`)).toBe(true)
   })
-  it(`says that tag name isn't a component if it doesn't contain a dash`, () => {
+  it(`says that tag name isn't a component if it doesn't start with a capital letter`, () => {
     expect(isComponent(`tagName`)).toBe(false)
+    expect(isComponent(`web-component`)).toBe(false)
     expect(isComponent(`div`)).toBe(false)
   })
 })

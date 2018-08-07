@@ -46,19 +46,19 @@ describe(`ProjectAnalyzer`, () => {
     })
     it(`returns App and Counter components for 02-counter app`, () => {
       expect(names(apps.counter.getAllRegisteredComponentsDeclarations()).sort())
-        .toEqual([`App`, `CounterCmp`].sort())
+        .toEqual([`App`, `Counter`].sort())
     })
     it(`returns App and Toggle components for 03-toggler app`, () => {
       expect(names(apps.toggler.getAllRegisteredComponentsDeclarations()).sort())
-        .toEqual([`App`, `ToggleCmp`].sort())
+        .toEqual([`App`, `Toggle`].sort())
     })
     it(`returns App, Counter and Info for 04-comparator app`, () => {
       expect(names(apps.comparator.getAllRegisteredComponentsDeclarations()).sort())
-        .toEqual([`App`, `CounterCmp`, `InfoCmp`].sort())
+        .toEqual([`App`, `Counter`, `Info`].sort())
     })
     it(`returns App, Counter and Toggler for 05-deep-ifs`, () => {
       expect(names(apps.deepIfs.getAllRegisteredComponentsDeclarations()).sort())
-        .toEqual([`App`, `CounterCmp`, `ToggleCmp`].sort())
+        .toEqual([`App`, `Counter`, `Toggle`].sort())
     })
     it(`returns the only component for 06-hello-everyone`, () => {
       expect(names(apps.helloEveryone.getAllRegisteredComponentsDeclarations()).sort())
@@ -66,7 +66,7 @@ describe(`ProjectAnalyzer`, () => {
     })
     it(`returns App and Item for 07-scoreboard`, () => {
       expect(names(apps.scoreboard.getAllRegisteredComponentsDeclarations()).sort())
-        .toEqual([`App`, `ItemCmp`].sort())
+        .toEqual([`App`, `Item`].sort())
     })
   })
 
@@ -89,7 +89,7 @@ describe(`ProjectAnalyzer`, () => {
       it(`has the correct child`, () => {
         expect(entryChildren[0][1] instanceof ComponentFactoryAnalyzer).toBe(true)
         const child = entryChildren[0][1] as ComponentFactoryAnalyzer
-        expect(child.getClassName()).toBe(`CounterCmp`)
+        expect(child.getClassName()).toBe(`Counter`)
         expect(child.getParent()).toBe(entry)
       })
       it(`has no other descendants`, () => {
@@ -109,7 +109,7 @@ describe(`ProjectAnalyzer`, () => {
       })
       it(`has toggle as the first child`, () => {
         expect(toggle instanceof ComponentFactoryAnalyzer).toBe(true, `instanceof`)
-        expect(toggle.getClassName()).toBe(`ToggleCmp`)
+        expect(toggle.getClassName()).toBe(`Toggle`)
         expect(toggle.getParentOrUndefined()).toBe(entry)
       })
       it(`has two conditional views as two other children`, () => {
@@ -146,17 +146,17 @@ describe(`ProjectAnalyzer`, () => {
       })
       it(`has CounterCmp as the first child`, () => {
         expect(counter1 instanceof ComponentFactoryAnalyzer).toBe(true)
-        expect(counter1.getClassName()).toBe(`CounterCmp`)
+        expect(counter1.getClassName()).toBe(`Counter`)
         expect(counter1.getParentOrUndefined()).toBe(entry)
       })
       it(`has CounterCmp as the second child`, () => {
         expect(counter2 instanceof ComponentFactoryAnalyzer).toBe(true)
-        expect(counter2.getClassName()).toBe(`CounterCmp`)
+        expect(counter2.getClassName()).toBe(`Counter`)
         expect(counter2.getParentOrUndefined()).toBe(entry)
       })
       it(`has InfoCmp as the third child`, () => {
         expect(info instanceof ComponentFactoryAnalyzer).toBe(true)
-        expect(info.getClassName()).toBe(`InfoCmp`)
+        expect(info.getClassName()).toBe(`Info`)
       })
       it(`has InfoCmp as third child with three w:if children, each has a partial view, they have no other descendants`, () => {
         const children = Array.from(info.getChildrenFactories())

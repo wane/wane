@@ -49,7 +49,7 @@ export const isTextNode: Guard<TreeNode<TemplateNodeInterpolationValue>> = isTre
 export function isCmpNodeWithName (tagName: string): Guard<TreeNode<TemplateNodeComponentValue>> {
   return and(
     isTreeNodeValueTypeOf(TemplateNodeComponentValue),
-    node => node.getValueOrThrow().getTagName() == tagName,
+    node => node.getValueOrThrow().getRegisteredName() == tagName,
   )
 }
 

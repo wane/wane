@@ -2,7 +2,7 @@ import { expectDomStructure, h, runTest } from '../../utils'
 import { expect } from 'chai'
 
 function counter (value: number) {
-  return h('counter-cmp', [
+  return h('w-counter', [
     h.button(`Decrement`),
     h.span(value.toString()),
     h.button(`Increment`),
@@ -18,10 +18,10 @@ function dom (left: number, right: number) {
   ])
 }
 
-const LEFT_DECREMENT = 'counter-cmp:first-of-type > button:first-of-type'
-const LEFT_INCREMENT = 'counter-cmp:first-of-type > button:last-of-type'
-const RIGHT_DECREMENT = 'counter-cmp:last-of-type > button:first-of-type'
-const RIGHT_INCREMENT = 'counter-cmp:last-of-type > button:last-of-type'
+const LEFT_DECREMENT = 'w-counter:first-of-type > button:first-of-type'
+const LEFT_INCREMENT = 'w-counter:first-of-type > button:last-of-type'
+const RIGHT_DECREMENT = 'w-counter:last-of-type > button:first-of-type'
+const RIGHT_INCREMENT = 'w-counter:last-of-type > button:last-of-type'
 
 export default function () {
   return runTest(__dirname, async page => {

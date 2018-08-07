@@ -27,7 +27,7 @@ function dom ({
               }: DomProps) {
   return h.body([
     h.script({ src: 'index.js' }),
-    h('counter-cmp', [
+    h('w-counter', [
       h.button(conditionallyAssign({}, { disabled: '' }, minusTen), [`-10`]),
       h.button(conditionallyAssign({}, { disabled: '' }, minusOne), [`-1`]),
       h.button(conditionallyAssign({}, { disabled: '' }, plusOne), [`+1`]),
@@ -37,10 +37,10 @@ function dom ({
   ])
 }
 
-const MINUS_TEN = 'body > counter-cmp > button:nth-of-type(1)'
-const MINUS_ONE = 'body > counter-cmp > button:nth-of-type(2)'
-const PLUS_ONE = 'body > counter-cmp > button:nth-of-type(3)'
-const PLUS_TEN = 'body > counter-cmp > button:nth-of-type(4)'
+const MINUS_TEN = 'body > w-counter > button:nth-of-type(1)'
+const MINUS_ONE = 'body > w-counter > button:nth-of-type(2)'
+const PLUS_ONE = 'body > w-counter > button:nth-of-type(3)'
+const PLUS_TEN = 'body > w-counter > button:nth-of-type(4)'
 
 export default function () {
   return runTest(__dirname, async (page) => {

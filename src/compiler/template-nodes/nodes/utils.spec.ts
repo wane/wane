@@ -12,9 +12,9 @@ const position = {
 }
 
 const cmpNode = new TreeNode(
-  new TemplateNodeComponentValue('tag-name', [], [], [], {
+  new TemplateNodeComponentValue('TagName', [], [], [], {
     type: 'element',
-    tagName: 'tag-name',
+    tagName: 'TagName',
     attributes: [],
     children: [],
     position,
@@ -101,14 +101,14 @@ describe(`utils`, () => {
 
   describe(`function componentNodeWithTagName`, () => {
     it(`should return true when it's true`, () => {
-      expect(isCmpNodeWithName('tag-name')(cmpNode)).toBe(true)
+      expect(isCmpNodeWithName('TagName')(cmpNode)).toBe(true)
     })
     it(`should return false when it's not true`, () => {
-      expect(isCmpNodeWithName('false-tag-name')(cmpNode)).toBe(false)
+      expect(isCmpNodeWithName('FalseTagName')(cmpNode)).toBe(false)
     })
     it(`should return false when the tested node isn't even a component`, () => {
-      expect(isCmpNodeWithName('tag-name')(interpolationNode)).toBe(false)
-      expect(isCmpNodeWithName('interpolated')(interpolationNode)).toBe(false)
+      expect(isCmpNodeWithName('TagName')(interpolationNode)).toBe(false)
+      expect(isCmpNodeWithName('Interpolated')(interpolationNode)).toBe(false)
     })
   })
 

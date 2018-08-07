@@ -20,7 +20,7 @@ import { Template, Register } from 'wane'
   
   <span>{{ value }}</span>
 `)
-export class CounterCmp {
+export class Counter {
 
   public max: number = 50
   public min: number = 0
@@ -67,9 +67,9 @@ export class CounterCmp {
 
 }
 
-@Register(CounterCmp)
+@Register(Counter)
 @Template(`
-  <counter-cmp
+  <Counter
     [value]="value"
     (valueChange)="onValueChange(#)"
   />
@@ -77,6 +77,7 @@ export class CounterCmp {
 export default class AppCmp {
 
   private value = 25
+
   private onValueChange(value: number): void {
     this.value = value
   }

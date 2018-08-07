@@ -13,7 +13,7 @@ export interface Item {
 @Template(`
   No entered data. <button (click)="createNew()">Add some!</button>
 `)
-export class EmptyStateCmp {
+export class EmptyState {
   public createNew () {
   }
 }
@@ -41,7 +41,7 @@ export class EmptyStateCmp {
     <button type="button" (click)="close()">Cancel</button>
   </form>
 `)
-export class FormCmp {
+export class Form {
 
   private listOfContinents = [`Africa`, `Antarctica`, `Asia`, `Europe`, `North America`, `Oceania`, `South America`]
 
@@ -73,10 +73,10 @@ export class FormCmp {
 
 }
 
-@Register(EmptyStateCmp, FormCmp)
+@Register(EmptyState, Form)
 @Template(`
   <w:if isDataEmpty>
-    <empty-state-cmp (createNew)="onCreateNewClick()"/>
+    <EmptyState (createNew)="onCreateNewClick()"/>
   </w:if>
   
   <w:if !isDataEmpty>
@@ -102,11 +102,11 @@ export class FormCmp {
   <button type="button" (click)="onCreateNewClick()">Add new</button>
   
   <w:if isNewFormOpen>
-    <form-cmp [initialValue]="itemSelectedForEdit" (submit)="add(#)" (close)="closeNewForm()"/>
+    <Form [initialValue]="itemSelectedForEdit" (submit)="add(#)" (close)="closeNewForm()"/>
   </w:if>
   
   <w:if isEditFormOpen>
-    <form-cmp [initialValue]="itemSelectedForEdit" (submit)="edit(#)" (close)="closeEditForm()"/>  
+    <Form [initialValue]="itemSelectedForEdit" (submit)="edit(#)" (close)="closeEditForm()"/>  
   </w:if>
 `)
 export default class App {

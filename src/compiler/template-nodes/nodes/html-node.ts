@@ -1,9 +1,12 @@
 import { TemplateNodeValue } from './template-node-value-base'
-import { AttributeBinding, HtmlElementEventBinding, HtmlElementPropBinding, ViewBinding } from '../view-bindings'
-import iterare from 'iterare'
-import CodeBlockWriter from 'code-block-writer'
+import {
+  AttributeBinding,
+  HtmlElementEventBinding,
+  HtmlElementPropBinding,
+  ViewBinding,
+} from '../view-bindings'
 import * as himalaya from 'himalaya'
-import { FactoryAnalyzer } from "../../analyzer";
+import { FactoryAnalyzer } from '../../analyzer'
 
 function getSuperParam (attributeBindings: Iterable<AttributeBinding>,
                         propertyBindings: Iterable<HtmlElementPropBinding>,

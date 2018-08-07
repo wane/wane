@@ -4,7 +4,7 @@ import { Template, Register } from 'wane'
 @Template(`
   <button (click)="changeState()">Toggle (currently {{ value }})</button>
 `)
-export class ToggleCmp {
+export class Toggle {
   public value!: boolean
 
   public valueChange (newValue: boolean) {
@@ -15,9 +15,9 @@ export class ToggleCmp {
   }
 }
 
-@Register(ToggleCmp)
+@Register(Toggle)
 @Template(`
-  <toggle-cmp
+  <Toggle
     [value]="bool"
     (valueChange)="onChange(#)"
   />

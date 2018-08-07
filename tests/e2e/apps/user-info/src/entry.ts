@@ -112,7 +112,7 @@ export class TextBoxEditCmp {
   </dl>
   
   <w:if isEditNameFormOpen>
-    <text-box-edit-cmp
+    <TextBoxEditCmp
       [title]="'Change name'"
       [value]="user.name"
       (valueChange)="onNameChange(#)"
@@ -120,7 +120,7 @@ export class TextBoxEditCmp {
   </w:if>
   
   <w:if isEditAgeFormOpen>
-    <number-box-edit-cmp
+    <NumberBoxEditCmp
       [title]="'Change age'"
       [value]="user.age"
       (valueChange)="onAgeChange(#)"

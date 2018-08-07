@@ -78,3 +78,8 @@ export function has<T> (set: Set<T>, predicate: (item: T) => boolean): boolean {
   }
   return false
 }
+
+export function startsWithCapitalLetter (str: string): boolean {
+  const [firstLetter] = str
+  return firstLetter.toUpperCase() == firstLetter
+}

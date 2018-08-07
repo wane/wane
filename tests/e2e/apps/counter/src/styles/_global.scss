@@ -1,0 +1,34 @@
+@import './colors';
+
+@mixin center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin square($size) {
+  width: $size;
+  height: $size;
+}
+
+@mixin circle($size: null) {
+  @if $size != null {
+    @include square($size)
+  }
+  border-radius: 50%;
+}
+
+@mixin vertical($spacing: 1rem) {
+  display: flex;
+  flex-direction: column;
+  > * + * {
+    margin-top: $spacing;
+  }
+}
+
+@mixin horizontal($spacing: 1rem) {
+  display: flex;
+  > * + * {
+    margin-left: $spacing;
+  }
+}

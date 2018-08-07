@@ -1,4 +1,6 @@
 import * as csstree from 'css-tree'
+import { isComponent } from '../template-parser/html/html'
+import { startsWithCapitalLetter } from '../utils/utils'
 
 function isChunkSeparator (node: any) {
   return node.type == 'Combinator' || node.type == 'WhiteSpace'
@@ -8,7 +10,46 @@ function isUniversalSelector (node: any) {
   return node.type == 'TypeSelector' && node.name == '*'
 }
 
-export function encapsulate (uniqueId: number, tagName: string, inputString: string): string {
+function replaceWithData (list: any, oldItem: any, newItem: any) {
+  list.insertData(newItem, oldItem)
+  list.remove(oldItem)
+}
+
+export function replaceTagNames (resolveTagName: (selector: string) => string,
+                                 inputString: string): string {
+  const ast = csstree.parse(inputString)
+
+  csstree.walk(ast, {
+    visit: 'Rule',
+    enter (ruleNode: any) {
+      const prelude = ruleNode.prelude
+      if (prelude.type != 'SelectorList') return
+      const selectors = prelude.children
+
+      selectors.each((selectorNode: any, selectorItem: any) => {
+        selectorNode.children.each((node: any, item: any, list: any) => {
+          if (node.type == 'TypeSelector') {
+            if (startsWithCapitalLetter(node.name) && !isUniversalSelector(node)) {
+              const name = resolveTagName(node.name)
+              replaceWithData(list, item, {
+                ...node,
+                name,
+              })
+            }
+          }
+        })
+      })
+    },
+  })
+
+  const output = csstree.generate(ast)
+  return output
+}
+
+export function encapsulate (uniqueId: number,
+                             hostTagName: string,
+                             inputString: string,
+): string {
   const ast = csstree.parse(inputString)
 
   const attributeName = `data-w-${uniqueId}`
@@ -43,12 +84,11 @@ export function encapsulate (uniqueId: number, tagName: string, inputString: str
         if (hasPseudoClassHostSelector) {
           selectorNode.children.each((node: any, item: any, list: any) => {
             if (node.type == 'PseudoClassSelector' && node.name == 'host') {
-              list.insertData({
+              replaceWithData(list, item, {
                 type: 'TypeSelector',
                 loc: null,
-                name: tagName,
-              }, item)
-              list.remove(item)
+                name: hostTagName,
+              })
             }
           })
         } else {
@@ -76,12 +116,10 @@ export function encapsulate (uniqueId: number, tagName: string, inputString: str
               isStartOfChunk = false
               if (node.type == 'PseudoElementSelector') {
                 list.insertData(dataToInsert, item)
+              } else if (item.next == null) {
+                list.appendData(dataToInsert)
               } else {
-                if (item.next == null) {
-                  list.appendData(dataToInsert)
-                } else {
-                  list.insertData(dataToInsert, item.next)
-                }
+                list.insertData(dataToInsert, item.next)
               }
               isChunkDone = true
               return

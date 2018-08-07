@@ -1792,9 +1792,9 @@ header-case@^1.0.0:
     no-case "^2.2.0"
     upper-case "^1.1.3"
 
-himalaya@^1.1.0:
+himalaya@lazarljubenovic/himalaya#wane:
   version "1.1.0"
-  resolved "https://registry.yarnpkg.com/himalaya/-/himalaya-1.1.0.tgz#31724ae9d35714cd7c6f4be94888953f3604606a"
+  resolved "https://codeload.github.com/lazarljubenovic/himalaya/tar.gz/1899cdbd9d030e2aab6f3febbfeb179ac5c80078"
 
 hipchat-notifier@^1.1.0:
   version "1.1.0"
@@ -4359,6 +4359,10 @@ type-check@~0.3.2:
 type-detect@^4.0.0:
   version "4.0.8"
   resolved "https://registry.yarnpkg.com/type-detect/-/type-detect-4.0.8.tgz#7646fb5f18871cfbb7749e69bd39a6388eb7450c"
+
+type-guards@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/type-guards/-/type-guards-0.5.0.tgz#cd3f5f0134c5144d243fe4c296aada1483af6a47"
 
 type-is@~1.6.16:
   version "1.6.16"

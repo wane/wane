@@ -1,5 +1,9 @@
-import {stripIndent} from 'common-tags'
-import {encapsulate} from './css'
+import { stripIndent } from 'common-tags'
+import { encapsulate, replaceTagNames } from './css'
+
+const resolver = (selector: string) => {
+  return selector == 'TransformMe' ? 'transformed-selector' : selector
+}
 
 describe(`encapsulate`, () => {
 
@@ -70,7 +74,7 @@ describe(`encapsulate`, () => {
   })
 
   it(`works with multiple styles`, () => {
-    const input =  stripIndent`
+    const input = stripIndent`
       .foo { color: red; }
       .bar { color: blue; }
     `
@@ -82,6 +86,16 @@ describe(`encapsulate`, () => {
     const input = `:host { color: red }`
     const output = `foo-cmp{color:red}`
     expect(encapsulate(1, 'foo-cmp', input)).toBe(output)
+  })
+
+})
+
+describe(`replaceTagNames`, () => {
+
+  it(`replaces tag names`, () => {
+    const input = `TransformMe ButNotMe { color: red }`
+    const output = `transformed-selector ButNotMe{color:red}`
+    expect(replaceTagNames(resolver, input)).toBe(output)
   })
 
 })

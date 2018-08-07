@@ -6,7 +6,7 @@ export type Letters = 'a' | 'b' | 'c'
 @Template(`
   <button (click)="changeState()">Toggle (currently {{ value }})</button>
 `)
-export class ToggleCmp {
+export class Toggle {
   public value!: boolean
 
   public valueChange (newValue: boolean) {
@@ -22,7 +22,7 @@ export class ToggleCmp {
   <span>{{ value }}</span>
   <button (click)="inc()">Increment</button>
 `)
-export class CounterCmp {
+export class Counter {
   public value!: number
 
   public valueChange (value: number) {
@@ -37,18 +37,18 @@ export class CounterCmp {
   }
 }
 
-@Register(CounterCmp, ToggleCmp)
+@Register(Counter, Toggle)
 @Template(`
   <div>
     <h1>Controls</h1>
     <h2>Values</h2>
-    a: <counter-cmp [value]="values.a" (valueChange)="onChange('a', #)"/>
-    b: <counter-cmp [value]="values.b" (valueChange)="onChange('b', #)"/>
-    c: <counter-cmp [value]="values.c" (valueChange)="onChange('c', #)"/>
+    a: <Counter [value]="values.a" (valueChange)="onChange('a', #)"/>
+    b: <Counter [value]="values.b" (valueChange)="onChange('b', #)"/>
+    c: <Counter [value]="values.c" (valueChange)="onChange('c', #)"/>
     <h2>Visibility</h2>
-    a: <toggle-cmp [value]="visibility.a" (valueChange)="onToggle('a')"/>
-    b: <toggle-cmp [value]="visibility.b" (valueChange)="onToggle('b')"/>
-    c: <toggle-cmp [value]="visibility.c" (valueChange)="onToggle('c')"/>
+    a: <Toggle [value]="visibility.a" (valueChange)="onToggle('a')"/>
+    b: <Toggle [value]="visibility.b" (valueChange)="onToggle('b')"/>
+    c: <Toggle [value]="visibility.c" (valueChange)="onToggle('c')"/>
   </div>
   
   <w:if visibility.a>

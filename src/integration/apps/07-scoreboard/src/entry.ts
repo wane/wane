@@ -4,15 +4,15 @@ import { Register, Template } from 'wane'
 @Template(`
   {{ entry }} ({{ score }})
 `)
-export class ItemCmp {
+export class Item {
   public entry!: string
   public score!: number
 }
 
-@Register(ItemCmp)
+@Register(Item)
 @Template(`
   <w:for let cat of cats>
-    <item-cmp
+    <Item
       [entry]="cat.name"
       [score]="cat.cutenessLevel"
     />

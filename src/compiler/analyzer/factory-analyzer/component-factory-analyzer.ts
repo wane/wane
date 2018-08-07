@@ -7,7 +7,7 @@ import iterare from 'iterare'
 import { getIntersection } from '../../utils/utils'
 import { ViewBoundValue } from '../../template-nodes/view-bound-value'
 import CodeBlockWriter from 'code-block-writer'
-import { pascalCase } from 'change-case'
+import { paramCase } from 'change-case'
 import parseStyle from '../../style-parser'
 import { echoize } from '../../utils/echoize'
 import { ProjectAnalyzer } from '../project-analyzer'
@@ -194,7 +194,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     if (this.isRoot()) {
       return `body`
     } else {
-      return pascalCase(this.getClassName())
+      return 'w-' + paramCase(this.getClassName())
     }
   }
 
@@ -202,10 +202,15 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   public getStyles (): string | null {
     const inputDir = this.projectAnalyzer.compilerOptions.input
     const uniqueId = this.identifier.id
-    const tagName = this.domTagName()
-    const cssString = this.componentAnalyzer.getStyles()
-    if (cssString == null) return null
-    return parseStyle(uniqueId, tagName, cssString, inputDir)
+    const hostTagName = this.domTagName()
+    const scss = this.componentAnalyzer.getStyles()
+    if (scss == null) return null
+    const resolveTagName = (tagName: string) => {
+      const componentClassDeclaration = this.componentAnalyzer.getRegisteredClassDeclarationOrThrow(tagName)
+      const componentAnalyzer = this.projectAnalyzer.getComponentAnalyzerByClassDeclaration(componentClassDeclaration)
+      return componentAnalyzer.getDomTagName()
+    }
+    return parseStyle(uniqueId, hostTagName, resolveTagName, scss, inputDir)
   }
 
   @echoize()

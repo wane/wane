@@ -6,7 +6,7 @@ import { Template, Register } from 'wane'
   <span>{{ value }}</span>
   <button (click)="inc()">Increment</button>
 `)
-export class CounterCmp {
+export class Counter {
   public value!: number
 
   public valueChange (value: number) {
@@ -26,7 +26,7 @@ export class CounterCmp {
   <w:if isRightGreater>right {{ isGreaterString }}</w:if>
   <w:if areEqual>they are equal</w:if> 
 `)
-export class InfoCmp {
+export class Info {
   public isLeftGreater!: boolean
   public isRightGreater!: boolean
 
@@ -37,22 +37,22 @@ export class InfoCmp {
   private isGreaterString = `is greater`
 }
 
-@Register(CounterCmp, InfoCmp)
+@Register(Counter, Info)
 @Template(`
   <span>Left number</span>
-  <counter-cmp
+  <Counter
     [value]="left"
     (valueChange)="onLeftChange(#)"
   />
   
   <span>Right number</span>
-  <counter-cmp
+  <Counter
     [value]="right"
     (valueChange)="onRightChange(#)"
   />
   
   <span>Info</span>
-  <info-cmp
+  <Info
     [isLeftGreater]="isLeftGreater"
     [isRightGreater]="isRightGreater"
   />

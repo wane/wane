@@ -26,7 +26,6 @@ export class ProjectAnalyzer {
   private counter = counter()
 
   private readonly _sourceFiles: SourceFile[]
-  private _registeredComponents = new Map<ClassDeclaration, Set<ClassDeclaration>>()
 
   constructor (private tsSimpleAstProject: Project,
                public compilerOptions: WaneCompilerOptions) {
@@ -68,7 +67,7 @@ export class ProjectAnalyzer {
 
   private _componentAnalyzers = new Map<ClassDeclaration, ComponentAnalyzer>()
 
-  private getComponentCompilerNodeForClass (classDeclaration: ClassDeclaration): ComponentAnalyzer {
+  public getComponentAnalyzerByClassDeclaration (classDeclaration: ClassDeclaration): ComponentAnalyzer {
     const result = this._componentAnalyzers.get(classDeclaration)
     if (result == null) {
       const compilerNode = new ComponentAnalyzer(this, classDeclaration)
@@ -79,30 +78,25 @@ export class ProjectAnalyzer {
     }
   }
 
-  private getRegisteredComponentsDeclarationsFor (component: ClassDeclaration): Set<ClassDeclaration> {
-    // First try getting it from the cache.
-    const fromCache = this._registeredComponents.get(component)
-    if (fromCache != null) return fromCache
-
-    // Compute.
-    const componentCompilerNode = this.getComponentCompilerNodeForClass(component)
-    const set = componentCompilerNode.getRegisteredComponentsDeclarations()
-
-    // Save in cache
-    this._registeredComponents.set(component, set)
-
-    // Returns
-    return set
+  private getRegisteredComponentsDeclarationsFor (component: ClassDeclaration): Iterable<ClassDeclaration> {
+    const componentCompilerNode = this.getComponentAnalyzerByClassDeclaration(component)
+    const map = componentCompilerNode.getRegisteredComponentsDeclarations()
+    return map.values()
   }
 
   private getRegisteredComponentsDeclarationsRecursivelyIn (component: ClassDeclaration): Set<ClassDeclaration> {
     const result = new Set<ClassDeclaration>([component])
     const registered = this.getRegisteredComponentsDeclarationsFor(component)
-    registered.forEach(r => result.add(r))
+
+    for (const r of registered) {
+      result.add(r)
+    }
+
     for (const child of registered) {
       const innerRegistered = this.getRegisteredComponentsDeclarationsRecursivelyIn(child)
       innerRegistered.forEach(r => result.add(r))
     }
+
     return result
   }
 
@@ -153,8 +147,8 @@ export class ProjectAnalyzer {
       }
     } else {
       if (isInstance(TemplateNodeComponentValue)(value)) {
-        const componentClassName = (viewNode.getValueOrThrow() as TemplateNodeComponentValue).getComponentClassName()
-        const componentDeclaration = definitionFactory.componentAnalyzer.getRegisteredComponentDeclaration(componentClassName)
+        const componentClassName: string = (viewNode.getValueOrThrow() as TemplateNodeComponentValue).getRegisteredName()
+        const componentDeclaration = definitionFactory.componentAnalyzer.getRegisteredClassDeclarationOrThrow(componentClassName)
         const componentCompilerNode = new ComponentAnalyzer(this, componentDeclaration)
         const childFactory = new ComponentFactoryAnalyzer(
           this,
@@ -276,5 +270,17 @@ export class ProjectAnalyzer {
     }
     throw new Error(`Factory with name ${factoryName} not found.`)
   }
+
+  // public getComponentAnalyzerByClassDeclaration (classDeclaration: ClassDeclaration): ComponentAnalyzer {
+  //   for (const factory of this.factories()) {
+  //     if (factory instanceof ComponentFactoryAnalyzer) {
+  //       const { componentAnalyzer } = factory
+  //       if (componentAnalyzer.classDeclaration == classDeclaration) {
+  //         return componentAnalyzer
+  //       }
+  //     }
+  //   }
+  //   throw new Error(`Factory could not be found by the specified declaration.`)
+  // }
 
 }

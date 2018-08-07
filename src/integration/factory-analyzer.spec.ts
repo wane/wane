@@ -260,7 +260,7 @@ describe(`FactoryAnalyzer`, () => {
       const fas = get02Factories()
       describe(`CounterCmp`, () => {
         it(`gets class name appended by a number`, () => {
-          expect(fas.counterCmp.getFactoryName()).toMatch(/CounterCmp\d+/)
+          expect(fas.counterCmp.getFactoryName()).toMatch(/Counter\d+/)
         })
       })
       describe(`App`, () => {
@@ -274,7 +274,7 @@ describe(`FactoryAnalyzer`, () => {
       const fas = get03Factories()
       describe(`for ToggleCmp`, () => {
         it(`gets class name appended by a number`, () => {
-          expect(fas.toggleCmp.getFactoryName()).toMatch(/ToggleCmp\d+/)
+          expect(fas.toggleCmp.getFactoryName()).toMatch(/Toggle\d+/)
         })
       })
       describe(`for ConditionalView1`, () => {
@@ -298,12 +298,12 @@ describe(`FactoryAnalyzer`, () => {
       const fas = get04Factories()
       describe(`for CounterCmp1`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(fas.counterCmp1.getFactoryName()).toMatch(/CounterCmp\d+/)
+          expect(fas.counterCmp1.getFactoryName()).toMatch(/Counter\d+/)
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(fas.counterCmp2.getFactoryName()).toMatch(/CounterCmp\d+/)
+          expect(fas.counterCmp2.getFactoryName()).toMatch(/Counter\d+/)
         })
       })
       describe(`for IsLeftGreater`, () => {
@@ -323,7 +323,7 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`for InfoCmp`, () => {
         it(`gets class name with a unique suffix`, () => {
-          expect(fas.infoCmp.getFactoryName()).toMatch(/InfoCmp\d+/)
+          expect(fas.infoCmp.getFactoryName()).toMatch(/Info\d+/)
         })
       })
       describe(`for App`, () => {
@@ -338,14 +338,14 @@ describe(`FactoryAnalyzer`, () => {
       describe(`for ToggleCmp components`, () => {
         for (const toggleCmp of fas.toggleCmps) {
           it(`gets class name with a unique suffix`, () => {
-            expect(toggleCmp.getFactoryName()).toMatch(/ToggleCmp\d+/)
+            expect(toggleCmp.getFactoryName()).toMatch(/Toggle\d+/)
           })
         }
       })
       describe(`for CounterCmp components`, () => {
         for (const counterCmp of fas.counterCmps) {
           it(`gets class name with a unique suffix`, () => {
-            expect(counterCmp.getFactoryName()).toMatch(/CounterCmp\d+/)
+            expect(counterCmp.getFactoryName()).toMatch(/Counter\d+/)
           })
         }
       })
@@ -389,7 +389,7 @@ describe(`FactoryAnalyzer`, () => {
       describe(`CounterCmp`, () => {
         const counter = apps.counter.getFactoryTree().getFirstChild()
         it(`returns counter-cmp{N}`, () => {
-          expect(counter.getFactoryFilename()).toMatch(/counter-cmp\d+/)
+          expect(counter.getFactoryFilename()).toMatch(/counter\d+/)
         })
       })
       describe(`App`, () => {
@@ -405,7 +405,7 @@ describe(`FactoryAnalyzer`, () => {
       const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`returns toggle-cmp{N}`, () => {
-          expect(toggleCmp.getFactoryFilename()).toMatch(/toggle-cmp\d+/)
+          expect(toggleCmp.getFactoryFilename()).toMatch(/toggle\d+/)
         })
       })
       describe(`for ConditionalView1`, () => {
@@ -431,12 +431,12 @@ describe(`FactoryAnalyzer`, () => {
       const [isLeftIsGreater, isRightIsGreater, areEqual] = infoCmp.getChildrenFactories()
       describe(`for CounterCmp1`, () => {
         it(`works`, () => {
-          expect(counterCmp1.getFactoryFilename()).toMatch(/counter-cmp\d+/)
+          expect(counterCmp1.getFactoryFilename()).toMatch(/counter\d+/)
         })
       })
       describe(`for CounterCmp2`, () => {
         it(`works`, () => {
-          expect(counterCmp2.getFactoryFilename()).toMatch(/counter-cmp\d+/)
+          expect(counterCmp2.getFactoryFilename()).toMatch(/counter\d+/)
         })
       })
       describe(`for IsLeftGreater`, () => {
@@ -456,7 +456,7 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`for InfoCmp`, () => {
         it(`works`, () => {
-          expect(infoCmp.getFactoryFilename()).toMatch(/info-cmp\d+/)
+          expect(infoCmp.getFactoryFilename()).toMatch(/info\d+/)
         })
       })
       describe(`for App`, () => {
@@ -471,14 +471,14 @@ describe(`FactoryAnalyzer`, () => {
       describe(`for ToggleCmp components`, () => {
         for (const toggleCmp of cmps.toggleCmps) {
           it(`gets class name with a unique suffix`, () => {
-            expect(toggleCmp.getFactoryFilename()).toMatch(/toggle-cmp\d+/)
+            expect(toggleCmp.getFactoryFilename()).toMatch(/toggle\d+/)
           })
         }
       })
       describe(`for CounterCmp components`, () => {
         for (const counterCmp of cmps.counterCmps) {
           it(`gets class name with a unique suffix`, () => {
-            expect(counterCmp.getFactoryFilename()).toMatch(/counter-cmp\d+/)
+            expect(counterCmp.getFactoryFilename()).toMatch(/counter\d+/)
           })
         }
       })
@@ -522,7 +522,7 @@ describe(`FactoryAnalyzer`, () => {
       describe(`CounterCmp`, () => {
         const counter = apps.counter.getFactoryTree().getFirstChild()
         it(`returns counter-cmp1.ts`, () => {
-          expect(counter.getFactoryFilenameWithExtension()).toBe(`counter-cmp1.ts`)
+          expect(counter.getFactoryFilenameWithExtension()).toBe(`counter1.ts`)
         })
       })
       describe(`App`, () => {
@@ -681,7 +681,7 @@ describe(`FactoryAnalyzer`, () => {
           const children = fas.app.getChildren()
           expect([...children].length).toBe(1)
           const [[node, child]] = children
-          expect(node.getValue).toBe(fas.app.view.findOrFail(isCmpNodeWithName('counter-cmp')).getValue)
+          expect(node.getValue).toBe(fas.app.view.findOrFail(isCmpNodeWithName('Counter')).getValue)
           expect(child).toBe(fas.counterCmp)
         })
       })
@@ -727,7 +727,7 @@ describe(`FactoryAnalyzer`, () => {
           const children = fas.app.getChildren()
           expect(Array.from(children).length).toBe(3)
           const [[node1, child1], [node2, child2], [node3, child3]] = children
-          expect(node1).toEqual(fas.app.view.findOrFail(isCmpNodeWithName('toggle-cmp')))
+          expect(node1).toEqual(fas.app.view.findOrFail(isCmpNodeWithName('Toggle')))
           expect(child1).toBe(fas.toggleCmp)
           expect(node2).toEqual(fas.app.view.findOrFail(isConditionalViewNodeWithVar(`isJavaScript`)))
           expect(child2).toBe(fas.isJavaScriptCondDir)
@@ -813,7 +813,7 @@ describe(`FactoryAnalyzer`, () => {
           expect(child1).toBe(fas.counterCmp1)
           expect(node2).toEqual(fas.app.view.getNthRoot(3))
           expect(child2).toBe(fas.counterCmp2)
-          expect(node3).toEqual(fas.app.view.findOrFail(isCmpNodeWithName(`info-cmp`)))
+          expect(node3).toEqual(fas.app.view.findOrFail(isCmpNodeWithName(`Info`)))
           expect(child3).toBe(fas.infoCmp)
         })
       })
@@ -985,7 +985,7 @@ describe(`FactoryAnalyzer`, () => {
       const counter = app.getFirstChild()
       describe(`CounterCmp`, () => {
         it(`returns the correct component view node`, () => {
-          const expected = app.view.findOrFail(isCmpNodeWithName(`counter-cmp`))
+          const expected = app.view.findOrFail(isCmpNodeWithName(`Counter`))
           expect(counter.getAnchorViewNode()).toEqual(expected)
         })
       })
@@ -1001,7 +1001,7 @@ describe(`FactoryAnalyzer`, () => {
       const [toggleCmp, conditionalView1, conditionalView2] = app.getChildrenFactories()
       describe(`for ToggleCmp`, () => {
         it(`worsk`, () => {
-          expect(toggleCmp.getAnchorViewNode()).toEqual(app.view.findOrFail(isCmpNodeWithName('toggle-cmp')))
+          expect(toggleCmp.getAnchorViewNode()).toEqual(app.view.findOrFail(isCmpNodeWithName('Toggle')))
         })
       })
       describe(`for ConditionalView1`, () => {
@@ -1057,7 +1057,7 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`for InfoCmp`, () => {
         it(`works`, () => {
-          expect(infoCmp.getAnchorViewNode()).toEqual(app.view.findOrFail(isCmpNodeWithName(`info-cmp`)))
+          expect(infoCmp.getAnchorViewNode()).toEqual(app.view.findOrFail(isCmpNodeWithName(`Info`)))
         })
       })
       describe(`for App`, () => {
@@ -1142,7 +1142,7 @@ describe(`FactoryAnalyzer`, () => {
       describe(`CounterCmp`, () => {
         it(`returns the correct component view node`, () => {
           expect(counter.getAnchorViewNodeOrUndefined())
-            .toEqual(app.view.findOrFail(isCmpNodeWithName(`counter-cmp`)))
+            .toEqual(app.view.findOrFail(isCmpNodeWithName(`Counter`)))
         })
       })
       describe(`App`, () => {
@@ -1596,7 +1596,7 @@ describe(`FactoryAnalyzer`, () => {
           expect(infoCmp.hasDefinedAndResolvesTo('areEqual')).toBe('__wane__data.areEqual')
         })
         it(`returns itself for "isGreaterString"`, () => {
-          expect(infoCmp.hasDefinedAndResolvesTo('isGreaterString')).toBe('__wane__constants.InfoCmp$isGreaterString')
+          expect(infoCmp.hasDefinedAndResolvesTo('isGreaterString')).toBe('__wane__constants.Info$isGreaterString')
         })
       })
       describe(`for App`, () => {
@@ -3149,7 +3149,7 @@ describe(`FactoryAnalyzer`, () => {
           const set = map.get(counterCmp)!
           expect(set).not.toBeFalsy()
           const counterCmpNodeValue = app.view
-            .findOrFail(isCmpNodeWithName('counter-cmp'))
+            .findOrFail(isCmpNodeWithName('Counter'))
             .getValueOrThrow()
           const inputBinding = counterCmpNodeValue.getInputBindingByNameOrFail('value')
           expect(set.has(inputBinding.boundValue as ViewBoundPropertyAccess)).toBe(true)
@@ -3187,7 +3187,7 @@ describe(`FactoryAnalyzer`, () => {
           it(`has size 1`, () => expect(set.size).toBe(1))
           it(`contains the "bool" binding to "value" input`, () => {
             const toggleCmpNodeValue = app.view
-              .findOrFail(isCmpNodeWithName('toggle-cmp'))
+              .findOrFail(isCmpNodeWithName('Toggle'))
               .getValueOrThrow()
             const inputBinding = toggleCmpNodeValue.getInputBindingByNameOrFail('value')
             const inputBindingBoundValue = inputBinding.boundValue as ViewBoundPropertyAccess
@@ -3411,14 +3411,14 @@ describe(`FactoryAnalyzer`, () => {
           it(`has size 2`, () => expect(set.size).toBe(2))
           it(`contains the "isLeftGreater" binding to [isLeftGreater] input`, () => {
             const infoCmpNodeValue = fas.app.view
-              .findOrFail(isCmpNodeWithName('info-cmp'))
+              .findOrFail(isCmpNodeWithName('Info'))
               .getValueOrThrow()
             const binding = infoCmpNodeValue.getInputBindingByNameOrFail('isLeftGreater')
             expect(set.has(binding.boundValue as ViewBoundPropertyAccess)).toBe(true)
           })
           it(`contains the "isRightGreater" binding to input [isRightGreater]`, () => {
             const infoCmpNodeValue = fas.app.view
-              .findOrFail(isCmpNodeWithName('info-cmp'))
+              .findOrFail(isCmpNodeWithName('Info'))
               .getValueOrThrow()
             const binding = infoCmpNodeValue.getInputBindingByNameOrFail('isRightGreater')
             expect(set.has(binding.boundValue as ViewBoundPropertyAccess)).toBe(true)
@@ -3650,9 +3650,9 @@ describe(`FactoryAnalyzer`, () => {
       const app = apps.counter.getFactoryTree()
       const children = Array.from(app.getChildren().values())
       const counterCmp = children[0] as ComponentFactoryAnalyzer
-      describe(`CounterCmp`, () => {
-        it(`returns "CounterCmp"`, () => {
-          expect(counterCmp.getClassName()).toBe(`CounterCmp`)
+      describe(`Counter`, () => {
+        it(`returns "Counter"`, () => {
+          expect(counterCmp.getClassName()).toBe(`Counter`)
         })
       })
       describe(`App`, () => {
@@ -3666,9 +3666,9 @@ describe(`FactoryAnalyzer`, () => {
       const app = apps.toggler.getFactoryTree()
       const children = Array.from(app.getChildren().values())
       const toggleCmp = children[0] as ComponentFactoryAnalyzer
-      describe(`for ToggleCmp`, () => {
-        it(`returns "ToggleCmp"`, () => {
-          expect(toggleCmp.getClassName()).toBe(`ToggleCmp`)
+      describe(`for Toggle component`, () => {
+        it(`returns "Toggle"`, () => {
+          expect(toggleCmp.getClassName()).toBe(`Toggle`)
         })
       })
       describe(`for App`, () => {
@@ -3684,19 +3684,19 @@ describe(`FactoryAnalyzer`, () => {
       const counterCmp1 = children[0] as ComponentFactoryAnalyzer
       const counterCmp2 = children[1] as ComponentFactoryAnalyzer
       const infoCmp = children[2] as ComponentFactoryAnalyzer
-      describe(`for CounterCmp1`, () => {
-        it(`returns "CounterCmp"`, () => {
-          expect(counterCmp1.getClassName()).toBe(`CounterCmp`)
+      describe(`for Counter component`, () => {
+        it(`returns "Counter"`, () => {
+          expect(counterCmp1.getClassName()).toBe(`Counter`)
         })
       })
-      describe(`for CounterCmp2`, () => {
-        it(`returns "CounterCmp"`, () => {
-          expect(counterCmp2.getClassName()).toBe(`CounterCmp`)
+      describe(`for Counter component`, () => {
+        it(`returns "Counter"`, () => {
+          expect(counterCmp2.getClassName()).toBe(`Counter`)
         })
       })
-      describe(`for InfoCmp`, () => {
-        it(`returns "InfoCmp"`, () => {
-          expect(infoCmp.getClassName()).toBe(`InfoCmp`)
+      describe(`for Info component`, () => {
+        it(`returns "Info"`, () => {
+          expect(infoCmp.getClassName()).toBe(`Info`)
         })
       })
       describe(`for App`, () => {

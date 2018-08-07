@@ -15,7 +15,7 @@ function dom (array: number[]) {
     ]),
     h.hr(),
     h.h1(`First ${array.length} Fibonacci numbers`),
-    h('sequence-cmp', array.join(' ')),
+    h('w-sequence', array.join(' ')),
   ])
 }
 

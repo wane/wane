@@ -49,13 +49,13 @@ function dom (domProps: DomProps) {
         }),
       ])
       :
-      h('empty-state-cmp', [
+      h('w-empty-state', [
         `No entered data.`,
         h.button(`Add some!`),
       ]),
     h.button({ type: 'button' }, [`Add new`]),
     domProps.isAddNewVisible
-      ? h('form-cmp', [
+      ? h('w-form', [
         h.form([
           h.label([
             h.span(`Name`),
@@ -187,7 +187,7 @@ export default function () {
     })
 
     // Clicking on "Add new" opens the dialog
-    await page.click('empty-state-cmp ~ button')
+    await page.click('w-empty-state ~ button')
     await testDom({
       tableData: [],
       isAddNewVisible: true,
@@ -203,7 +203,7 @@ export default function () {
     })
 
     // Clicking on "Add some!" opens the dialog
-    await page.click('empty-state-cmp button')
+    await page.click('w-empty-state button')
     await testDom({
       tableData: [],
       isAddNewVisible: true,

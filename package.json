@@ -8,6 +8,7 @@
     "wane": "dist/compiler/index.js"
   },
   "scripts": {
+    "postinstall": "cd ./node_modules/himalaya && npm i && npm run build && cd ../..",
     "build": "tsc",
     "tsc:w": "tsc -w",
     "test": "jasmine --config=jasmine.json",
@@ -49,7 +50,7 @@
     "del": "^3.0.0",
     "fs-extra": "^6.0.1",
     "gzip-size": "^4.1.0",
-    "himalaya": "^1.1.0",
+    "himalaya": "lazarljubenovic/himalaya#wane",
     "is-travis": "^2.0.0",
     "iterare": "^0.0.8",
     "lodash": "^4.17.10",
@@ -61,6 +62,7 @@
     "rollup-plugin-uglify": "^3.0.0",
     "source-map": "^0.7.2",
     "ts-simple-ast": "^12.5.1",
+    "type-guards": "^0.5.0",
     "typescript": "^2.8.3",
     "uglify-es": "^3.3.9",
     "yarn": "^1.7.0"

@@ -76,7 +76,7 @@ async function reportSizes () {
 }
 
 run()
-  .then(reportSizes)
+  // .then(reportSizes)
   .then(() => {
     console.log('Done.')
     process.exit(0)

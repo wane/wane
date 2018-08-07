@@ -12,7 +12,7 @@ import { Register, Template } from 'wane'
     Increment
   </button>
 `)
-export class CounterCmp {
+export class Counter {
   public value!: number
 
   public valueChange (value: number): void {
@@ -27,16 +27,16 @@ export class CounterCmp {
   }
 }
 
-@Register(CounterCmp)
+@Register(Counter)
 @Template(`
   <p>Left is {{ left }}, right is {{ right }}.</p>
 
-  <counter-cmp
+  <Counter
     [value]="left"
     (valueChange)="onLeftChange(#)"
   />
   
-  <counter-cmp
+  <Counter
     [value]="right"
     (valueChange)="onRightChange(#)"
   />

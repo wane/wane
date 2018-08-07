@@ -6,7 +6,7 @@ import { Template, Register } from 'wane'
   <span>{{ value }}</span>
   <button (click)="inc()">Increment</button>
 `)
-export class CounterCmp {
+export class Counter {
   public value!: number
 
   public valueChange (value: number) {
@@ -21,9 +21,9 @@ export class CounterCmp {
   }
 }
 
-@Register(CounterCmp)
+@Register(Counter)
 @Template(`
-  <counter-cmp
+  <Counter
     [value]="count"
     (valueChange)="onCountChange(#)"
   />

@@ -1,10 +1,16 @@
 import { TemplateNodeValue } from './template-node-value-base'
-import { AttributeBinding, ComponentInputBinding, ComponentOutputBinding, ViewBinding } from '../view-bindings'
-import { pascal } from 'change-case'
+import {
+  AttributeBinding,
+  ComponentInputBinding,
+  ComponentOutputBinding,
+  ViewBinding,
+} from '../view-bindings'
+import { paramCase } from 'change-case'
 import * as himalaya from 'himalaya'
-import { FactoryAnalyzer } from "../../analyzer";
-import { and } from "./utils";
-import { isInstance } from "../../utils/utils";
+import { FactoryAnalyzer } from '../../analyzer'
+import { and } from './utils'
+import { isInstance } from '../../utils/utils'
+import { ComponentFactoryAnalyzer } from '../../analyzer/factory-analyzer/component-factory-analyzer'
 
 function getSuperParam (attributeBindings: Iterable<AttributeBinding>,
                         propertyBindings: Iterable<ComponentInputBinding>,
@@ -26,7 +32,7 @@ export class TemplateNodeComponentValue extends TemplateNodeValue {
 
   public readonly isPureDom = false
 
-  constructor (protected tagName: string,
+  constructor (protected registeredTagName: string,
                protected attributeBindings: Iterable<AttributeBinding>,
                protected inputBindings: Iterable<ComponentInputBinding>,
                protected outputBindings: Iterable<ComponentOutputBinding>,
@@ -34,12 +40,14 @@ export class TemplateNodeComponentValue extends TemplateNodeValue {
     super(getSuperParam(attributeBindings, inputBindings, outputBindings), originalTemplateNode)
   }
 
-  public getTagName (): string {
-    return this.tagName
+  public getRegisteredName (): string {
+    return this.registeredTagName
   }
 
-  public getComponentClassName (): string {
-    return pascal(this.tagName)
+  public getDomTagName (): string {
+    const cfa = this.getFactoryWhichThisIsAnchorFor() as ComponentFactoryAnalyzer
+    const ca = cfa.componentAnalyzer
+    return ca.getDomTagName()
   }
 
   public getAttributeBindings () {
@@ -68,7 +76,7 @@ export class TemplateNodeComponentValue extends TemplateNodeValue {
   public getBindingOrFail<V extends ViewBinding<TemplateNodeValue>> (predicate: (input: ViewBinding<TemplateNodeValue>) => input is V): V {
     const result = this.getBinding(predicate)
     if (result == null) {
-      throw new Error(`Cannot find binding for component node "${this.getTagName()}".`)
+      throw new Error(`Cannot find binding for component node "${this.getRegisteredName()}".`)
     }
     return result
   }
@@ -78,23 +86,29 @@ export class TemplateNodeComponentValue extends TemplateNodeValue {
   }
 
   public getInputBindingByNameOrFail (name: string): ComponentInputBinding {
-    return this.getBindingOrFail(and(isInstance(ComponentInputBinding), input => input.getName() == name))
+    return this.getBindingOrFail(and(
+      isInstance(ComponentInputBinding),
+      input => input.getName() == name),
+    )
   }
 
   public getOutputBindingByNameOrFail (name: string): ComponentOutputBinding {
-    return this.getBindingOrFail(and(isInstance(ComponentOutputBinding), input => input.getName() == name))
+    return this.getBindingOrFail(and(
+      isInstance(ComponentOutputBinding),
+      output => output.getName() == name,
+    ))
   }
 
   public printDomInit (from: FactoryAnalyzer<TemplateNodeValue>): string[] {
     return [
-      `util.__wane__createElement('${this.tagName}')`,
+      `util.__wane__createElement('${this.getDomTagName()}')`,
     ]
   }
 
   public domNodesCount = 1
 
   public toString (): string {
-    return `[Component] <${this.tagName}>`
+    return `[Component] <${this.registeredTagName}>`
   }
 
 }
