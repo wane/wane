@@ -17,15 +17,18 @@ import {
   getPropNamesWhichCanBeModifiedBy,
 } from './utils'
 import { echoize } from '../utils/echoize'
+import { ProjectAnalyzer } from './project-analyzer'
 
 export class ComponentAnalyzer {
 
   public readonly componentTemplateAnalyzer: ComponentTemplateAnalyzer
   public classDeclaration: ClassDeclaration
 
-  constructor (classDeclaration: ClassDeclaration) {
+  constructor (public projectAnalyzer: ProjectAnalyzer,
+               classDeclaration: ClassDeclaration) {
     this.classDeclaration = classDeclaration
-    this.componentTemplateAnalyzer = new ComponentTemplateAnalyzer(classDeclaration, this)
+    this.componentTemplateAnalyzer =
+      new ComponentTemplateAnalyzer(this.projectAnalyzer, classDeclaration, this)
   }
 
   @echoize()

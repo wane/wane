@@ -1,13 +1,15 @@
 import { Forest, TreeNode } from '../utils/tree'
 import { TemplateNodeHtmlValue, TemplateNodeInterpolationValue } from '../template-nodes'
 import { ComponentAnalyzer } from './component-analyzer'
-import { ClassDeclaration, TypeGuards } from 'ts-simple-ast'
+import { ClassDeclaration, Decorator, TypeGuards } from 'ts-simple-ast'
 import parseTemplate from '../template-parser/html'
 import { ViewBinding } from '../template-nodes/view-bindings'
 import { TemplateNodeComponentValue } from '../template-nodes/nodes/component-node'
 import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
 import iterare from 'iterare'
 import { echoize } from '../utils/echoize'
+import { oneLine } from 'common-tags'
+import { ProjectAnalyzer } from './project-analyzer'
 
 export class ComponentTemplateAnalyzer {
 
@@ -15,13 +17,19 @@ export class ComponentTemplateAnalyzer {
 
   @echoize()
   public getDefinition (): Forest<TemplateNodeValue> {
-    const decorators = this.klass.getDecorators()
+    const decorators = this.klass.getDecorators() as Decorator[]
+
     const templateDecorator = decorators.find(deco => deco.getFullName() == 'Template')
     if (templateDecorator == null) {
-      throw new Error(`Component ${this.klass.getName()} does not have a @Template.`)
+      throw new Error(oneLine`Component ${this.klass.getName()} does not have
+        a @Template decorator.`)
     }
+
     const arg = templateDecorator.getArguments()[0]
-    if (!TypeGuards.isNoSubstitutionTemplateLiteral(arg)) throw new Error(`Template must have a template literal as the first argument.`)
+    if (!TypeGuards.isNoSubstitutionTemplateLiteral(arg)) {
+      throw new Error(`Template must have a template literal as the first argument.`)
+    }
+
     const templateLiteral = arg
     const text = templateLiteral.getLiteralText()
     return parseTemplate(text)
@@ -59,7 +67,10 @@ export class ComponentTemplateAnalyzer {
   //   return result
   // }
 
-  constructor (klass: ClassDeclaration, componentCompilerNode: ComponentAnalyzer) {
+  constructor (public projectAnalyzer: ProjectAnalyzer,
+               klass: ClassDeclaration,
+               componentCompilerNode: ComponentAnalyzer,
+  ) {
     this._klass = klass
     this._componentCompilerNode = componentCompilerNode
   }

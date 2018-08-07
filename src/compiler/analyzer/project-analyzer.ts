@@ -66,13 +66,12 @@ export class ProjectAnalyzer {
     return classDeclaration
   }
 
-  private _isAllComponentCompilerNodesReady: boolean = false
   private _componentAnalyzers = new Map<ClassDeclaration, ComponentAnalyzer>()
 
   private getComponentCompilerNodeForClass (classDeclaration: ClassDeclaration): ComponentAnalyzer {
     const result = this._componentAnalyzers.get(classDeclaration)
     if (result == null) {
-      const compilerNode = new ComponentAnalyzer(classDeclaration)
+      const compilerNode = new ComponentAnalyzer(this, classDeclaration)
       this._componentAnalyzers.set(classDeclaration, compilerNode)
       return compilerNode
     } else {
@@ -156,7 +155,7 @@ export class ProjectAnalyzer {
       if (isInstance(TemplateNodeComponentValue)(value)) {
         const componentClassName = (viewNode.getValueOrThrow() as TemplateNodeComponentValue).getComponentClassName()
         const componentDeclaration = definitionFactory.componentAnalyzer.getRegisteredComponentDeclaration(componentClassName)
-        const componentCompilerNode = new ComponentAnalyzer(componentDeclaration)
+        const componentCompilerNode = new ComponentAnalyzer(this, componentDeclaration)
         const childFactory = new ComponentFactoryAnalyzer(
           this,
           this.counter.next().value,
@@ -237,7 +236,7 @@ export class ProjectAnalyzer {
     if (this._factoryTree != null) {
       return this._factoryTree
     }
-    const entryComponentCompilerNode = new ComponentAnalyzer(this.getEntryComponentDeclaration())
+    const entryComponentCompilerNode = new ComponentAnalyzer(this, this.getEntryComponentDeclaration())
     const entryFactory = new ComponentFactoryAnalyzer(
       this,
       this.counter.next().value,
