@@ -2,10 +2,13 @@ import * as sass from 'node-sass'
 import * as path from 'path'
 
 function tildeSrcResolver (root: string): sass.Importer {
-  return (url, prev, done) => {
-    const relative = url.startsWith(`~/`) ? '.' + url.slice(1) : url
-    const file = path.join(root, relative)
-    return { file }
+  return function (url, prev, done) {
+    if (url.startsWith('~/')) {
+      const relative = '.' + url.slice(1)
+      const file = path.join(root, relative)
+      return { file }
+    }
+    return null
   }
 }
 
