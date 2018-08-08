@@ -83,3 +83,7 @@ export function startsWithCapitalLetter (str: string): boolean {
   const [firstLetter] = str
   return firstLetter.toUpperCase() == firstLetter
 }
+
+export function nullish<T> (value: T | null | undefined, fallback: Exclude<T, undefined | null>): T {
+  return value == null ? fallback : value
+}

@@ -18,8 +18,10 @@ import {
 } from './utils'
 import { echoize } from '../utils/echoize'
 import { ProjectAnalyzer } from './project-analyzer'
-import { paramCase } from 'change-case'
+import { paramCase, pascalCase } from 'change-case'
 import { oneLine } from 'common-tags'
+import { file } from 'gzip-size'
+import { nullish } from '../utils/utils'
 
 export class ComponentAnalyzer {
 
@@ -42,13 +44,49 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
-  public getClassName (): string {
+  public getClassNameOrUndefined (): string | undefined {
+    return this.classDeclaration.getName()
+  }
+
+  @echoize()
+  public getPrettyClassName (): string {
+    const className = this.getClassNameOrUndefined()
+    return nullish(className, `UnnamedComponent`)
+  }
+
+  @echoize()
+  public getClassNameOrThrow (): string {
     return this.classDeclaration.getNameOrThrow()
+  }
+
+  /**
+   * A pascal-case name for the component.
+   *
+   * If the class has a name, we use that.
+   * Otherwise, we use the file name -- unless it's named index, in which case
+   * we use the name of the directory where index.ts resides.
+   */
+  @echoize()
+  public getComponentName (): string {
+    const className = this.getClassNameOrUndefined()
+    if (className != null) {
+      return className
+    }
+
+    const sourceFile = this.classDeclaration.getSourceFile()
+    const fileName = sourceFile.getBaseNameWithoutExtension()
+    if (fileName != 'index') {
+      return pascalCase(fileName)
+    }
+
+    const directory = sourceFile.getDirectory()
+    const dirName = directory.getBaseName()
+    return dirName
   }
 
   @echoize()
   public getDomTagName (): string {
-    return 'w-' + paramCase(this.getClassName())
+    return 'w-' + paramCase(this.getComponentName())
   }
 
   @echoize()
@@ -56,7 +94,7 @@ export class ComponentAnalyzer {
     const sourceFile = this.classDeclaration.getSourceFile()
     const path = sourceFile.getFilePath()
     const fileName = sourceFile.getBaseNameWithoutExtension()
-    const className = this.getClassName()
+    const className = this.getPrettyClassName()
     return `${path}/${fileName}#${className}`
   }
 
@@ -195,7 +233,7 @@ export class ComponentAnalyzer {
 
   @echoize()
   public getConstantName (propName: string): string {
-    return `${this.getClassName()}$${propName}`
+    return `${this.getPrettyClassName()}$${propName}`
   }
 
   @echoize()

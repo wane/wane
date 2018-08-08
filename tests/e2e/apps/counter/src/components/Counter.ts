@@ -43,7 +43,7 @@ import { Template, Style } from 'wane'
     Increment
   </button>
 `)
-export default class Counter {
+export default class {
 
   public value!: number
 

@@ -55,7 +55,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   ) {
     super(projectAnalyzer, uniqueId, parentFactory, anchorViewNode)
     const path = componentAnalyzer.getFilePath()
-    const name = componentAnalyzer.getClassName()
+    const name = componentAnalyzer.getComponentName()
     this.identifier = new ComponentFactoryIdentifier(path, name, uniqueId)
     this.componentAnalyzer = componentAnalyzer
   }
@@ -125,7 +125,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
 
   @echoize()
   public getFactoryName (): string {
-    return `${this.componentAnalyzer.getClassName()}${this.uniqueId}`
+    return `${this.componentAnalyzer.getComponentName()}${this.uniqueId}`
   }
 
   @echoize()

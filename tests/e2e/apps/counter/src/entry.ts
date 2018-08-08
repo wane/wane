@@ -26,7 +26,7 @@ import Counter from './components/Counter'
     padding: 3rem;
   }
 `)
-export default class AppCmp {
+export default class {
 
   private count = 42
 
