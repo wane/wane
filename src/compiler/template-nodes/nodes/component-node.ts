@@ -6,7 +6,7 @@ import {
   ViewBinding,
 } from '../view-bindings'
 import { paramCase } from 'change-case'
-import * as himalaya from 'himalaya'
+import * as himalaya from '../../template-parser/html/himalaya'
 import { FactoryAnalyzer } from '../../analyzer'
 import { and } from './utils'
 import { isInstance } from '../../utils/utils'
@@ -36,7 +36,7 @@ export class TemplateNodeComponentValue extends TemplateNodeValue {
                protected attributeBindings: Iterable<AttributeBinding>,
                protected inputBindings: Iterable<ComponentInputBinding>,
                protected outputBindings: Iterable<ComponentOutputBinding>,
-               originalTemplateNode: himalaya.Element) {
+               originalTemplateNode: himalaya.NodeElement) {
     super(getSuperParam(attributeBindings, inputBindings, outputBindings), originalTemplateNode)
   }
 

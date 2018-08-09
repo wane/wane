@@ -6,6 +6,7 @@ import {position} from './html.spec'
 import {removeWhitespaceNodes} from './html-post'
 import {TemplateNodeValue} from '../../template-nodes/nodes/template-node-value-base'
 import {parseTemplate} from './html'
+import * as himalaya from '../../template-parser/html/himalaya'
 
 describe(`removeWhitespaceNodes`, () => {
 
@@ -21,7 +22,7 @@ describe(`removeWhitespaceNodes`, () => {
             new ViewBoundPropertyAccess('foo'),
           ),
           {
-            type: 'text',
+            type: himalaya.NodeType.Text,
             content: html,
             position: position(0, 0, 0, 21, 2, 4),
           },
@@ -40,14 +41,14 @@ describe(`removeWhitespaceNodes`, () => {
 `
     const actual = removeWhitespaceNodes(parseTemplate(html))
 
-    const himalayaA = {
-      type: 'text' as 'text',
+    const himalayaA: himalaya.NodeText = {
+      type: himalaya.NodeType.Text,
       content: `a`,
       position: position(27, 2, 14, 28, 2, 15),
     }
 
-    const himalayaB = {
-      type: 'text' as 'text',
+    const himalayaB: himalaya.NodeText = {
+      type: himalaya.NodeType.Text,
       content: `b`,
       position: position(27, 0, 0, 0, 0, 0),
     }
@@ -66,16 +67,16 @@ describe(`removeWhitespaceNodes`, () => {
       himalayaB,
     )
 
-    const himalayaSpanA = {
-      type: 'element' as 'element',
+    const himalayaSpanA: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       tagName: 'span',
       attributes: [],
       position: position(21, 2, 8, 35, 2, 22),
       children: [himalayaA],
     }
 
-    const himalayaSpanB = {
-      type: 'element' as 'element',
+    const himalayaSpanB: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       tagName: 'span',
       attributes: [],
       position: position(0, 0, 0, 0, 0, 0),
@@ -106,7 +107,7 @@ describe(`removeWhitespaceNodes`, () => {
           new Set(),
           new Set(),
           {
-            type: 'element',
+            type: himalaya.NodeType.Element,
             tagName: 'div',
             attributes: [],
             position: position(7, 1, 7, 71, 4, 12),

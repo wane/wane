@@ -524,13 +524,11 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
         // only what's bound to it.
         bindings.push(...factory.getHtmlNativeDomBindings())
       }
-      // console.log([...bindings].map(x => x.getTemplateNode().toString()))
       for (const binding of bindings) {
         const responsibleFactory = binding.getResponsibleFactory()
         const definitionFactory = binding.getDefinitionFactory()
         const boundValue = binding.boundValue
         if (responsibleFactory.getPathTo(definitionFactory).includes(this) && boundValue instanceof ViewBoundPropertyAccess && !(boundValue instanceof ViewBoundMethodCall)) {
-          // console.log('adding', boundValue)
           result.set(factory, createOrAddToSet(boundValue, result.get(factory)))
         }
       }

@@ -18,14 +18,15 @@ import {
   isPropertyOrInputBinding,
   parseMethodCall,
 } from './html'
-import * as himalaya from 'himalaya'
+import * as himalaya from '../../template-parser/html/himalaya'
 import { TemplateNodeHtmlValue, TemplateNodeInterpolationValue } from '../../template-nodes'
 import {
   AttributeBinding,
   ConditionalViewBinding,
   HtmlElementPropBinding,
   InterpolationBinding,
-  RepeatingViewBinding, TextBinding,
+  RepeatingViewBinding,
+  TextBinding,
 } from '../../template-nodes/view-bindings'
 import {
   ViewBoundConstant,
@@ -39,14 +40,14 @@ import { stripIndent } from 'common-tags'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import { Forest, TreeNode } from '../../utils/tree'
 import parseTemplate from './index'
-import { TemplateNodeTextValue } from "../../template-nodes/nodes/text-node";
+import { TemplateNodeTextValue } from '../../template-nodes/nodes/text-node'
 
 export function position (startIndex: number,
-                   startLine: number,
-                   startColumn: number,
-                   endIndex: number,
-                   endLine: number,
-                   endColumn: number): himalaya.Element['position'] {
+                          startLine: number,
+                          startColumn: number,
+                          endIndex: number,
+                          endLine: number,
+                          endColumn: number): { start: himalaya.Position, end: himalaya.Position } {
   return {
     start: {
       index: startIndex,
@@ -99,8 +100,8 @@ describe(`isJustPropertyAccess`, () => {
 describe(`handleText`, () => {
 
   it(`handles a text-only string`, () => {
-    const htmlNode: himalaya.Text = {
-      type: 'text',
+    const htmlNode: himalaya.NodeText = {
+      type: himalaya.NodeType.Text,
       content: `foo`,
       position: DUMMY_POSITION,
     }
@@ -114,8 +115,8 @@ describe(`handleText`, () => {
   })
 
   it(`handles a interpolation-only string`, () => {
-    const htmlNode: himalaya.Text = {
-      type: 'text',
+    const htmlNode: himalaya.NodeText = {
+      type: himalaya.NodeType.Text,
       content: `{{ foo }}`,
       position: DUMMY_POSITION,
     }
@@ -129,8 +130,8 @@ describe(`handleText`, () => {
   })
 
   it(`handles a string with interpolation between text`, () => {
-    const htmlNode: himalaya.Text = {
-      type: 'text',
+    const htmlNode: himalaya.NodeText = {
+      type: himalaya.NodeType.Text,
       content: `foo {{ bar }} baz`,
       position: DUMMY_POSITION,
     }
@@ -156,8 +157,8 @@ describe(`handleText`, () => {
   })
 
   it(`handles text between two interpolations`, () => {
-    const htmlNode: himalaya.Text = {
-      type: 'text',
+    const htmlNode: himalaya.NodeText = {
+      type: himalaya.NodeType.Text,
       content: `{{ foo }} bar {{ baz }}`,
       position: DUMMY_POSITION,
     }
@@ -345,12 +346,12 @@ describe(`isComponent`, () => {
 
 describe(`handleDirectiveIf`, () => {
   it(`understands a regular condition`, () => {
-    const templateNode: himalaya.Element = {
-      position: DUMMY_POSITION,
-      type: 'element',
+    const templateNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       children: [],
       attributes: [{ key: `foo`, value: null }],
       tagName: `w:if`,
+      position: DUMMY_POSITION,
     }
     expect(handleDirectiveIf(templateNode)).toEqual(
       new TemplateNodeConditionalViewValue(
@@ -362,12 +363,12 @@ describe(`handleDirectiveIf`, () => {
       ))
   })
   it(`understands a negative condition`, () => {
-    const templateNode: himalaya.Element = {
-      position: DUMMY_POSITION,
-      type: 'element',
+    const templateNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       children: [],
       attributes: [{ key: `!foo`, value: null }],
       tagName: `w:if`,
+      position: DUMMY_POSITION,
     }
     expect(handleDirectiveIf(templateNode)).toEqual(
       new TemplateNodeConditionalViewValue(
@@ -379,12 +380,12 @@ describe(`handleDirectiveIf`, () => {
       ))
   })
   it(`allows dot notation`, () => {
-    const templateNode: himalaya.Element = {
-      position: DUMMY_POSITION,
-      type: 'element',
+    const templateNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       children: [],
       attributes: [{ key: `foo.bar.baz`, value: null }],
       tagName: `w:if`,
+      position: DUMMY_POSITION,
     }
     expect(handleDirectiveIf(templateNode)).toEqual(
       new TemplateNodeConditionalViewValue(
@@ -396,12 +397,12 @@ describe(`handleDirectiveIf`, () => {
       ))
   })
   it(`throws if there is no condition`, () => {
-    const templateNode: himalaya.Element = {
-      position: DUMMY_POSITION,
-      type: 'element',
+    const templateNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       children: [],
       attributes: [],
       tagName: `w:if`,
+      position: DUMMY_POSITION,
     }
     expect(() => handleDirectiveIf(templateNode)).toThrow()
   })
@@ -409,9 +410,8 @@ describe(`handleDirectiveIf`, () => {
 
 describe(`handleDirectiveFor`, () => {
   it(`handles a usual case of simple iteration`, () => {
-    const templateNode: himalaya.Element = {
-      position: DUMMY_POSITION,
-      type: 'element',
+    const templateNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       children: [],
       attributes: [
         { key: `item`, value: null },
@@ -419,6 +419,7 @@ describe(`handleDirectiveFor`, () => {
         { key: `items`, value: null },
       ],
       tagName: `w:for`,
+      position: DUMMY_POSITION,
     }
     expect(handleDirectiveFor(templateNode)).toEqual(
       new TemplateNodeRepeatingViewValue(
@@ -433,9 +434,9 @@ describe(`handleDirectiveFor`, () => {
     )
   })
   it(`handles utilizing index variable`, () => {
-    const templateNode: himalaya.Element = {
+    const templateNode: himalaya.NodeElement = {
       position: DUMMY_POSITION,
-      type: 'element',
+      type: himalaya.NodeType.Element,
       children: [],
       attributes: [
         { key: `(item,`, value: null },
@@ -458,9 +459,9 @@ describe(`handleDirectiveFor`, () => {
     )
   })
   it(`handles passing in a key`, () => {
-    const templateNode: himalaya.Element = {
+    const templateNode: himalaya.NodeElement = {
       position: DUMMY_POSITION,
-      type: 'element',
+      type: himalaya.NodeType.Element,
       children: [],
       attributes: [
         { key: `item`, value: null },
@@ -484,9 +485,9 @@ describe(`handleDirectiveFor`, () => {
     )
   })
   it(`handles both index and key at the same time`, () => {
-    const templateNode: himalaya.Element = {
+    const templateNode: himalaya.NodeElement = {
       position: DUMMY_POSITION,
-      type: 'element',
+      type: himalaya.NodeType.Element,
       children: [],
       attributes: [
         { key: `(item,`, value: null },
@@ -539,8 +540,8 @@ describe(`isLiteral`, () => {
 
 describe(`getElementOrComponentAttributes`, () => {
   it(`gets a simple aria prop from an html element`, () => {
-    const himalayaNode: himalaya.Element = {
-      type: 'element',
+    const himalayaNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       tagName: `div`,
       attributes: [
         { key: `aria-label`, value: `foo` },
@@ -557,8 +558,8 @@ describe(`getElementOrComponentAttributes`, () => {
     expect(getElementOrComponentAttributes(himalayaNode)).toEqual(htmlElementAttrBindings)
   })
   it(`gets an explicitly bound "colspan" from an html element`, () => {
-    const himalayaNode: himalaya.Element = {
-      type: 'element',
+    const himalayaNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       tagName: `th`,
       attributes: [
         { key: `[attr.colspan]`, value: `'2'` },
@@ -578,8 +579,8 @@ describe(`getElementOrComponentAttributes`, () => {
 
 describe(`getElementProps`, () => {
   it(`should get a simple usual prop`, () => {
-    const himalayaNode: himalaya.Element = {
-      type: 'element',
+    const himalayaNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       tagName: `div`,
       attributes: [
         { key: `class`, value: `bar` },
@@ -596,8 +597,8 @@ describe(`getElementProps`, () => {
     expect(getElementProps(himalayaNode)).toEqual(htmlElementPropBindings)
   })
   it(`should get a single prop bound as literal`, () => {
-    const himalayaNode: himalaya.Element = {
-      type: 'element',
+    const himalayaNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       tagName: `div`,
       attributes: [
         { key: `[class]`, value: `'bar'` },
@@ -614,8 +615,8 @@ describe(`getElementProps`, () => {
     expect(getElementProps(himalayaNode)).toEqual(htmlElementPropBindings)
   })
   it(`should get a single prop bound to a class prop`, () => {
-    const himalayaNode: himalaya.Element = {
-      type: 'element',
+    const himalayaNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       tagName: `div`,
       attributes: [
         { key: `[class]`, value: `foo.bar` },
@@ -632,8 +633,8 @@ describe(`getElementProps`, () => {
     expect(getElementProps(himalayaNode)).toEqual(htmlElementPropBindings)
   })
   it(`should get prop binding as a string`, () => {
-    const himalayaNode: himalaya.Element = {
-      type: 'element',
+    const himalayaNode: himalaya.NodeElement = {
+      type: himalaya.NodeType.Element,
       tagName: 'div',
       attributes: [
         { key: `class`, value: `foo` },
@@ -733,7 +734,7 @@ describe(`INTEGRATION`, () => {
             new ViewBoundConstant(`'foo bar baz'`),
           ),
           {
-            type: 'text',
+            type: himalaya.NodeType.Text,
             content: `foo bar baz`,
             position: position(0, 0, 0, 11, 0, 11),
           },
@@ -757,7 +758,7 @@ describe(`INTEGRATION`, () => {
             new ViewBoundConstant(`'foo\\n'`),
           ),
           {
-            type: 'text',
+            type: himalaya.NodeType.Text,
             content: `foo\n`,
             position: position(0, 0, 0, 4, 1, 0),
           },
@@ -775,12 +776,12 @@ describe(`INTEGRATION`, () => {
           ]),
           new Set([]),
           {
-            type: 'element',
+            type: himalaya.NodeType.Element,
             tagName: `div`,
             attributes: [{ key: `class`, value: `bar` }],
             children: [
               {
-                type: 'text',
+                type: himalaya.NodeType.Text,
                 content: `\n  baz {{ qux }}\n`,
                 position: position(21, 1, 17, 38, 3, 0),
               },
@@ -795,7 +796,7 @@ describe(`INTEGRATION`, () => {
                 new ViewBoundConstant(`'\\n  baz '`),
               ),
               {
-                type: 'text',
+                type: himalaya.NodeType.Text,
                 content: `\n  baz {{ qux }}\n`,
                 position: position(21, 1, 17, 38, 3, 0),
               },
@@ -807,7 +808,7 @@ describe(`INTEGRATION`, () => {
                 new ViewBoundPropertyAccess(`qux`),
               ),
               {
-                type: 'text',
+                type: himalaya.NodeType.Text,
                 content: `\n  baz {{ qux }}\n`,
                 position: position(21, 1, 17, 38, 3, 0),
               },

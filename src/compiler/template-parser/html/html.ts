@@ -1,4 +1,4 @@
-import * as himalaya from 'himalaya'
+import * as himalaya from './himalaya'
 import {
   AttributeBinding,
   ComponentInputBinding,
@@ -33,7 +33,7 @@ function assert (test: boolean, ...message: any[]): void {
 
 export class ParseError extends Error {
 
-  constructor (public position: himalaya.Position,
+  constructor (public position: { start: himalaya.Position, end: himalaya.Position },
                message: string) {
     super(message)
   }
@@ -68,7 +68,7 @@ export function isJustPropertyAccess (string: string, disallowNegation: boolean 
     : /^!?[a-zA-Z.]*$/g.test(string)
 }
 
-export function handleText (htmlNode: himalaya.Text): TemplateNodeValue[] {
+export function handleText (htmlNode: himalaya.NodeText): TemplateNodeValue[] {
   const { content } = htmlNode
   const array = content.split(HANDLEBARS_REGEX)
   const nodes: TemplateNodeValue[] = []
@@ -133,7 +133,9 @@ export function isPropertyOrInputBinding (attribute: himalaya.Attribute): boolea
 
 export function getInputName (attribute: himalaya.Attribute): string {
   assert(isPropertyOrInputBinding(attribute), `Expected`, attribute, `to be an input.`)
-  return isWrappedInPropBindingDelims(attribute.key) ? stripPropBindingDelims(attribute.key) : attribute.key
+  return isWrappedInPropBindingDelims(attribute.key)
+    ? stripPropBindingDelims(attribute.key)
+    : attribute.key
 }
 
 export function isEventOrOutputBinding ({ key }: himalaya.Attribute): boolean {
@@ -180,10 +182,10 @@ export function isComponent (tagName: string): boolean {
   return startsWithCapitalLetter(tagName)
 }
 
-export function handleDirectiveIf (htmlNode: himalaya.Element): TemplateNodeConditionalViewValue {
+export function handleDirectiveIf (htmlNode: himalaya.NodeElement): TemplateNodeConditionalViewValue {
   const { attributes } = htmlNode
   if (attributes.length == 0) {
-    throw new ParseError(htmlNode.position, `Must specify the condition in w:if.`)
+    throw new ParseError(htmlNode.position!, `Must specify the condition in w:if.`)
   }
 
   const path = attributes.map(attr => {
@@ -194,7 +196,7 @@ export function handleDirectiveIf (htmlNode: himalaya.Element): TemplateNodeCond
     }
   }).join(' ')
   if (!isJustPropertyAccess(path)) {
-    throw new ParseError(htmlNode.position, `The conditional for w:if must be a property name.`)
+    throw new ParseError(htmlNode.position!, `The conditional for w:if must be a property name.`)
   }
 
   const isNegated = path.startsWith('!')
@@ -205,7 +207,7 @@ export function handleDirectiveIf (htmlNode: himalaya.Element): TemplateNodeCond
   return new TemplateNodeConditionalViewValue(viewBinding, htmlNode)
 }
 
-export function handleDirectiveFor (htmlNode: himalaya.Element): TemplateNodeRepeatingViewValue {
+export function handleDirectiveFor (htmlNode: himalaya.NodeElement): TemplateNodeRepeatingViewValue {
   const { attributes } = htmlNode
   const definition = attributes.map(attr => attr.key.trim()).join(' ').trim()
 
@@ -227,7 +229,9 @@ export function handleDirectiveFor (htmlNode: himalaya.Element): TemplateNodeRep
   ] = iterationDefinition.split('of').map(s => s.trim())
 
   if (iterationDefinitionLeft.startsWith('(') && iterationDefinitionLeft.endsWith(')')) {
-    [iterativeConstantName, indexConstantName] = iterationDefinitionLeft.slice(1, -1).split(',').map(s => s.trim())
+    [iterativeConstantName,
+      indexConstantName,
+    ] = iterationDefinitionLeft.slice(1, -1).split(',').map(s => s.trim())
   } else {
     iterativeConstantName = iterationDefinitionLeft
   }
@@ -239,13 +243,13 @@ export function handleDirectiveFor (htmlNode: himalaya.Element): TemplateNodeRep
   if (keyDefinition != null) {
     const [left, right] = keyDefinition.split(':').map(s => s.trim())
     if (right == null) {
-      throw new ParseError(htmlNode.position, `Bad format after ";" in w:for.`)
+      throw new ParseError(htmlNode.position!, `Bad format after ";" in w:for.`)
     }
     if (left != 'key') {
-      throw new ParseError(htmlNode.position, `Key "${left}" not supported in w:for.`)
+      throw new ParseError(htmlNode.position!, `Key "${left}" not supported in w:for.`)
     }
     if (!isJustPropertyAccess(right, true)) {
-      throw new ParseError(htmlNode.position, `The key must be simple property access.`)
+      throw new ParseError(htmlNode.position!, `The key must be simple property access.`)
     }
     keyAccessorPath = right
   }
@@ -261,7 +265,7 @@ export function handleDirectiveFor (htmlNode: himalaya.Element): TemplateNodeRep
   return new TemplateNodeRepeatingViewValue(viewBinding, htmlNode)
 }
 
-export function handleDirective (htmlNode: himalaya.Element): TemplateNodeValue {
+export function handleDirective (htmlNode: himalaya.NodeElement): TemplateNodeValue {
   const directiveName = htmlNode.tagName.slice(2).toLowerCase()
   switch (directiveName) {
     case 'if':
@@ -294,7 +298,7 @@ function resolveBinding (str: string): ViewBoundPropertyAccess | ViewBoundConsta
   return isLiteral(str) ? new ViewBoundConstant(str) : new ViewBoundPropertyAccess(str)
 }
 
-export function getElementOrComponentAttributes (htmlNode: himalaya.Element): Set<AttributeBinding> {
+export function getElementOrComponentAttributes (htmlNode: himalaya.NodeElement): Set<AttributeBinding> {
   const result = new Set<AttributeBinding>()
   for (const htmlAttribute of htmlNode.attributes) {
     if (!isAttributeBinding(htmlAttribute)) {
@@ -311,14 +315,14 @@ export function getElementOrComponentAttributes (htmlNode: himalaya.Element): Se
   return result
 }
 
-export function getElementProps (htmlNode: himalaya.Element): Set<HtmlElementPropBinding> {
+export function getElementProps (htmlNode: himalaya.NodeElement): Set<HtmlElementPropBinding> {
   const result = new Set<HtmlElementPropBinding>()
   for (const htmlAttribute of htmlNode.attributes) {
     if (!isPropertyOrInputBinding(htmlAttribute)) {
       continue
     }
     if (htmlAttribute.value == null) {
-      throw new ParseError(htmlNode.position, `A prop bound to an HTML element must have a value.`)
+      throw new ParseError(htmlNode.position!, `A prop bound to an HTML element must have a value.`)
     }
     const propName = getInputName(htmlAttribute)
     const viewBoundValue = isWrappedInPropBindingDelims(htmlAttribute.key)
@@ -329,28 +333,28 @@ export function getElementProps (htmlNode: himalaya.Element): Set<HtmlElementPro
   return result
 }
 
-function getElementEvents (htmlNode: himalaya.Element): Set<HtmlElementEventBinding> {
+function getElementEvents (htmlNode: himalaya.NodeElement): Set<HtmlElementEventBinding> {
   const result = new Set<HtmlElementEventBinding>()
   for (const htmlAttribute of htmlNode.attributes) {
     if (!isEventOrOutputBinding(htmlAttribute)) {
       continue
     }
     if (htmlAttribute.value == null) {
-      throw new ParseError(htmlNode.position, `An event bound to an HTML element must have a value.`)
+      throw new ParseError(htmlNode.position!, `An event bound to an HTML element must have a value.`)
     }
     const eventName = getOutputName(htmlAttribute)
-    const viewBoundValue = parseMethodCall(htmlAttribute.value, htmlNode.position)
+    const viewBoundValue = parseMethodCall(htmlAttribute.value, htmlNode.position!)
     result.add(new HtmlElementEventBinding(eventName, viewBoundValue))
   }
   return result
 }
 
-function getComponentInputs (htmlNode: himalaya.Element): Set<ComponentInputBinding> {
+function getComponentInputs (htmlNode: himalaya.NodeElement): Set<ComponentInputBinding> {
   const result = new Set<ComponentInputBinding>()
   for (const htmlAttribute of htmlNode.attributes) {
     if (!isPropertyOrInputBinding(htmlAttribute)) continue
     if (htmlAttribute.value == null) {
-      throw new ParseError(htmlNode.position, `An input bound to a Wane component must have a value.`)
+      throw new ParseError(htmlNode.position!, `An input bound to a Wane component must have a value.`)
     }
     const inputName = getInputName(htmlAttribute)
     const viewBoundValue = resolveBinding(htmlAttribute.value)
@@ -359,21 +363,22 @@ function getComponentInputs (htmlNode: himalaya.Element): Set<ComponentInputBind
   return result
 }
 
-function getComponentOutputs (htmlNode: himalaya.Element): Set<ComponentOutputBinding> {
+function getComponentOutputs (htmlNode: himalaya.NodeElement): Set<ComponentOutputBinding> {
   const result = new Set<ComponentOutputBinding>()
   for (const htmlAttribute of htmlNode.attributes) {
     if (!isEventOrOutputBinding(htmlAttribute)) continue
     if (htmlAttribute.value == null) {
-      throw new ParseError(htmlNode.position, `An output bound to a Wane component must have a value.`)
+      throw new ParseError(htmlNode.position!, `An output bound to a Wane component must have a value.`)
     }
     const outputName = getOutputName(htmlAttribute)
-    const viewBoundValue = parseMethodCall(htmlAttribute.value, htmlNode.position)
+    const viewBoundValue = parseMethodCall(htmlAttribute.value, htmlNode.position!)
     result.add(new ComponentOutputBinding(outputName, viewBoundValue))
   }
   return result
 }
 
-export function parseMethodCall (str: string, position: himalaya.Position): ViewBoundMethodCall {
+export function parseMethodCall (str: string,
+                                 position: { start: himalaya.Position, end: himalaya.Position }): ViewBoundMethodCall {
   const chunks = str.trim().split(FUNCTION_CALL_REGEX).slice(0, -1)
 
   if (chunks.length == 0) {
@@ -401,7 +406,7 @@ export function parseMethodCall (str: string, position: himalaya.Position): View
   }))
 }
 
-export function handleComponent (htmlNode: himalaya.Element): TemplateNodeComponentValue {
+export function handleComponent (htmlNode: himalaya.NodeElement): TemplateNodeComponentValue {
   const tagName = htmlNode.tagName
   const attributes = getElementOrComponentAttributes(htmlNode)
   const inputs = getComponentInputs(htmlNode)
@@ -409,7 +414,7 @@ export function handleComponent (htmlNode: himalaya.Element): TemplateNodeCompon
   return new TemplateNodeComponentValue(tagName, attributes, inputs, outputs, htmlNode)
 }
 
-export function handleElement (htmlNode: himalaya.Element): TemplateNodeHtmlValue {
+export function handleElement (htmlNode: himalaya.NodeElement): TemplateNodeHtmlValue {
   const tagName = htmlNode.tagName
   const attributes = getElementOrComponentAttributes(htmlNode)
   const props = getElementProps(htmlNode)
@@ -417,7 +422,7 @@ export function handleElement (htmlNode: himalaya.Element): TemplateNodeHtmlValu
   return new TemplateNodeHtmlValue(tagName, attributes, props, events, htmlNode)
 }
 
-function handleHtmlElementNode (htmlNode: himalaya.Element): TemplateNodeValue {
+function handleHtmlElementNode (htmlNode: himalaya.NodeElement): TemplateNodeValue {
   const { tagName } = htmlNode
   switch (true) {
     case isDirective(tagName):

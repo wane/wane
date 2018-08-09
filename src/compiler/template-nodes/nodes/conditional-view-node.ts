@@ -1,15 +1,14 @@
 import { TemplateNodeValue } from './template-node-value-base'
 import { ConditionalViewBinding } from '../view-bindings'
-import CodeBlockWriter from 'code-block-writer'
-import * as himalaya from 'himalaya'
-import { FactoryAnalyzer } from "../../analyzer";
+import * as himalaya from '../../template-parser/html/himalaya'
+import { FactoryAnalyzer } from '../../analyzer'
 
 export class TemplateNodeConditionalViewValue extends TemplateNodeValue {
 
   public readonly isPureDom = false
 
   constructor (protected binding: ConditionalViewBinding,
-               originalTemplateNode: himalaya.Element) {
+               originalTemplateNode: himalaya.NodeElement) {
     super([binding], originalTemplateNode)
   }
 
@@ -30,7 +29,7 @@ export class TemplateNodeConditionalViewValue extends TemplateNodeValue {
     return `[Conditional] w:if`
   }
 
-  public getRawCondition(): string {
+  public getRawCondition (): string {
     return this.binding.getRaw()
   }
 

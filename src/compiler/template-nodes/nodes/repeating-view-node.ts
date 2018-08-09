@@ -1,15 +1,14 @@
 import { TemplateNodeValue } from './template-node-value-base'
 import { RepeatingViewBinding } from '../view-bindings'
-import CodeBlockWriter from 'code-block-writer'
-import * as himalaya from 'himalaya'
-import { FactoryAnalyzer } from "../../analyzer";
+import * as himalaya from '../../template-parser/html/himalaya'
+import { FactoryAnalyzer } from '../../analyzer'
 
 export class TemplateNodeRepeatingViewValue extends TemplateNodeValue {
 
   public readonly isPureDom = false
 
   constructor (protected binding: RepeatingViewBinding,
-               originalTemplateNode: himalaya.Node) {
+               originalTemplateNode: himalaya.NodeElement) {
     super([binding], originalTemplateNode)
   }
 

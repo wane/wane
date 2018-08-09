@@ -3,8 +3,9 @@ import { isType } from '../../utils/utils'
 import { TemplateNodeComponentValue } from './component-node'
 import { TemplateNodeInterpolationValue } from './interpolation-node'
 import { InterpolationBinding } from '../view-bindings'
-import { ViewBoundConstant, ViewBoundPropertyAccess } from '../view-bound-value'
+import { ViewBoundPropertyAccess } from '../view-bound-value'
 import { TreeNode } from '../../utils/tree'
+import * as himalaya from '../../template-parser/html/himalaya'
 
 const position = {
   start: { column: 0, index: 0, line: 0 },
@@ -13,7 +14,7 @@ const position = {
 
 const cmpNode = new TreeNode(
   new TemplateNodeComponentValue('TagName', [], [], [], {
-    type: 'element',
+    type: himalaya.NodeType.Element,
     tagName: 'TagName',
     attributes: [],
     children: [],
@@ -27,21 +28,8 @@ const interpolationNode = new TreeNode(
       new ViewBoundPropertyAccess(`interpolated`),
     ),
     {
-      type: 'text',
+      type: himalaya.NodeType.Text,
       content: `{{ interpolated }}`,
-      position,
-    },
-  ),
-)
-
-const textNode = new TreeNode(
-  new TemplateNodeInterpolationValue(
-    new InterpolationBinding(
-      new ViewBoundConstant(`'string'`),
-    ),
-    {
-      type: 'text',
-      content: `string`,
       position,
     },
   ),
@@ -54,7 +42,7 @@ describe(`utils`, () => {
 
     describe(`passing in a single function`, () => {
       it(`should just propagate its return value`, () => {
-        expect(and((x: any) => true)(1)).toBe(true)
+        expect(and(() => true)(1)).toBe(true)
       })
     })
 
@@ -78,7 +66,10 @@ describe(`utils`, () => {
         const le99 = (x: number) => x <= 99
         const isTwoDigits = and(ge10, le99)
         const isMagic = and(isNumber, isEven, isPositive, isTwoDigits)
-        expect([-10, 0, 1, 2, 3, 10, 11, 12, 13, '14', 98, 99, 100].filter(isMagic)).toEqual([10, 12, 98])
+        expect([-10, 0, 1, 2, 3, 10, 11, 12, 13, '14', 98, 99, 100].filter(isMagic)).toEqual([10,
+          12,
+          98,
+        ])
       })
     })
 

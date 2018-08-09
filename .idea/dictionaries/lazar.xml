@@ -2,6 +2,7 @@
   <dictionary name="lazar">
     <words>
       <w>codegen</w>
+      <w>colspan</w>
       <w>delims</w>
       <w>diffable</w>
       <w>dirname</w>

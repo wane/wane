@@ -1,6 +1,6 @@
 import { FactoryAnalyzer } from '../../analyzer'
 import { ViewBinding } from '../view-bindings'
-import * as himalaya from 'himalaya'
+import * as himalaya from '../../template-parser/html/himalaya'
 
 export abstract class TemplateNodeValue {
 

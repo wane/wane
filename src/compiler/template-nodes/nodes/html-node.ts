@@ -5,7 +5,7 @@ import {
   HtmlElementPropBinding,
   ViewBinding,
 } from '../view-bindings'
-import * as himalaya from 'himalaya'
+import * as himalaya from '../../template-parser/html/himalaya'
 import { FactoryAnalyzer } from '../../analyzer'
 
 function getSuperParam (attributeBindings: Iterable<AttributeBinding>,
@@ -22,7 +22,7 @@ export class TemplateNodeHtmlValue extends TemplateNodeValue {
                protected attributeBindings: Iterable<AttributeBinding>,
                protected propertyBindings: Iterable<HtmlElementPropBinding>,
                protected eventBinding: Iterable<HtmlElementEventBinding>,
-               originalTemplateNode: himalaya.Node) {
+               originalTemplateNode: himalaya.NodeElement) {
     super(getSuperParam(attributeBindings, propertyBindings, eventBinding), originalTemplateNode)
   }
 

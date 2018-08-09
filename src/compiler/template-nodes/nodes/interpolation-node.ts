@@ -1,16 +1,15 @@
 import { TemplateNodeValue } from './template-node-value-base'
-import CodeBlockWriter from 'code-block-writer'
 import { InterpolationBinding } from '../view-bindings'
-import * as himalaya from 'himalaya'
-import { FactoryAnalyzer } from "../../analyzer";
-import {ViewBoundPropertyAccess} from '../view-bound-value'
+import * as himalaya from '../../template-parser/html/himalaya'
+import { FactoryAnalyzer } from '../../analyzer'
+import { ViewBoundPropertyAccess } from '../view-bound-value'
 
 export class TemplateNodeInterpolationValue extends TemplateNodeValue {
 
   public readonly isPureDom = true
 
   constructor (protected interpolationBinding: InterpolationBinding,
-               originalTemplateNode: himalaya.Text) {
+               originalTemplateNode: himalaya.NodeText) {
     super([interpolationBinding], originalTemplateNode)
   }
 

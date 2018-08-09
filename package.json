@@ -8,7 +8,6 @@
     "wane": "dist/compiler/index.js"
   },
   "scripts": {
-    "postinstall": "cd ./node_modules/himalaya && npm i && npm run build && cd ../..",
     "build": "tsc",
     "tsc:w": "tsc -w",
     "test": "jasmine --config=jasmine.json",
@@ -50,7 +49,6 @@
     "del": "^3.0.0",
     "fs-extra": "^6.0.1",
     "gzip-size": "^4.1.0",
-    "himalaya": "lazarljubenovic/himalaya#wane",
     "is-travis": "^2.0.0",
     "iterare": "^0.0.8",
     "lodash": "^4.17.10",
