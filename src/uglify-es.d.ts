@@ -29,8 +29,3 @@ declare module 'is-travis' {
   const val: boolean
   export = val
 }
-
-declare module 'lite-server' {
-  const val: any
-  export = val
-}

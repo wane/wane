@@ -1,13 +1,8 @@
 import { getDirs, WaneCompilerOptions } from '../compiler/compile'
-import * as path from 'path'
-import * as lite from 'lite-server'
+import devServer from '../dev-server'
 
-export default async function start (options: Partial<WaneCompilerOptions>) {
+export default async function start (options: Partial<WaneCompilerOptions> = {}) {
 
-  const { srcDir, distDir } = getDirs(options)
-
-  lite.server({
-    files: [path.join(distDir, '**', '*')],
-  })
+  devServer(options)
 
 }

@@ -1,7 +1,7 @@
-import compile from '../compiler'
 import * as ora from 'ora'
 import chalk from 'chalk'
 import { oneLine } from 'common-tags'
+import { WaneCompilerOptions } from '../compiler/compile'
 
 function sleep (n: number) {
   return new Promise((resolve, reject) => {
@@ -17,7 +17,7 @@ const spinner = ora({
 
 const TIME_TO_BUILD = `Time to build`
 
-export default async function build () {
+export default async function build (options: Partial<WaneCompilerOptions> = {}) {
   spinner.start()
   console.time(TIME_TO_BUILD)
   // await compile()

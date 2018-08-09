@@ -12,13 +12,17 @@ commander
   .command('start')
   .alias('dev')
   .description(`Start the app in dev mode.`)
-  .action(start)
+  .action(async () => {
+    await start()
+  })
 
 commander
   .command('build')
   .alias('prod')
   .description(`Build the app for production.`)
-  .action(build)
+  .action(async () => {
+    await build()
+  })
 
 if (process.argv.slice(2).length == 0) {
   commander.outputHelp()

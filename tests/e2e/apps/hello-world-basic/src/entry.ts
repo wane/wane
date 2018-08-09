@@ -1,9 +1,9 @@
 // @ts-ignore
-import { Template } from 'wane'
+import { Template, Style } from 'wane'
 
 @Template(`
   {{ message }}
 `)
 export default class HelloWorldCmp {
-  private message = `Hello World!`
+  private message = `Hello!`
 }
