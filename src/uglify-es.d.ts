@@ -29,3 +29,8 @@ declare module 'is-travis' {
   const val: boolean
   export = val
 }
+
+declare module 'cli-spinners' {
+  const val: any
+  export = val
+}
