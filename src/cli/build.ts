@@ -1,13 +1,7 @@
 import * as ora from 'ora'
 import chalk from 'chalk'
 import { oneLine } from 'common-tags'
-import { WaneCompilerOptions } from '../compiler/compile'
-
-function sleep (n: number) {
-  return new Promise((resolve, reject) => {
-    setTimeout(resolve, n)
-  })
-}
+import { compile, WaneCompilerOptions } from '../compiler/compile'
 
 const spinner = ora({
   spinner: 'moon',
@@ -20,8 +14,7 @@ const TIME_TO_BUILD = `Time to build`
 export default async function build (options: Partial<WaneCompilerOptions> = {}) {
   spinner.start()
   console.time(TIME_TO_BUILD)
-  // await compile()
-  await sleep(4000)
+  await compile()
   spinner.stop()
   console.info(oneLine`${chalk.green.bold('Done.')}
     The bundle is available in the ${chalk.bold(`dist`)} folder.`)

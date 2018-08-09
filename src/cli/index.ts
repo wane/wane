@@ -1,11 +1,13 @@
 #!/usr/bin/env node
+import * as fs from 'fs-extra'
 import * as commander from 'commander'
-
 import start from './start'
 import build from './build'
 
+const VERSION = JSON.parse(fs.readFileSync('package.json', 'utf-8')).version
+
 commander
-  .version('0.0.1')
+  .version(VERSION)
   .description(`A framework/compiler/bundler for building front-end applications.`)
 
 commander
