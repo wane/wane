@@ -111,14 +111,4 @@ export async function compile (options: Partial<WaneCompilerOptions> = {}) {
 </html>`
   fs.writeFileSync(path.join(distDir, 'index.html'), html)
 
-  // const table = new Table({
-  //   head: [`Type`, `Raw`, `Gzip`, `Brotli`],
-  //   colWidths: [30, 10, 10, 10],
-  // })
-  // table.push(
-  //   [`Wane output (ES6)`, output.length, gzipSize.sync(output), brotliSize.sync(output)],
-  //   [`UglifyES (ES6)`, uglified.code.length, gzipSize.sync(uglified.code), brotliSize.sync(uglified.code)],
-  // )
-  // console.log(table.toString())
-
 }

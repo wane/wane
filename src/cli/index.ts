@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
 import * as commander from 'commander'
-import * as spinners from 'cli-spinners'
-import * as ora from 'ora'
 
 commander
   .version('0.0.1')
@@ -10,19 +8,20 @@ commander
 
 commander
   .command('start')
+  .alias('dev')
   .description(`Start the app in dev mode.`)
-  .option('--port <port>', `The localhost port to run on.`)
-  .action((command: commander.Command, port: string) => {
-    const spinner = ora({
-      spinner: spinners.triangle,
-      text: 'Starting...',
-      color: 'yellow',
-    })
-    spinner.start()
+  .action(() => {
+
   })
 
 commander
   .command('build')
+  .alias('prod')
   .description(`Build the app for production.`)
+
+if (process.argv.slice(2).length == 0) {
+  commander.outputHelp()
+  process.exit(1)
+}
 
 commander.parse(process.argv)
