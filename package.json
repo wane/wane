@@ -1,6 +1,6 @@
 {
-  "name": "@wane/core",
-  "version": "0.0.1",
+  "name": "wane",
+  "version": "0.0.2",
   "description": "A framework for building web-apps.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,9 +28,9 @@
   "author": "Lazar Ljubenović",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/lazarljubenovic/wane/issues"
+    "url": "https://github.com/wane/wane/issues"
   },
-  "homepage": "https://github.com/lazarljubenovic/wane#readme",
+  "homepage": "https://github.com/wane/wane#readme",
   "dependencies": {
     "@types/acorn": "^4.0.3",
     "@types/chokidar": "^1.7.5",
