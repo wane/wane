@@ -19,7 +19,7 @@ To get started, create an empty folder for your project and do the usual `npm in
 Then install `wane`, create a new folder `src` and within it a file `entry.ts`.
 
 ```
-$ npm i @wane/core
+$ yarn add wane
 $ mkdir src
 $ touch src/entry.ts
 ```
@@ -27,9 +27,8 @@ $ touch src/entry.ts
 Open the `src/entry.ts` file and write the following.
 
 ```typescript
-import { Entry, Template } from '@wane/core'
+import { Template } from 'wane'
 
-@Entry()
 @Template(`Hello, {{ someone }}!`)
 export class App {
   someone = 'World'
@@ -40,28 +39,24 @@ Save the file and run the wane compiler.
 You can do this quickly by utilizing `npx`.
 
 ```
-$ npx wane
+$ npx build wane
 ```
 
-If everything went fine, you should see the success message in green:
-
-```
-✔ Compiled successfully.
-```
+If everything went fine, you should see the success message with some information about compilation.
 
 The built app is contained within the newly created `dist` folder.
 Open the `dist/index.html` file from your browser to see the app in action.
 
-The generated JavaScript file is only **580 bytes**.
-Yes, that's 0.58kB. 
-If you run that through gzip, you get **334 bytes**.
-With brotli, you're down to only **273 bytes**.
+The generated JavaScript file is only **272 bytes**.
+Yes, that's less than 0.3kB. 
+If you run that through gzip, you get **207 bytes**.
+With brotli, you're down to only **166 bytes**.
 Here's it again: 
 
 ```text
- 580 index.js
- 334 index.js.gz
- 273 index.js.br
+ 272 index.js
+ 207 index.js.gz
+ 166 index.js.br
 ``` 
 
 And it can only get better.
@@ -93,3 +88,5 @@ When a new feature is implemented, you could just run the compiler again over th
 ## How to explore
 
 Until I (or someone else) gets around to writing examples and tutorials, your best shot at seeing what is currently implemented are apps created for end-to-end tests under `tests/e2e/apps`.
+
+There's also a work-in-progress website: [wane.app](https://www.wane.app).
