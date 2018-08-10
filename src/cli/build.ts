@@ -17,7 +17,9 @@ export default async function build (options: Partial<WaneCompilerOptions> = {})
   spinner.start()
 
   try {
-    const result = await compile()
+    const result = await compile({
+      dir: 'tests/e2e/apps/counter'
+    })
 
     const { sizes } = result
 

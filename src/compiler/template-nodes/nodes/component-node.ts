@@ -40,12 +40,17 @@ export class TemplateNodeComponentValue extends TemplateNodeValue {
     super(getSuperParam(attributeBindings, inputBindings, outputBindings), originalTemplateNode)
   }
 
+  // just for the better type
+  public getFactoryWhichThisIsAnchorFor (): ComponentFactoryAnalyzer {
+    return super.getFactoryWhichThisIsAnchorFor() as ComponentFactoryAnalyzer
+  }
+
   public getRegisteredName (): string {
     return this.registeredTagName
   }
 
   public getDomTagName (): string {
-    const cfa = this.getFactoryWhichThisIsAnchorFor() as ComponentFactoryAnalyzer
+    const cfa = this.getFactoryWhichThisIsAnchorFor()
     const ca = cfa.componentAnalyzer
     return ca.getDomTagName()
   }

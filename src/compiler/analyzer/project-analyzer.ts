@@ -230,6 +230,7 @@ export class ProjectAnalyzer {
     if (this._factoryTree != null) {
       return this._factoryTree
     }
+
     const entryComponentCompilerNode = new ComponentAnalyzer(this, this.getEntryComponentDeclaration())
     const entryFactory = new ComponentFactoryAnalyzer(
       this,
@@ -238,10 +239,15 @@ export class ProjectAnalyzer {
       undefined,
       entryComponentCompilerNode,
     )
-    // console.log(`=== FACTORY TREE FOR ${entryFactory.getFactoryName()} ===`)
+
     this._generateFactoryTree(entryFactory, entryFactory)
     this._factoryTree = entryFactory
-    // console.log('done generating')
+
+    for (const componentFactory of this.getComponentFactoryAnalyzers()) {
+      const templateAnalyzer = componentFactory.componentAnalyzer.componentTemplateAnalyzer
+      templateAnalyzer.checkRequiredInputsInComponents()
+    }
+
     return this._factoryTree
   }
 
@@ -260,6 +266,10 @@ export class ProjectAnalyzer {
         }
       },
     }
+  }
+
+  public getComponentFactoryAnalyzers(): Iterable<ComponentFactoryAnalyzer> {
+    return [...this.factories()].filter(isInstance(ComponentFactoryAnalyzer))
   }
 
   public getFactoryByName (factoryName: string): FactoryAnalyzer<TemplateNodeValue> {

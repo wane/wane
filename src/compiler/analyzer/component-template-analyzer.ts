@@ -8,12 +8,12 @@ import { TemplateNodeComponentValue } from '../template-nodes/nodes/component-no
 import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
 import iterare from 'iterare'
 import { echoize } from '../utils/echoize'
-import { oneLine } from 'common-tags'
+import { oneLine, oneLineCommaListsAnd } from 'common-tags'
 import { ProjectAnalyzer } from './project-analyzer'
 
 export class ComponentTemplateAnalyzer {
 
-  private _componentCompilerNode: ComponentAnalyzer | undefined
+  private readonly _componentAnalyzer!: ComponentAnalyzer
 
   @echoize()
   public getDefinition (): Forest<TemplateNodeValue> {
@@ -69,10 +69,10 @@ export class ComponentTemplateAnalyzer {
 
   constructor (public projectAnalyzer: ProjectAnalyzer,
                klass: ClassDeclaration,
-               componentCompilerNode: ComponentAnalyzer,
+               componentAnalyzer: ComponentAnalyzer,
   ) {
     this._klass = klass
-    this._componentCompilerNode = componentCompilerNode
+    this._componentAnalyzer = componentAnalyzer
   }
 
   private _klass: ClassDeclaration | undefined
@@ -148,6 +148,34 @@ export class ComponentTemplateAnalyzer {
     return iterare(this.getDefinition())
       .map(tree => tree.printIndented())
       .join('\n')
+  }
+
+  public checkRequiredInputsInComponents (): void {
+    for (const componentNode of this.componentNodes()) {
+      const value = componentNode.getValueOrThrow()
+
+      // we expect to find required inputs in the template
+      const cfa = value.getFactoryWhichThisIsAnchorFor()
+      const ca = cfa.componentAnalyzer
+      const expected = ca.getNamesOfRequiredInputs()
+
+      // the template has certain inputs
+      const actual = [...value.getInputBindings()].map(inputBinding => inputBinding.getName())
+
+      const missingInputs: string[] = []
+      for (const requiredInput of expected) {
+        if (!actual.includes(requiredInput)) {
+          missingInputs.push(requiredInput)
+        }
+      }
+
+      if (missingInputs.length > 0) {
+        throw new Error(oneLineCommaListsAnd`The template for
+          ${this._componentAnalyzer.getPrettyClassName()} uses a component
+          ${value.getRegisteredName()}, but the following inputs are missing:
+          ${missingInputs}.`)
+      }
+    }
   }
 
 }
