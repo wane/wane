@@ -30,19 +30,19 @@ function expectWriter (spy: (wr: CodeBlockWriter) => void, expectation: string):
   expect(wr.toString().trim()).toBe(expectation.trim())
 }
 
-function get01Factories () {
+export function get01Factories () {
   const app = apps.helloWorld.getFactoryTree()
   return {app}
 }
 
-function get02Factories () {
+export function get02Factories () {
   const app = apps.counter.getFactoryTree()
   const appChildren = [...app.getChildrenFactories()]
   const counterCmp = appChildren[0] as ComponentFactoryAnalyzer
   return {app, counterCmp}
 }
 
-function get03Factories () {
+export function get03Factories () {
   const app = apps.toggler.getFactoryTree()
 
   const appChildren = [...app.getChildrenFactories()]
@@ -60,7 +60,7 @@ function get03Factories () {
   }
 }
 
-function get04Factories () {
+export function get04Factories () {
   const app = apps.comparator.getFactoryTree()
 
   const appChildren = [...app.getChildrenFactories()]
@@ -86,7 +86,7 @@ function get04Factories () {
   }
 }
 
-function get05Factories () {
+export function get05Factories () {
   const app = apps.deepIfs.getFactoryTree()
 
   const counterCmps = [...app.getChildrenFactories()].slice(0, 3) as ComponentFactoryAnalyzer[]

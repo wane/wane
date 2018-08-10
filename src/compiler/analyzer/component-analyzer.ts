@@ -119,6 +119,28 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
+  public getNamesOfRequiredInputs (): Iterable<string> {
+    return [...this.getNamesOfInputs()]
+      .filter(inputName => {
+        const propDeclaration = this.classDeclaration.getPropertyOrThrow(inputName)
+        const hasInitializer = propDeclaration.hasInitializer()
+        const type = propDeclaration.getType()
+        return !type.isNullable() && !hasInitializer
+      })
+  }
+
+  @echoize()
+  public getNamesOfOptionalInputs (): Iterable<string> {
+    return [...this.getNamesOfInputs()]
+      .filter(inputName => {
+        const propDeclaration = this.classDeclaration.getPropertyOrThrow(inputName)
+        const hasInitializer = propDeclaration.hasInitializer()
+        const type = propDeclaration.getType()
+        return type.isNullable() || hasInitializer
+      })
+  }
+
+  @echoize()
   public getMethodDeclaration (methodName: string): MethodDeclaration {
     return this.classDeclaration.getMethodOrThrow(methodName)
   }

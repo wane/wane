@@ -7,7 +7,7 @@ import { Template, Register } from 'wane'
   <button (click)="inc()">Increment</button>
 `)
 export class Counter {
-  public value!: number
+  public value: number = 21
 
   public valueChange (value: number) {
   }
@@ -24,7 +24,7 @@ export class Counter {
 @Template(`
   <w:if isLeftGreater>left {{ isGreaterString }}</w:if>
   <w:if isRightGreater>right {{ isGreaterString }}</w:if>
-  <w:if areEqual>they are equal</w:if> 
+  <w:if areEqual>they are equal</w:if>
 `)
 export class Info {
   public isLeftGreater!: boolean
