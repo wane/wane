@@ -1,16 +1,17 @@
-import { compile, WaneCompilerOptions } from '../../../src/compiler/compile'
+import { CompilationResult, compile, WaneCompilerOptions } from '../../../src/compiler/compile'
 import { expectDomStructure, h } from './vdom'
 import * as puppeteer from 'puppeteer'
 import { spawn } from 'child_process'
 import * as path from 'path'
 import * as isTravis from 'is-travis'
-import chalk from "chalk";
+import chalk from 'chalk'
 
 export async function compileTestApp (opts: Partial<WaneCompilerOptions>) {
-  await compile({ pretty: true, ...opts })
+  return compile({ pretty: true, ...opts })
 }
 
-export async function runTest (__dirname: string, test: (page: puppeteer.Page) => Promise<void>): boolean {
+export async function runTest (__dirname: string,
+                               test: (page: puppeteer.Page) => Promise<void>): Promise<CompilationResult | null> {
 
   const testName = path.basename(__dirname)
 
@@ -26,15 +27,15 @@ export async function runTest (__dirname: string, test: (page: puppeteer.Page) =
     }
 
     try {
-      await compileTestApp({ dir: __dirname })
+      const result = await compileTestApp({ dir: __dirname })
       page = await browser.newPage()
       await page.goto(`file:///${__dirname}/dist/index.html`)
       await test(page)
-      return true
+      return result
     } catch (e) {
       console.error(chalk.red(`Expected app ${chalk.bold(testName)} to compile successfully.`))
       console.error(e)
-      return false
+      return null
     }
 
   } catch (error) {

@@ -5,5 +5,5 @@ import { Template, Style } from 'wane'
   {{ message }}
 `)
 export default class HelloWorldCmp {
-  private message = `Hello!`
+  private message = `Hello World!`
 }

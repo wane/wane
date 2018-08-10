@@ -1,83 +1,138 @@
-import helloWorldBasic from './apps/hello-world-basic/test.spec'
-import helloWorldWithBinding from './apps/hello-world-with-binding/test.spec'
-import counter from './apps/counter/test.spec'
-import counterWithBoundaries from './apps/counter-with-boundaries/test.spec'
-import twoCounters from './apps/two-counters/test.spec'
-import palindromeChecker from './apps/palindrome-checker/test.spec'
-import userInfo from './apps/user-info/test.spec'
-import fibonacciSequence from './apps/fibonacci-sequence/test.spec'
-import crudTable from './apps/crud-table/test.spec'
-import helloApi from './apps/hello-api/test.spec'
-
-import * as path from 'path'
-import { readFileSync } from 'fs'
-// @ts-ignore
-import * as Table from 'cli-table'
-import * as gzipSize from 'gzip-size'
-import * as brotliSize from 'brotli-size'
 import chalk from 'chalk'
+import { CompilationResult } from '../../src/compiler/compile'
+import * as ora from 'ora'
+import numberFormat from 'format-number'
+import { getBorderCharacters, table } from 'table'
+
+const f = numberFormat()
 
 Error.stackTraceLimit = Infinity
 
-async function run () {
+const APP_NAMES = [
   // Basic apps with basic components, inputs, outputs, events.
-  await helloWorldBasic()
-  await helloWorldWithBinding()
-  await counter()
-  await counterWithBoundaries()
-  await twoCounters()
-
+  'hello-world-basic',
+  'hello-world-with-binding',
+  'counter',
+  'counter-with-boundaries',
+  'two-counters',
   // Basic usages of w:if
-  await palindromeChecker()
-  await userInfo()
-
+  'palindrome-checker',
+  'user-info',
   // Basic usages of w:for
-  await fibonacciSequence()
-  await crudTable()
-
+  'fibonacci-sequence',
+  'crud-table',
   // Basic usages of promises
-  await helloApi()
-}
+  'hello-api',
+]
 
-async function reportSizes () {
-  const apps = [
-    'hello-world-basic',
-    'hello-world-with-binding',
-    'counter',
-    'counter-with-boundaries',
-    'two-counters',
-    'palindrome-checker',
-    'user-info',
-    'fibonacci-sequence',
-    'crud-table',
-    'hello-api',
-  ]
+const RESULT_DATA: Record<string, CompilationResult | null> = {}
 
-  const table = new Table({
-    head: ['', 'raw', 'gzip', 'brotli'],
-    colAligns: ['left', 'right', 'right', 'right'],
-    colWidths: [40, 10, 10, 10],
-    chars: { 'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
-  })
+const borderStyle = chalk.white
+const appNameStyle = chalk.gray
+const brotliSizeStyle = chalk.bold
+const notApplicableStyle = chalk
+const headingStyle = chalk.bold.gray
 
-  for (const appName of apps) {
-    const pathToApp = path.join(__dirname, 'apps', appName, 'dist', 'index.js')
-    try {
-      const indexJs = readFileSync(pathToApp, { encoding: 'utf8' })
-      const raw: number = indexJs.length
-      const gzip: number = gzipSize.sync(indexJs, { level: 9 })
-      const brotli: number = brotliSize.sync(indexJs)
-      table.push([appName, raw, gzip, brotli])
-    } catch (e) {
-      console.error(chalk.red(`Count not read ${chalk.bold(appName)}.`))
+async function run () {
+
+  for (const appName of APP_NAMES) {
+
+    const appPath = `./apps/${appName}/test.spec`
+    const module = await import(appPath)
+    const runTest = module.default
+
+    const spinner = ora({
+      text: `${chalk.bold(appName)}: running tests...`,
+    })
+    spinner.start()
+
+    const result: CompilationResult | null = await runTest()
+
+    if (result != null) {
+      RESULT_DATA[appName] = result
+      spinner.stopAndPersist({
+        symbol: chalk.bold.green('✓'),
+        text: `${chalk.green.bold(appName)}: tests passed`,
+      })
+    } else {
+      RESULT_DATA[appName] = null
+      spinner.stopAndPersist({
+        symbol: chalk.bold.red('✗'),
+        text: `${chalk.bold.red(appName)}: tests ${chalk.bgRedBright.whiteBright.bold(`FAILED`)}.`,
+      })
     }
+
   }
 
-  console.log(table.toString())
+  const sizesTableData = Object.keys(RESULT_DATA)
+    .map(appName => {
+      const report = RESULT_DATA[appName]
+      if (report == null) {
+        return [
+          appNameStyle(appName),
+          notApplicableStyle('N/A'),
+          notApplicableStyle('N/A'),
+          notApplicableStyle('N/A'),
+        ]
+      } else {
+        return [
+          appNameStyle(appName),
+          f(report.sizes.js.raw),
+          f(report.sizes.js.gzip),
+          brotliSizeStyle(f(report.sizes.js.brotli)),
+        ]
+      }
+    })
+
+  sizesTableData.unshift([
+    '',
+    'raw',
+    'gzip',
+    'brotli',
+  ].map(s => headingStyle(s)))
+
+  const prettyTable = table(sizesTableData, {
+    columnDefault: {
+      alignment: 'right',
+      paddingLeft: 3,
+      paddingRight: 0,
+    },
+    columns: {
+      0: {
+        alignment: 'left',
+        paddingRight: 1,
+      },
+      3: {
+        paddingRight: 3,
+      },
+    },
+    border: {
+      ...getBorderCharacters('void'),
+
+      topBody: borderStyle('═'),
+      topLeft: borderStyle('╔'),
+      topRight: borderStyle('╗'),
+
+      bottomBody: borderStyle('═'),
+      bottomLeft: borderStyle('╚'),
+      bottomRight: borderStyle('╝'),
+
+      bodyLeft: borderStyle('║'),
+      bodyRight: borderStyle('║'),
+
+      joinLeft: borderStyle('╟'),
+      joinRight: borderStyle('╢'),
+
+      joinBody: borderStyle('─'),
+    },
+    drawHorizontalLine: (index, size) => [0, 1, size].includes(index),
+  })
+
+  console.log(prettyTable)
+
 }
 
 run()
-  // .then(reportSizes)
   .then(() => {
     console.log('Done.')
     process.exit(0)
