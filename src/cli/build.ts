@@ -21,7 +21,7 @@ export default async function build (options: Partial<WaneCompilerOptions> = {})
 
     const { sizes } = result
 
-    const left = chalk.gray.italic
+    const left = chalk.gray
 
     const sizesTable = [
       ['', 'raw', 'gzip', 'brotli'].map(str => chalk.bold.gray(str)),
