@@ -2,12 +2,14 @@ import CodeBlockWriter from 'code-block-writer'
 import { BaseCodegen } from '../base-codegen'
 import { FactoryAnalyzer } from '../../analyzer'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
+import { oneLine } from 'common-tags'
 
 const names = {
   createElement: `__wane__createElement`,
   createTextNode: `__wane__createTextNode`,
   createComment: `__wane__createComment`,
   createDocumentFragment: `__wane__createDocumentFragment`,
+  appendChild: `__wane__appendChild`,
   appendChildren: `__wane__appendChildren`,
   insertBefore: `__wane__insertBefore`,
   removeChildren: `__wane__removeChildren`,
@@ -75,7 +77,10 @@ export class HelpersCodegen extends BaseCodegen {
       .writeLine(`// Create a document fragment`)
       .writeLine(`export const ${this.names.createDocumentFragment} = () => document.createDocumentFragment()`)
       .blankLine()
-      .writeLine(`// Append children to a parent and returns the parent.`)
+      .writeLine(`// Append a child to the parent and return the appended child`)
+      .writeLine(`export const ${this.names.appendChild} = (element, child) => element.appendChild(child)`)
+      .blankLine()
+      .writeLine(`// Append multiple children to a parent and returns the parent. Prefer "appendChild" when possible.`)
       .writeLine(`export const ${this.names.appendChildren} = (element, children) => {`)
       .indentBlock(() => {
         this.writer
@@ -199,6 +204,28 @@ export class HelpersCodegen extends BaseCodegen {
     })
   }
 
+  /**
+   * See: https://github.com/wane/wane/issues/18
+   */
+  private generateAssembleDomFunction (): this {
+    this.writer
+      .writeLine(`export function __wane__assembleDom(domNodes: Node[], spec: number[]): void {`)
+      .indentBlock(() => {
+        this.writer
+          .writeLine(`for (let specIndex = 0; specIndex < spec.length; specIndex += 3) {`)
+          .indentBlock(() => {
+            this.writer
+              .writeLine(oneLine`for (let childDomIndex = spec[specIndex + 1];
+                                      childDomIndex < spec[specIndex + 1] + spec[specIndex + 2];
+                                      childDomIndex++)`)
+              .writeLine(`${this.names.appendChild}(domNodes[spec[specIndex]], domNodes[childDomIndex])`)
+          })
+          .writeLine(`}`)
+      })
+      .writeLine(`}`)
+    return this
+  }
+
   public printCode (): CodeBlockWriter {
     return this
       .resetWriter()
@@ -208,6 +235,7 @@ export class HelpersCodegen extends BaseCodegen {
       .generateFactoryTreeHelpers()
       .generateGetNextNotUsed()
       .generateDestroyConditionalDirective()
+      .generateAssembleDomFunction()
       .getWriter()
   }
 

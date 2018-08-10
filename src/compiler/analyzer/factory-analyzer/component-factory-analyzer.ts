@@ -11,6 +11,7 @@ import { paramCase } from 'change-case'
 import parseStyle from '../../style-parser'
 import { echoize } from '../../utils/echoize'
 import { ProjectAnalyzer } from '../project-analyzer'
+import { commaLists } from 'common-tags'
 
 export class ComponentFactoryIdentifier {
 
@@ -128,13 +129,76 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
     return `${this.componentAnalyzer.getComponentName()}${this.uniqueId}`
   }
 
+  /**
+   * See: https://github.com/wane/wane/issues/18
+   */
   @echoize()
+  public getDomAssemblingSpecification (): { index: number, from: number, length: number }[] {
+    const specification: { index: number, from: number, length: number }[] = []
+
+    const queue = [...this.view.getRoots()]
+    const rootIndexes = queue
+      .map(root => root.getValueOrThrow().getIndexes())
+      .reduce((acc, curr) => [...acc, ...curr], [])
+    const lastIndex = rootIndexes[rootIndexes.length - 1]
+
+    // handle roots
+    specification.push({
+      index: -1,
+      from: 0,
+      length: lastIndex + 1,
+    })
+
+    while (queue.length > 0) {
+      const current = queue.shift()!
+
+      if (current.hasChildren()) {
+        const children = current.getChildren()
+        queue.push(...children)
+        const childrenIndexes = children
+          .map(child => child.getValueOrThrow().getIndexes())
+          .reduce((acc, curr) => [...acc, ...curr], [])
+        const firstIndex = childrenIndexes[0]
+        const lastIndex = childrenIndexes[childrenIndexes.length - 1]
+        const domChildrenCount = lastIndex - firstIndex + 1
+        specification.push({
+          index: current.getValueOrThrow().getSingleIndex(),
+          from: firstIndex,
+          length: domChildrenCount,
+        })
+      }
+    }
+
+    return specification
+  }
+
   public printAssemblingDomNodes (wr: CodeBlockWriter): CodeBlockWriter {
-    return wr
+    const spec = this.getDomAssemblingSpecification()
+      .filter(({ index }) => index != -1)
+      .map(({ index, from, length }) => [index, from, length])
+      .reduce((acc, curr) => [...acc, ...curr], [])
+    const specString = commaLists`[${spec}]`
+
+    const rootSpec = this.getDomAssemblingSpecification()
+      .find(({ index }) => index == -1)!
+    const rootsLength = rootSpec.length
+
+    wr
       .newLineIfLastNot()
-      .writeLine(`util.__wane__appendChildren(this.__wane__root, [`)
-      .indentBlock(() => this.printAssemblingDomNodesGeneric(wr))
-      .writeLine(`])`)
+      .conditionalWriteLine(spec.length > 0, `util.__wane__assembleDom(this.__wane__domNodes, ${specString})`)
+
+    if (rootsLength == 0) {
+      // There's only one root
+      wr.writeLine(`util.__wane__appendChild(this.__wane__root, this.__wane__domNodes[0]`)
+    } else if (spec.length == 0) {
+      // Everything is a root
+      wr.writeLine(`util.__wane__appendChildren(this.__wane__root, this.__wane__domNodes)`)
+    } else {
+      // Only first few are roots
+      wr.writeLine(`util.__wane__appendChildren(this.__wane__root, this.__wane__domNodes.slice(0, ${rootsLength}))`)
+    }
+
+    return wr
   }
 
   @echoize()
