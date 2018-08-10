@@ -3,6 +3,19 @@ import * as fs from 'fs-extra'
 import Project, { ModuleKind, ScriptTarget } from 'ts-simple-ast'
 import { ProjectAnalyzer } from './analyzer'
 import { Codegen } from './codegen'
+import getSize, { Size } from './utils/get-sizes'
+
+export interface CompilationResult {
+  durationNs: number
+  filesRoot: string
+  files: string[]
+  sizes: {
+    js: Size
+    css: Size
+    html: Size
+    total: Size
+  }
+}
 
 export interface WaneCompilerOptions {
   dir: string
@@ -83,7 +96,9 @@ export function getProjectAnalyzer (waneCompilerOptions: Partial<WaneCompilerOpt
 
 }
 
-export async function compile (options: Partial<WaneCompilerOptions> = {}) {
+export async function compile (options: Partial<WaneCompilerOptions> = {}): Promise<CompilationResult> {
+
+  const start = process.hrtime()
 
   const { distDir } = getDirs(options)
   const projectAnalyzer = getProjectAnalyzer(options)
@@ -94,9 +109,9 @@ export async function compile (options: Partial<WaneCompilerOptions> = {}) {
    * It will use and existing Project that it grabs from the Analyzer.
    */
 
-  await codegen.generateCode()
+  const codegenResult = await codegen.generateCode()
 
-  const html = `<!DOCTYPE html>
+  const htmlFileContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -109,6 +124,25 @@ export async function compile (options: Partial<WaneCompilerOptions> = {}) {
   <script src="index.js"></script>
 </body>
 </html>`
-  fs.writeFileSync(path.join(distDir, 'index.html'), html)
+  fs.writeFileSync(path.join(distDir, 'index.html'), htmlFileContent)
+
+  const diff = process.hrtime(start)
+  const durationNs = diff[0] * 1e9 + diff[1]
+
+  const [js, css, html] = ['index.js', 'styles.css', 'index.html']
+    .map(filename => path.join(codegenResult.filesRoot, filename))
+    .map(getSize)
+
+  const total: Size = {
+    raw: js.raw + css.raw + html.raw,
+    gzip: js.gzip + css.gzip + html.gzip,
+    brotli: js.brotli + css.brotli + html.brotli,
+  }
+
+  return {
+    durationNs,
+    ...codegenResult,
+    sizes: {js, css, html, total},
+  }
 
 }

@@ -33,6 +33,11 @@ type Constructor<T> = {
   ): T
 }
 
+export interface CodegenResult {
+  filesRoot: string
+  files: string[]
+}
+
 export class Codegen {
 
   private distDirectory: string
@@ -53,7 +58,7 @@ export class Codegen {
     this.distDirectory = this.waneCompilerOptions.output
   }
 
-  public async generateCode () {
+  public async generateCode (): Promise<CodegenResult> {
     const factoryTree = this.analyzer.getFactoryTree()
 
     this
@@ -73,6 +78,11 @@ export class Codegen {
       })
 
     await this.bundle()
+
+    return {
+      filesRoot: this.distDirectory,
+      files: ['index.js', 'styles.css'],
+    }
   }
 
   private project: Project
