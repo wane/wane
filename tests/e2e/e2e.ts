@@ -11,6 +11,7 @@ import helloApi from './apps/hello-api/test.spec'
 
 import * as path from 'path'
 import { readFileSync } from 'fs'
+// @ts-ignore
 import * as Table from 'cli-table'
 import * as gzipSize from 'gzip-size'
 import * as brotliSize from 'brotli-size'

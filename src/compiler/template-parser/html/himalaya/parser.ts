@@ -147,6 +147,7 @@ export function parse (state: ParseState) {
     const elementNode: himalaya.NodeElement = {
       type: NodeType.Element,
       tagName: tagToken.content,
+      // @ts-ignore
       attributes,
       children,
       position,
