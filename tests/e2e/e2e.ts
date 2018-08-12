@@ -24,8 +24,9 @@ const APP_NAMES = [
   // Basic usages of w:for
   'fibonacci-sequence',
   'crud-table',
-  // Basic usages of promises
+  // Basic usages of async code
   'hello-api',
+  'counter-async',
 ]
 
 const RESULT_DATA: Record<string, CompilationResult | null> = {}

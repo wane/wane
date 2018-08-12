@@ -265,6 +265,33 @@ describe(`wrap-async-code`, () => {
       testTransform(before, before)
     })
 
+    it(`injects constructor and wraps callbacks for setTimeout`, () => {
+      const before = stripIndent`
+        export class Foo {
+          m () {
+            setTimeout(fn, 21)
+          } 
+        }
+      `
+      const after = stripIndent`
+        export class Foo {
+          m () {
+            setTimeout((...args: any[]) => {
+          const __wane__result = ((...args: any[]) => {
+            return fn(...args)
+          })(...args)
+          // inject
+          return __wane__result
+        }, 21)
+          }
+
+          constructor(private __wane__factory: any) {
+          }
+        }
+      `
+      testTransform(before, after)
+    })
+
     it(`injects constructor and wraps callbacks`, () => {
       const before = stripIndent`
         export class Foo {

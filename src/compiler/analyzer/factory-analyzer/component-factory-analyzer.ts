@@ -11,6 +11,7 @@ import { paramCase } from 'change-case'
 import parseStyle from '../../style-parser'
 import { echoize } from '../../utils/echoize'
 import { ProjectAnalyzer } from '../project-analyzer'
+import { Block } from 'ts-simple-ast'
 
 export class ComponentFactoryIdentifier {
 
@@ -149,10 +150,12 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   }
 
   @echoize()
-  public isAffectedByCalling (methodName: string): boolean {
+  public isAffectedByCalling (methodNameOrBlock: string | Block): boolean {
     // all methods which can be invoked when methodName is invoked
-    const allMethods = this.componentAnalyzer.getMethodsNamesCalledFrom(methodName)
-    allMethods.add(methodName)
+    const allMethods = this.componentAnalyzer.getMethodsNamesCalledFrom(methodNameOrBlock)
+    if (typeof methodNameOrBlock == 'string') {
+      allMethods.add(methodNameOrBlock)
+    }
 
     // all props which can be modified in this factory when invoking methodName
     const modifiableProps = iterare(allMethods)
