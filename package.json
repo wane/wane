@@ -14,11 +14,17 @@
     "test:w": "nodemon -w ./dist -e jasmine -- --config=jasmine.json",
     "test:debug": "echo \"Open chrome://inspect in Chrome.\"; node --inspect-brk ./node_modules/jasmine/bin/jasmine.js --config=jasmine.json",
     "e2e": "ts-node ./tests/e2e/e2e.ts",
-    "karma": "karma start karma.conf.js"
+    "karma": "karma start karma.conf.js",
+    "check-commit-msg": "node devops/check-commit-msg.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wane/wane.git"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "yarn check-commit-msg $HUSKY_GIT_PARAMS"
+    }
   },
   "keywords": [
     "javascript",
@@ -83,6 +89,7 @@
     "@types/puppeteer": "^1.2.1",
     "@types/rimraf": "^2.0.2",
     "@types/table": "^4.0.5",
+    "husky": "^1.0.0-rc.13",
     "is-travis": "^2.0.0",
     "jasmine": "^3.1.0",
     "jasmine-pretty-html-reporter": "^0.2.5",

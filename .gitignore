@@ -1,5 +1,6 @@
 node_modules/
 **/*.js
+!devops/**/*
 **/*.map
 dist/
 examples/*/node_modules
