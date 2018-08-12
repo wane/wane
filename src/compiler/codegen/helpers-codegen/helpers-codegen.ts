@@ -18,6 +18,8 @@ const names = {
 
   destroyComponentFactory: `__wane__destroyComponentFactory`,
   destroyDirectiveFactory: `__wane__destroyDirectiveFactory`,
+
+  encapsulateStyles: `__wane__encapsulateStyles`,
 }
 
 // TODO: This should not implement BaseCodegen at all
@@ -98,6 +100,14 @@ export class HelpersCodegen extends BaseCodegen {
       .writeLine(`// Add event listener to an HTML element.`)
       .writeLine(`export const ${this.names.addEventListener} = (element: HTMLElement, eventName: string, listener: EventListenerOrEventListenerObject) => element.addEventListener(eventName, listener)`)
       .blankLine()
+      .blankLine()
+      .writeLine(`// Add style-encapsulating attribute to certain elements of the array`)
+      .writeLine(`export const ${this.names.encapsulateStyles} = (domNodes: Node[], indexes: number[], id: string) => {`)
+      .indentBlock(() => {
+        this.writer
+          .writeLine(`indexes.forEach(index => domNodes[index].setAttribute('data-w-' + id, '')`)
+      })
+      .writeLine(`}`)
     return this
   }
 

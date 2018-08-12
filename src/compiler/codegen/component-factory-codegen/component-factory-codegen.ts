@@ -8,7 +8,7 @@ import { isInstance } from '../../utils/utils'
 import { TemplateNodeHtmlValue } from '../../template-nodes'
 import { TemplateNodeComponentValue } from '../../template-nodes/nodes/component-node'
 import { SyntaxKind } from "ts-simple-ast";
-import { oneLine } from 'common-tags'
+import { oneLine, oneLineCommaLists } from 'common-tags'
 
 export class ComponentFactoryCodegen extends BaseFactoryCodegen {
 
@@ -132,12 +132,15 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
   private printStylesEncapsulationAttributes (fa: ComponentFactoryAnalyzer): this {
     if (!fa.hasStyles()) return this
     const nodes = fa.getSavedNodes()
+    const indexes: number[] = []
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i]
       if (or(isInstance(TemplateNodeHtmlValue), isInstance(TemplateNodeComponentValue))(node)) {
-        this.writer.writeLine(`this.__wane__domNodes[${i}].setAttribute('data-w-${fa.identifier.id}', '')`)
+        indexes.push(i)
       }
     }
+    this.writer.writeLine(oneLineCommaLists`util.__wane__encapsulateStyles
+      (this.__wane__domNodes, [${indexes}], '${fa.identifier.id}')`)
     return this
   }
 
