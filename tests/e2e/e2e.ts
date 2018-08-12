@@ -3,8 +3,11 @@ import { CompilationResult } from '../../src/compiler/compile'
 import * as ora from 'ora'
 import numberFormat from 'format-number'
 import { getBorderCharacters, table } from 'table'
+import { oneLineCommaListsAnd } from 'common-tags'
 
 const f = numberFormat()
+
+const testsToRun = process.argv.slice(2)
 
 Error.stackTraceLimit = Infinity
 
@@ -35,7 +38,26 @@ const headingStyle = chalk.bold.gray
 
 async function run () {
 
-  for (const appName of APP_NAMES) {
+  const appNames: string[] = []
+
+  if (testsToRun.length == 0) {
+    appNames.push(...APP_NAMES)
+  } else {
+    for (const testToRun of testsToRun) {
+      const isKnownTest = APP_NAMES.includes(testToRun)
+      if (isKnownTest) {
+        appNames.push(testToRun)
+      } else {
+        const errorMessage = [
+          chalk.red(`Unknown test ${chalk.bold(testToRun)}.`),
+          oneLineCommaListsAnd`Known tests: ${APP_NAMES}.`
+        ]
+        throw new Error(errorMessage.join('\n'))
+      }
+    }
+  }
+
+  for (const appName of appNames) {
 
     const appPath = `./apps/${appName}/test.spec`
     const module = await import(appPath)
