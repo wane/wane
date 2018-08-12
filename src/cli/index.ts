@@ -6,6 +6,8 @@ import build from './build'
 
 const VERSION = JSON.parse(fs.readFileSync('package.json', 'utf-8')).version
 
+console.log('starting cli')
+
 commander
   .version(VERSION)
   .description(`A framework/compiler/bundler for building front-end applications.`)

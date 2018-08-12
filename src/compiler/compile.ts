@@ -4,6 +4,9 @@ import Project, { ModuleKind, ScriptTarget } from 'ts-simple-ast'
 import { ProjectAnalyzer } from './analyzer'
 import { Codegen } from './codegen'
 import getSize, { Size } from './utils/get-sizes'
+import { nullish } from './utils/utils'
+import readConfig from './config-reader'
+import merge from './config-reader/merger'
 
 export interface CompilationResult {
   durationNs: number
@@ -27,8 +30,8 @@ export interface WaneCompilerOptions {
 
 export function expandCompilerOptions (options: Partial<WaneCompilerOptions>): WaneCompilerOptions {
   const dir = options.dir != null ? options.dir : process.cwd()
-  const input = options.input != null ? options.input : path.join(dir, 'src')
-  const output = options.output != null ? options.output : path.join(dir, 'dist')
+  const input = path.join(dir, nullish(options.input, 'src'))
+  const output = path.join(dir, nullish(options.output, 'dist'))
 
   const pretty = options.pretty != null ? options.pretty : false
 
@@ -100,9 +103,13 @@ export async function compile (options: Partial<WaneCompilerOptions> = {}): Prom
 
   const start = process.hrtime()
 
-  const { distDir } = getDirs(options)
-  const projectAnalyzer = getProjectAnalyzer(options)
-  const codegen = new Codegen(projectAnalyzer, expandCompilerOptions(options))
+  const { dir } = expandCompilerOptions(options)
+  const userOptions = readConfig(dir)
+  const mergedOptions = {...options, ...userOptions}
+
+  const { distDir } = getDirs(mergedOptions)
+  const projectAnalyzer = getProjectAnalyzer(mergedOptions)
+  const codegen = new Codegen(projectAnalyzer, expandCompilerOptions(mergedOptions))
 
   /**
    * We can now tell code generator to start the process of generating files.
