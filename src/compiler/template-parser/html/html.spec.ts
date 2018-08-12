@@ -521,7 +521,7 @@ describe(`isLiteral`, () => {
     expect(isLiteral(`null`)).toBe(true)
   })
   it(`says that "true" and "false" are literals`, () => {
-    expect(isLiteral(`true`)).toBe(true, `tru`)
+    expect(isLiteral(`true`)).toBe(true, `true`)
     expect(isLiteral(`false`)).toBe(true, `false`)
   })
   it(`says that a string with single quotes is a literal`, () => {
@@ -535,6 +535,9 @@ describe(`isLiteral`, () => {
   })
   it(`says that a random thing is not a literal`, () => {
     expect(isLiteral(`foo`)).toBe(false)
+  })
+  it(`says that a negative number is a literal`, () => {
+    expect(isLiteral(`-1`)).toBe(true)
   })
 })
 
