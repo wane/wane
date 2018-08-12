@@ -37,23 +37,23 @@ export class ProjectAnalyzer {
   }
 
   /**
-   * Entry component is a default export from the src/entry.ts file.
+   * Entry component is a default export from the src/index.ts file.
    */
   public getEntryComponentDeclaration (): ClassDeclaration {
-    const entryFilePath = path.join(this.compilerOptions.output, 'entry.ts')
+    const entryFilePath = path.join(this.compilerOptions.output, 'index.ts')
     const entryFile = this.getProject().getSourceFile(entryFilePath)
     if (entryFile == null) {
-      throw new Error(`The entry file not found.`)
+      throw new Error(`The entry file (src/index.ts) not found.`)
     }
 
     const defaultExportSymbol = entryFile.getDefaultExportSymbol()
     if (defaultExportSymbol == null) {
-      throw new Error(`The entry file must have a default export.`)
+      throw new Error(`The entry file (src/index.ts) must have a default export.`)
     }
     const declarations = defaultExportSymbol.getDeclarations()
 
     if (declarations.length == 0) {
-      throw new Error(oneLine`No declarations of the exported
+      throw new Error(oneLine`No declarations found for the exported
         symbol ${defaultExportSymbol.getName()}.`)
     }
 
