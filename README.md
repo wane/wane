@@ -1,5 +1,5 @@
 <p align=center>
-  <img align=center src="logo.svg" alt="Wane" width=200>
+  <img align=center src="logo.svg" alt=Wane width=200>
 </p>
 
 # Wane
@@ -15,18 +15,20 @@ Feel free to play around, ask questions and report bugs in the issues section.
 
 ## Hello World
 
-To get started, create an empty folder for your project and do the usual `npm init` ceremony.
-Then install `wane`, create a new folder `src` and within it a file `entry.ts`.
+To get started, create an empty folder for your project and do the usual `yarn init` ceremony.
+Then, install `wane`, create a new folder `src`, and within it a file `index.ts`.
 
-```
+```bash
 $ yarn add wane
 $ mkdir src
-$ touch src/entry.ts
+$ touch src/index.ts
 ```
 
-Open the `src/entry.ts` file and write the following.
+Open it and write the following.
 
 ```typescript
+// src/index.ts
+
 import { Template } from 'wane'
 
 @Template(`Hello, {{ someone }}!`)
@@ -35,14 +37,21 @@ export class App {
 }
 ```
 
-Save the file and run the wane compiler.
-You can do this quickly by utilizing `npx`.
+Save the file and run the wane dev server.
 
-```
-$ npx build wane
+```bash
+$ yarn wane start
 ```
 
-If everything went fine, you should see the success message with some information about compilation.
+If everything went fine, you're now running the dev server
+which will watch for changes you make to the source code,
+re-compile the app and reload the browser for you.
+
+You can also create the production build.
+
+```bash
+$ yarn wane build
+```
 
 The built app is contained within the newly created `dist` folder.
 Open the `dist/index.html` file from your browser to see the app in action.
