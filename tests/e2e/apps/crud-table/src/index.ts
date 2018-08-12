@@ -32,9 +32,12 @@ export class EmptyState {
       <span>Continent</span>
       <select name="continent" [value]="initialValue.continent">
         <option value="">Unknown</option>
-        <w:for continent of listOfContinents>
-          <option [value]="continent">{{ continent }}</option>
-        </w:for>
+          <option
+            [w:for]="continent of listOfContinents"
+            [value]="continent"
+          >
+            {{ continent }}
+          </option>
       </select>
     </label>
     <button type="submit">Save</button>
@@ -101,9 +104,12 @@ export class Form {
   
   <button type="button" (click)="onCreateNewClick()">Add new</button>
   
-  <w:if isNewFormOpen>
-    <Form [initialValue]="itemSelectedForEdit" (submit)="add(#)" (close)="closeNewForm()"/>
-  </w:if>
+  <Form
+    [w:if]="isNewFormOpen"
+    [initialValue]="itemSelectedForEdit"
+    (submit)="add(#)"
+    (close)="closeNewForm()"
+  />
   
   <w:if isEditFormOpen>
     <Form [initialValue]="itemSelectedForEdit" (submit)="edit(#)" (close)="closeEditForm()"/>  

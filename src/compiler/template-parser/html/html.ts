@@ -16,7 +16,11 @@ import {
   ViewBoundPlaceholder,
   ViewBoundPropertyAccess,
 } from '../../template-nodes/view-bound-value'
-import { TemplateNodeHtmlValue, TemplateNodeInterpolationValue } from '../../template-nodes'
+import {
+  TemplateNodeHtmlValue,
+  TemplateNodeInterpolationValue,
+  TemplateNodePartialViewValue,
+} from '../../template-nodes'
 import { TemplateNodeConditionalViewValue } from '../../template-nodes/nodes/conditional-view-node'
 import { TemplateNodeRepeatingViewValue } from '../../template-nodes/nodes/repeating-view-node'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
@@ -182,34 +186,35 @@ export function isComponent (tagName: string): boolean {
   return startsWithCapitalLetter(tagName)
 }
 
+export function parseSpecIf (spec: string, position: { start: himalaya.Position, end: himalaya.Position }) {
+  if (!isJustPropertyAccess(spec)) {
+    throw new ParseError(position, `The conditional for w:if must be a property access.`)
+  }
+
+  const isNegated = spec.startsWith('!')
+  const valueAccessorPath = isNegated ? spec.slice(1) : spec
+
+  return { isNegated, valueAccessorPath }
+}
+
 export function handleDirectiveIf (htmlNode: himalaya.NodeElement): TemplateNodeConditionalViewValue {
   const { attributes } = htmlNode
   if (attributes.length == 0) {
     throw new ParseError(htmlNode.position!, `Must specify the condition in w:if.`)
   }
+  const spec = attributes.map(attr => attr.key.trim()).join(' ').trim()
 
-  const path = attributes.map(attr => {
-    if (attr.value == null) {
-      return attr.key
-    } else {
-      return `${attr.key} = ${attr.value}`
-    }
-  }).join(' ')
-  if (!isJustPropertyAccess(path)) {
-    throw new ParseError(htmlNode.position!, `The conditional for w:if must be a property name.`)
-  }
-
-  const isNegated = path.startsWith('!')
-  const valueAccessorPath = isNegated ? path.slice(1) : path
+  const {
+    isNegated,
+    valueAccessorPath,
+  } = parseSpecIf(spec, htmlNode.position!)
 
   const viewBoundValue = resolveBinding(valueAccessorPath)
   const viewBinding = new ConditionalViewBinding(viewBoundValue, isNegated)
   return new TemplateNodeConditionalViewValue(viewBinding, htmlNode)
 }
 
-export function handleDirectiveFor (htmlNode: himalaya.NodeElement): TemplateNodeRepeatingViewValue {
-  const { attributes } = htmlNode
-  const definition = attributes.map(attr => attr.key.trim()).join(' ').trim()
+export function parseSpecFor (spec: string, position: { start: himalaya.Position, end: himalaya.Position }) {
 
   let boundValueAccessorPath: string
   let iterativeConstantName: string
@@ -219,7 +224,7 @@ export function handleDirectiveFor (htmlNode: himalaya.NodeElement): TemplateNod
   const [
     iterationDefinition,
     keyDefinition,
-  ] = definition.split(';').map(s => s.trim())
+  ] = spec.split(';').map(s => s.trim())
 
   // Iteration definition
 
@@ -229,7 +234,8 @@ export function handleDirectiveFor (htmlNode: himalaya.NodeElement): TemplateNod
   ] = iterationDefinition.split('of').map(s => s.trim())
 
   if (iterationDefinitionLeft.startsWith('(') && iterationDefinitionLeft.endsWith(')')) {
-    [iterativeConstantName,
+    [
+      iterativeConstantName,
       indexConstantName,
     ] = iterationDefinitionLeft.slice(1, -1).split(',').map(s => s.trim())
   } else {
@@ -243,16 +249,36 @@ export function handleDirectiveFor (htmlNode: himalaya.NodeElement): TemplateNod
   if (keyDefinition != null) {
     const [left, right] = keyDefinition.split(':').map(s => s.trim())
     if (right == null) {
-      throw new ParseError(htmlNode.position!, `Bad format after ";" in w:for.`)
+      throw new ParseError(position, `Bad format after ";" in w:for.`)
     }
     if (left != 'key') {
-      throw new ParseError(htmlNode.position!, `Key "${left}" not supported in w:for.`)
+      throw new ParseError(position, `Key "${left}" not supported in w:for.`)
     }
     if (!isJustPropertyAccess(right, true)) {
-      throw new ParseError(htmlNode.position!, `The key must be simple property access.`)
+      throw new ParseError(position, `The key must be simple property access.`)
     }
     keyAccessorPath = right
   }
+
+  return {
+    boundValueAccessorPath,
+    iterativeConstantName,
+    indexConstantName,
+    keyAccessorPath,
+  }
+
+}
+
+export function handleDirectiveFor (htmlNode: himalaya.NodeElement): TemplateNodeRepeatingViewValue {
+  const { attributes } = htmlNode
+  const spec = attributes.map(attr => attr.key.trim()).join(' ').trim()
+
+  const {
+    boundValueAccessorPath,
+    iterativeConstantName,
+    indexConstantName,
+    keyAccessorPath,
+  } = parseSpecFor(spec, htmlNode.position!)
 
   const boundValue = resolveBinding(boundValueAccessorPath)
   const viewBinding = new RepeatingViewBinding(
@@ -325,6 +351,7 @@ export function getElementProps (htmlNode: himalaya.NodeElement): Set<HtmlElemen
       throw new ParseError(htmlNode.position!, `A prop bound to an HTML element must have a value.`)
     }
     const propName = getInputName(htmlAttribute)
+    if (propName.startsWith('w:')) continue
     const viewBoundValue = isWrappedInPropBindingDelims(htmlAttribute.key)
       ? resolveBinding(htmlAttribute.value)
       : new ViewBoundConstant(`'${htmlAttribute.value}'`)
@@ -357,6 +384,7 @@ function getComponentInputs (htmlNode: himalaya.NodeElement): Set<ComponentInput
       throw new ParseError(htmlNode.position!, `An input bound to a Wane component must have a value.`)
     }
     const inputName = getInputName(htmlAttribute)
+    if (inputName.startsWith('w:')) continue
     const viewBoundValue = resolveBinding(htmlAttribute.value)
     result.add(new ComponentInputBinding(inputName, viewBoundValue))
   }
@@ -375,6 +403,51 @@ function getComponentOutputs (htmlNode: himalaya.NodeElement): Set<ComponentOutp
     result.add(new ComponentOutputBinding(outputName, viewBoundValue))
   }
   return result
+}
+
+function getWrapperDirectiveOrUndefined (htmlNode: himalaya.NodeElement): TemplateNodePartialViewValue | undefined {
+  const directiveAttributes = htmlNode.attributes.filter(({ key }) => {
+    return isWrappedInPropBindingDelims(key) && stripPropBindingDelims(key).startsWith('w:')
+  })
+  if (directiveAttributes.length == 0) return undefined
+  if (directiveAttributes.length > 1) {
+    throw new Error(`Only one directive can be placed on a component or an element.`)
+  }
+  const directive = directiveAttributes[0]
+  if (directive.key == '[w:for]') {
+    const spec = directive.value
+    if (spec == null) {
+      throw new ParseError(htmlNode.position!, 'Missing value of [w:for].')
+    }
+    const {
+      boundValueAccessorPath,
+      iterativeConstantName,
+      indexConstantName,
+      keyAccessorPath,
+    } = parseSpecFor(spec, htmlNode.position!)
+    const boundValue = resolveBinding(boundValueAccessorPath)
+    const viewBinding = new RepeatingViewBinding(
+      boundValue,
+      iterativeConstantName,
+      indexConstantName,
+      keyAccessorPath,
+    )
+    return new TemplateNodeRepeatingViewValue(viewBinding, htmlNode)
+  }
+  if (directive.key == '[w:if]') {
+    const spec = directive.value
+    if (spec == null) {
+      throw new ParseError(htmlNode.position!, 'Missing value of [w:if].')
+    }
+    const {
+      isNegated,
+      valueAccessorPath,
+    } = parseSpecIf(spec, htmlNode.position!)
+    const viewBoundValue = resolveBinding(valueAccessorPath)
+    const viewBinding = new ConditionalViewBinding(viewBoundValue, isNegated)
+    return new TemplateNodeConditionalViewValue(viewBinding, htmlNode)
+  }
+  throw new Error(`Unknown directive ${directive.key}; only w:if and w:for are supported.`)
 }
 
 export function parseMethodCall (str: string,
@@ -406,7 +479,7 @@ export function parseMethodCall (str: string,
   }))
 }
 
-export function handleComponent (htmlNode: himalaya.NodeElement): TemplateNodeComponentValue {
+export function handleComponent (htmlNode: himalaya.NodeElement): TemplateNodeComponentValue | TemplateNodeConditionalViewValue | TemplateNodePartialViewValue {
   const tagName = htmlNode.tagName
   const attributes = getElementOrComponentAttributes(htmlNode)
   const inputs = getComponentInputs(htmlNode)
@@ -422,15 +495,29 @@ export function handleElement (htmlNode: himalaya.NodeElement): TemplateNodeHtml
   return new TemplateNodeHtmlValue(tagName, attributes, props, events, htmlNode)
 }
 
-function handleHtmlElementNode (htmlNode: himalaya.NodeElement): TemplateNodeValue {
+function handleHtmlElementNode (htmlNode: himalaya.NodeElement): TemplateNodeValue | [TemplateNodeValue, TemplateNodeValue] {
   const { tagName } = htmlNode
-  switch (true) {
-    case isDirective(tagName):
-      return handleDirective(htmlNode)
-    case isComponent(tagName):
-      return handleComponent(htmlNode)
-    default:
-      return handleElement(htmlNode)
+
+  if (isDirective(tagName)) {
+    return handleDirective(htmlNode)
+  }
+
+  const dirWrapper = getWrapperDirectiveOrUndefined(htmlNode)
+
+  if (isComponent(tagName)) {
+    const component = handleComponent(htmlNode)
+    if (dirWrapper == null) {
+      return component
+    } else {
+      return [dirWrapper, component]
+    }
+  } else {
+    const element = handleElement(htmlNode)
+    if (dirWrapper == null) {
+      return element
+    } else {
+      return [dirWrapper, element]
+    }
   }
 }
 
@@ -441,7 +528,16 @@ export function handleNodeRecursively (htmlNode: himalaya.Node): TreeNode<Templa
     const children = htmlNode.children
       .map(handleNodeRecursively)
       .reduce((acc, curr) => [...acc, ...curr], [])
-    return [new TreeNode(handleHtmlElementNode(htmlNode), children)]
+    const handledElementNode = handleHtmlElementNode(htmlNode)
+    if (Array.isArray(handledElementNode)) {
+      return [
+        new TreeNode(handledElementNode[0], [
+          new TreeNode(handledElementNode[1], children)
+        ])
+      ]
+    } else {
+      return [new TreeNode(handledElementNode, children)]
+    }
   } else if (htmlNode.type == 'comment') {
     return []
   } else {
