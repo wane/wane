@@ -173,6 +173,12 @@ export class Codegen {
           .forEach(propDeclartion => {
             propDeclartion.remove()
           })
+
+        // Export classes if they are not exported so they can be consumed
+        // by other parts of code.
+        if (!declaration.isExported()) {
+          declaration.setIsExported(true)
+        }
       })
     return this
   }

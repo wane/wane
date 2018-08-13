@@ -12,7 +12,7 @@ import { Register, Template } from 'wane'
     Increment
   </button>
 `)
-export class Counter {
+class Counter {
   public value!: number
 
   public valueChange (value: number): void {
