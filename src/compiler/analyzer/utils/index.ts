@@ -57,15 +57,33 @@ export function getMethodNamesCalledFrom (
   return result
 }
 
+const ASSIGNMENT_TOKENS = [
+  SyntaxKind.EqualsToken,
+  SyntaxKind.PlusEqualsToken,
+  SyntaxKind.MinusEqualsToken,
+  SyntaxKind.AsteriskEqualsToken,
+  SyntaxKind.SlashEqualsToken,
+  SyntaxKind.PercentEqualsToken,
+  SyntaxKind.AsteriskAsteriskEqualsToken,
+  SyntaxKind.LessThanLessThanEqualsToken,
+  SyntaxKind.GreaterThanGreaterThanEqualsToken,
+  SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken,
+  SyntaxKind.AmpersandEqualsToken,
+  SyntaxKind.CaretEqualsToken,
+  SyntaxKind.BarEqualsToken,
+]
+
 function getPropertyNameModifiedByThisExpressionIfAny (
   expression: Expression,
 ): string | undefined {
 
-  // Find the usual "this.prop = something" modification.
   if (TypeGuards.isBinaryExpression(expression)) {
+    // Find the usual "this.prop = something" modification.
 
-    // Not assignment (could be eg. less than):
-    if (expression.getOperatorToken().getKind() != SyntaxKind.EqualsToken) return undefined
+    // Not any sort of assignment (could be eg. less than):
+    const syntaxKind = expression.getOperatorToken().getKind()
+    if (!ASSIGNMENT_TOKENS.includes(syntaxKind)) return undefined
+
     const left = expression.getLeft()
 
     // The left side is not even property access, meaning it cannot start with "this.".
@@ -78,8 +96,8 @@ function getPropertyNameModifiedByThisExpressionIfAny (
     // If we're here then it should be actual property modification.
     return left.getName()
 
-    // Find "this.foo++" things.
   } else if (TypeGuards.isPostfixUnaryExpression(expression) || TypeGuards.isPrefixUnaryExpression(expression)) {
+    // Find "this.foo++" things.
     const operand = expression.getOperand()
 
     // The operand is not property access at all, so it cannot be "this." access.
@@ -90,13 +108,15 @@ function getPropertyNameModifiedByThisExpressionIfAny (
 
     // If we're here then it should be actual property modification.
     return operand.getName()
+  } else {
+
   }
 
   return undefined
 }
 
 function getPropsNamesWhichCanBeModifiedDirectlyBy (
-  functionBody: Block
+  functionBody: Block,
 ): Set<string> {
   const result = new Set<string>()
 

@@ -187,4 +187,8 @@ class TestClass07 {
   //   this.p1 < (this.p2 = this.p3)
   // }
 
+  m11 () {
+    this.p1 += this.p2 // yes, p1
+  }
+
 }

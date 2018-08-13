@@ -4,7 +4,7 @@ import {
   canPropBeModifiedInClass,
   getMethodBody,
   getMethodNamesCalledFrom,
-  getPropNamesWhichCanBeModifiedBy
+  getPropNamesWhichCanBeModifiedBy,
 } from '../index'
 
 const loadClassFromFile = (filename: string) => (className: string): ClassDeclaration => {
@@ -70,8 +70,13 @@ describe(`Analyzer Utils`, () => {
 
     it(`should work for a simple case`, () => {
       const klass = loadClass(`TestClass01`)
-      expect(getPropNamesWhichCanBeModifiedBy(getMethodBody(klass, `m1`))).toEqual(new Set([`p1`, `p2`, `p3`]))
-      expect(getPropNamesWhichCanBeModifiedBy(getMethodBody(klass, `m2`))).toEqual(new Set([`p2`, `p3`]))
+      expect(getPropNamesWhichCanBeModifiedBy(getMethodBody(klass, `m1`))).toEqual(new Set([`p1`,
+        `p2`,
+        `p3`,
+      ]))
+      expect(getPropNamesWhichCanBeModifiedBy(getMethodBody(klass, `m2`))).toEqual(new Set([`p2`,
+        `p3`,
+      ]))
       expect(getPropNamesWhichCanBeModifiedBy(getMethodBody(klass, `m3`))).toEqual(new Set([`p3`]))
     })
 
@@ -103,6 +108,7 @@ describe(`Analyzer Utils`, () => {
       // expect(getProps(`m8`)).toEqual(new Set([`p1`]))
       // expect(getProps(`m9`)).toEqual(new Set([`p1`, `p2`, `p3`]))
       // expect(getProps(`m10`)).toEqual(new Set([`p2`]))
+      expect(getProps(`m11`)).toEqual(new Set([`p1`]))
     })
 
   })
