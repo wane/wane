@@ -313,7 +313,7 @@ export function isLiteral (str: string): boolean {
     return true
   }
   // Numbers
-  if (str.match(/^\d/g) || str.startsWith('.')) {
+  if (!Number.isNaN(Number.parseFloat(str))) {
     return true
   }
   // Otherwise, it's not a literal but a reference to something from the class.
