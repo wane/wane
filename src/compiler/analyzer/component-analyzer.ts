@@ -12,15 +12,15 @@ import { ViewBinding } from '../template-nodes/view-bindings'
 import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-base'
 import {
   canPropBeModifiedInClass,
+  getBodiesCalledFrom,
   getMethodBody,
-  getMethodNamesCalledFrom,
+  getMethodNameOrThrow,
   getPropNamesWhichCanBeModifiedBy,
 } from './utils'
 import { echoize } from '../utils/echoize'
 import { ProjectAnalyzer } from './project-analyzer'
 import { paramCase, pascalCase } from 'change-case'
 import { oneLine } from 'common-tags'
-import { file } from 'gzip-size'
 import { nullish } from '../utils/utils'
 
 export class ComponentAnalyzer {
@@ -197,11 +197,13 @@ export class ComponentAnalyzer {
   }
 
   @echoize()
-  public getMethodsCalledFrom (methodNameOrBody: string | Block): Set<string> {
+  public getMethodsNamesCalledFrom (methodNameOrBody: string | Block): Set<string> {
     const body = typeof methodNameOrBody == 'string'
       ? this.getBodyForMethod(methodNameOrBody)
       : methodNameOrBody
-    return getMethodNamesCalledFrom(body)
+    const bodies = getBodiesCalledFrom(body)
+    const namesArr = [...bodies].map(getMethodNameOrThrow)
+    return new Set(namesArr)
   }
 
   @echoize()

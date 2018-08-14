@@ -192,3 +192,23 @@ class TestClass07 {
   }
 
 }
+
+class TestClass08 {
+
+  p1: any
+  p2: any
+
+  methodWithBlock () {
+    this.p1 = 1
+    {
+      this.p2 = 2
+    }
+  }
+
+  methodWithCallback () {
+    this.p1(() => {
+      this.p2 = 1
+    })
+  }
+
+}
