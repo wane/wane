@@ -14,38 +14,40 @@ export function getMethodBody (
   return methodDeclaration.getFirstChildOrThrow(TypeGuards.isBlock) as Block
 }
 
-function getMethodNamesCalledDirectlyFrom (
+function getBodiesCalledDirectlyFrom (
   functionBody: Block,
-): Set<string> {
-  const result = new Set<string>()
+): Set<Block> {
+  const result = new Set<Block>()
 
   const callExpressions = functionBody.getDescendantsOfKind(SyntaxKind.CallExpression)
   for (const callExpression of callExpressions) {
     const expression = callExpression.getExpression()
-    if (!TypeGuards.isPropertyAccessExpression(expression)) continue
-    if (expression.getExpression().getKind() != SyntaxKind.ThisKeyword) continue
-    result.add(expression.getName())
+
+    // Hunt for this.methodName()
+    if (TypeGuards.isPropertyAccessExpression(expression)) {
+      if (expression.getExpression().getKind() == SyntaxKind.ThisKeyword) {
+        const methodName = expression.getName()
+        const classDeclaration = expression.getFirstAncestorByKindOrThrow(SyntaxKind.ClassDeclaration)
+        const methodDeclaration = classDeclaration.getMethodOrThrow(methodName)
+        const methodBody = methodDeclaration.getFirstDescendantByKindOrThrow(SyntaxKind.Block)
+        result.add(methodBody)
+      }
+    }
   }
 
   return result
 }
 
-export function getMethodNamesCalledFrom (
+export function getBodiesCalledFrom (
   methodBody: Block,
-): Set<string> {
-  const method = methodBody.getFirstAncestorByKindOrThrow(SyntaxKind.MethodDeclaration)
-  const methodName = method.getName()
-  const classDeclaration = method.getFirstAncestorByKindOrThrow(SyntaxKind.ClassDeclaration)
-
-  const result = new Set<string>()
-  const visited = new Set<string>([methodName])
-  const stack: string[] = [methodName]
+): Set<Block> {
+  const result = new Set<Block>()
+  const visited = new Set<Block>([methodBody])
+  const stack: Block[] = [methodBody]
 
   while (stack.length > 0) {
-    const current = stack.pop()!
-
-    const methodBody = getMethodBody(classDeclaration, current)
-    const methodNamesCalledDirectly = getMethodNamesCalledDirectlyFrom(methodBody)
+    const methodBody = stack.pop()!
+    const methodNamesCalledDirectly = getBodiesCalledDirectlyFrom(methodBody)
     for (const methodNamedCalledDirectly of methodNamesCalledDirectly) {
       if (visited.has(methodNamedCalledDirectly)) continue
       result.add(methodNamedCalledDirectly)
@@ -133,33 +135,28 @@ function getPropsNamesWhichCanBeModifiedDirectlyBy (
 export function getPropNamesWhichCanBeModifiedBy (
   functionBody: Block,
 ): Set<string> {
-  const classDeclaration = functionBody.getFirstAncestorByKindOrThrow(SyntaxKind.ClassDeclaration)
-
   const result = new Set<string>()
 
   // Directly...
-  for (const prop of getPropsNamesWhichCanBeModifiedDirectlyBy(functionBody)) {
-    result.add(prop)
+  for (const propName of getPropsNamesWhichCanBeModifiedDirectlyBy(functionBody)) {
+    result.add(propName)
   }
 
   // And indirectly...
-  for (const method of getMethodNamesCalledFrom(functionBody)) {
-    const indirectMethodBody = getMethodBody(classDeclaration, method)
-    for (const prop of getPropsNamesWhichCanBeModifiedDirectlyBy(indirectMethodBody)) {
-      result.add(prop)
+  for (const indirectMethodBody of getBodiesCalledFrom(functionBody)) {
+    for (const propName of getPropsNamesWhichCanBeModifiedDirectlyBy(indirectMethodBody)) {
+      result.add(propName)
     }
   }
 
   return result
 }
 
-function canPropBeModifiedByMethodInClass (
+function canPropBeModifiedByBlockInClass (
   propName: string,
-  methodName: string,
-  classDeclaration: ClassDeclaration,
+  block: Block,
 ): boolean {
-  const body = getMethodBody(classDeclaration, methodName)
-  const props = getPropNamesWhichCanBeModifiedBy(body)
+  const props = getPropNamesWhichCanBeModifiedBy(block)
   return props.has(propName)
 }
 
@@ -167,7 +164,23 @@ export function canPropBeModifiedInClass (
   propName: string,
   classDeclaration: ClassDeclaration,
 ): boolean {
-  const methodNames = classDeclaration.getMethods()
-    .map(methodDeclaration => methodDeclaration.getName())
-  return methodNames.some(methodName => canPropBeModifiedByMethodInClass(propName, methodName, classDeclaration))
+  const methodBodies = classDeclaration.getMethods()
+    .map(method => method.getFirstChildByKindOrThrow(SyntaxKind.Block))
+  return methodBodies.some(methodBody => {
+    return canPropBeModifiedByBlockInClass(propName, methodBody)
+  })
+}
+
+export function isMethodBody (block: Block): boolean {
+  const parent = block.getParentIfKind(SyntaxKind.MethodDeclaration)
+  return parent != null
+}
+
+export function getMethodNameOrThrow (block: Block): string {
+  const isMethod = isMethodBody(block)
+  if (!isMethod) {
+    throw new Error(`Expected block to be a block of a method.\n${block.getText()}`)
+  }
+  const methodDeclaration = block.getFirstAncestorByKindOrThrow(SyntaxKind.MethodDeclaration)
+  return methodDeclaration.getName()
 }

@@ -151,7 +151,7 @@ export class ComponentFactoryAnalyzer extends FactoryAnalyzer<TemplateNodeCompon
   @echoize()
   public isAffectedByCalling (methodName: string): boolean {
     // all methods which can be invoked when methodName is invoked
-    const allMethods = this.componentAnalyzer.getMethodsCalledFrom(methodName)
+    const allMethods = this.componentAnalyzer.getMethodsNamesCalledFrom(methodName)
     allMethods.add(methodName)
 
     // all props which can be modified in this factory when invoking methodName

@@ -336,7 +336,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           // we skip this binding if it cannot be called when methodName is invoked...
           const allMethods = this.getFirstScopeBoundaryUpwardsIncludingSelf()
             .componentAnalyzer
-            .getMethodsCalledFrom(functionBody)
+            .getMethodsNamesCalledFrom(functionBody)
           allMethods.add(methodName) // ...including itself, of course
 
           if (!allMethods.has(outputName)) {
