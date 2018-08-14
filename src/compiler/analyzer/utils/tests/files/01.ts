@@ -197,18 +197,32 @@ class TestClass08 {
 
   p1: any
   p2: any
+  p3: any
+  p4: any
 
   methodWithBlock () {
     this.p1 = 1
+    this.m3()
     {
       this.p2 = 2
+      this.m4()
     }
   }
 
   methodWithCallback () {
-    this.p1(() => {
+    this.m3()
+    this.p1.map(() => {
+      this.m4()
       this.p2 = 1
     })
+  }
+
+  m3 () {
+    this.p3 = 3
+  }
+
+  m4 () {
+    this.p4 = 4
   }
 
 }

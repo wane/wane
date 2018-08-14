@@ -73,6 +73,16 @@ describe(`Analyzer Utils`, () => {
       test(`m5`, [`m2`, `m3`, `m4`, `m6`])
       test(`m6`, [`m2`, `m3`, `m4`])
     })
+
+    it(`is not stopped by a random block`, () => {
+      const test = getTest(loadClass('TestClass08'))
+      test('methodWithBlock', ['m3', 'm4'])
+    })
+
+    it(`is not stopped by a random callback`, () => {
+      const test = getTest(loadClass('TestClass08'))
+      test('methodWithCallback', ['m3', 'm4'])
+    })
   })
 
   describe(`getPropsWhichCanBeModifiedBy`, () => {
@@ -115,6 +125,16 @@ describe(`Analyzer Utils`, () => {
       // test(`m9`, [`p1`, `p2`, `p3`])
       // test(`m10`, [`p2`])
       test(`m11`, [`p1`])
+    })
+
+    it(`is not stopped by a random block`, () => {
+      const test = getTest(loadClass('TestClass08'))
+      test('methodWithBlock', ['p1', 'p3', 'p2', 'p4'])
+    })
+
+    it(`is not stopped by a random callback`, () => {
+      const test = getTest(loadClass('TestClass08'))
+      test('methodWithCallback', ['p3', 'p4', 'p2'])
     })
 
   })
