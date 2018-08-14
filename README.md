@@ -96,6 +96,6 @@ When a new feature is implemented, you could just run the compiler again over th
 
 ## How to explore
 
-Until I (or someone else) gets around to writing examples and tutorials, your best shot at seeing what is currently implemented are apps created for end-to-end tests under `tests/e2e/apps`.
+Until I (or someone else) gets around to writing examples and tutorials, your best shot at seeing what is currently implemented are apps created for end-to-end tests under [tests/e2e/apps](https://github.com/wane/wane/tree/master/tests/e2e/apps).
 
 There's also a work-in-progress website: [wane.app](https://www.wane.app).
