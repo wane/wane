@@ -32,7 +32,7 @@ Open it and write the following.
 import { Template } from 'wane'
 
 @Template(`Hello, {{ someone }}!`)
-export class App {
+export default class App {
   someone = 'World'
 }
 ```
