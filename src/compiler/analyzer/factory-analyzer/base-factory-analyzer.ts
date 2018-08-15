@@ -8,9 +8,10 @@ import { paramCase } from 'change-case'
 import { ComponentFactoryAnalyzer } from './component-factory-analyzer'
 import { getPath, printTreePath } from '../../utils/graph'
 import { echoize } from '../../utils/echoize'
-import { Block, SyntaxKind } from "ts-simple-ast";
-import { oneLine } from "common-tags";
+import { Block, SyntaxKind } from 'ts-simple-ast'
+import { oneLine } from 'common-tags'
 import { ProjectAnalyzer } from '../project-analyzer'
+import { getMethodNameOrThrow, isMethodBody } from '../utils'
 
 export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
 
@@ -292,33 +293,33 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
   /**
    * These are only ancestor factories... I think.
    *
-   * @param methodNameOrFunctionBody
+   * @param methodNameOrBlock
    * @returns
    */
   @echoize()
-  public getFactoriesAffectedByCalling (methodNameOrFunctionBody: string | Block): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
-    if (typeof methodNameOrFunctionBody != 'string' && !this.isScopeBoundary()) {
+  public getFactoriesAffectedByCalling (methodNameOrBlock: string | Block): Iterable<FactoryAnalyzer<TemplateNodeValue>> {
+    if (typeof methodNameOrBlock != 'string' && !this.isScopeBoundary()) {
       throw new Error(`Using Block as parameter type is possible only on ComponentFactoryAnalyzer.`)
     }
 
-    let methodName: string
+    let methodName: string | undefined
     let functionBody: Block
 
-    if (typeof methodNameOrFunctionBody == 'string') {
-      methodName = methodNameOrFunctionBody
+    if (typeof methodNameOrBlock == 'string') {
+      methodName = methodNameOrBlock
       const methodDeclaration = (this.getFirstScopeBoundaryUpwardsIncludingSelf()).componentAnalyzer.getMethodDeclaration(methodName)
       functionBody = methodDeclaration.getFirstDescendantByKindOrThrow(SyntaxKind.Block)
     } else {
-      const methodDeclaration = methodNameOrFunctionBody.getFirstAncestorByKindOrThrow(SyntaxKind.MethodDeclaration)
-      methodName = methodDeclaration.getName()
-      functionBody = methodNameOrFunctionBody
+      methodName = isMethodBody(methodNameOrBlock)
+        ? getMethodNameOrThrow(methodNameOrBlock)
+        : undefined
+      functionBody = methodNameOrBlock
     }
 
-
-    const resolved = this.getFirstScopeBoundaryUpwardsIncludingSelf().hasDefinedAndResolvesTo(methodName)
-    if (resolved == null) {
-      throw new Error(`Method named "${methodName}" is not defined on factory "${this.getFactoryName()}".`)
-    }
+    // const resolved = this.getFirstScopeBoundaryUpwardsIncludingSelf().hasDefinedAndResolvesTo(methodName)
+    // if (resolved == null) {
+    //   throw new Error(`Method named "${methodName}" is not defined on factory "${this.getFactoryName()}".`)
+    // }
     const result = new Set<FactoryAnalyzer<TemplateNodeValue>>()
 
     const anchorViewNode = this.getFirstScopeBoundaryUpwardsIncludingSelf().getAnchorViewNodeOrUndefined()
@@ -337,7 +338,11 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           const allMethods = this.getFirstScopeBoundaryUpwardsIncludingSelf()
             .componentAnalyzer
             .getMethodsNamesCalledFrom(functionBody)
-          allMethods.add(methodName) // ...including itself, of course
+
+          // ...including itself, of course
+          if (methodName != null) {
+            allMethods.add(methodName)
+          }
 
           if (!allMethods.has(outputName)) {
             continue
@@ -354,7 +359,7 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
       }
     }
 
-    if (this.getFirstScopeBoundaryUpwardsIncludingSelf().isAffectedByCalling(methodName)) {
+    if (this.getFirstScopeBoundaryUpwardsIncludingSelf().isAffectedByCalling(methodNameOrBlock)) {
       result.add(this.getFirstScopeBoundaryUpwardsIncludingSelf())
     }
 

@@ -49,7 +49,6 @@ export function expandArrowFunction (arrowFunction: ArrowFunction): boolean {
  */
 export function expandCallback (syntaxList: SyntaxList): boolean {
 
-  console.assert(syntaxList.getChildCount() == 1, `Expected SyntaxList to have a single child.`)
   const node = syntaxList.getFirstChildOrThrow()
 
   // Things like ".then(this.handle.bind(this)" or ".then(handles)".
@@ -79,7 +78,6 @@ export function expandCallback (syntaxList: SyntaxList): boolean {
 export function injectCodeInExpandedFunction (syntaxList: SyntaxList,
                                               injectCode: (writer: CodeBlockWriter) => boolean): boolean {
 
-  console.assert(syntaxList.getChildCount() == 1, `Expected SyntaxList to have a single child.`)
   const node = syntaxList.getFirstChildOrThrow()
 
   let didInjectionHappen = false
@@ -128,25 +126,53 @@ export function wrapAsyncCode (classDeclaration: ClassDeclaration,
   let needsConstructorInjection = false
   let counter: number = 0
 
-  const methods = classDeclaration.getMethods()
+  const methods = [...classDeclaration.getMethods(), ...classDeclaration.getConstructors()]
   for (const method of methods) {
 
     const block = method.getFirstDescendantByKind(SyntaxKind.Block)
     if (block == null) continue
 
+    // Hunt for "then" and "catch" in promises.
     const propAccessExpressions = method.getDescendantsOfKind(SyntaxKind.PropertyAccessExpression)
     for (const propAccessExpression of propAccessExpressions.reverse()) {
 
+      // We care only for .then and .catch
       const name = propAccessExpression.getName()
-      if (name != 'then' && name != 'catch') {
-        continue
-      }
+      if (name != 'then' && name != 'catch') continue
 
+      // Grab the syntax list (arguments of the method)
       const syntaxList = propAccessExpression.getNextSiblingOrThrow(TypeGuards.isSyntaxList) as SyntaxList
 
-      needsConstructorInjection = expandCallback(syntaxList!) || needsConstructorInjection
+      needsConstructorInjection = expandCallback(syntaxList) || needsConstructorInjection
       const block = syntaxList!.getFirstDescendantByKindOrThrow(SyntaxKind.Block)
-      const isCodeInjected = injectCodeInExpandedFunction(syntaxList!, injectCode(block, counter))
+      const isCodeInjected = injectCodeInExpandedFunction(syntaxList, injectCode(block, counter))
+
+      if (isCodeInjected) {
+        counter++
+      }
+
+    }
+
+    // Hunt for "setTimeout" and "setInterval"
+    const callExpressions = method.getDescendantsOfKind(SyntaxKind.CallExpression)
+    for (const callExpression of callExpressions.reverse()) {
+
+      // A call can be made as usual:   foo()
+      // But also unusual, for example: (x => x + 1)(3)
+      // We ignore everything that's not the "usual" thing here.
+      const expression = callExpression.getExpression()
+      if (!TypeGuards.isIdentifier(expression)) continue
+
+      // We care only for "setTimeout" and "setInterval"
+      const functionName = expression.getText()
+      if (functionName != 'setTimeout' && functionName != 'setInterval') continue
+
+      // Just like in the previous loop, we grab the syntax list and do stuff.
+      const syntaxList = expression.getNextSiblingOrThrow(TypeGuards.isSyntaxList) as SyntaxList
+
+      needsConstructorInjection = expandCallback(syntaxList) || needsConstructorInjection
+      const block = syntaxList!.getFirstDescendantByKindOrThrow(SyntaxKind.Block)
+      const isCodeInjected = injectCodeInExpandedFunction(syntaxList, injectCode(block, counter))
 
       if (isCodeInjected) {
         counter++

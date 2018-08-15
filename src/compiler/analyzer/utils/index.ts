@@ -110,8 +110,6 @@ function getPropertyNameModifiedByThisExpressionIfAny (
 
     // If we're here then it should be actual property modification.
     return operand.getName()
-  } else {
-
   }
 
   return undefined
