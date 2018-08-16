@@ -220,9 +220,9 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                       .writeLine(`if (fromBacklog != null) {`)
                       .indentBlock(() => {
                         this.writer
-                          .writeLine(`// remove from backlog (important becauyse of deleting later), move node, do not advance in dom`)
+                          .writeLine(`// remove from backlog (important because of deleting later), move node, do not advance in dom`)
                           .writeLine(`backlog[key] = undefined`)
-                          .writeLine(`this.__wane__moveView(comments[oldKeys[currDomIndex]][0], comments[key]`)
+                          .writeLine(`this.__wane__moveView(this.__wane__factoryChildren[oldKeys[currDomIndex]].__wane__openingCommentOutlet, [this.__wane__factoryChildren[key].__wane__openingCommentOutlet, this.__wane__factoryChildren[key].__wane__closingCommentOutlet]`)
                       })
                       .writeLine(`} else {`)
                       .indentBlock(() => {
@@ -231,7 +231,18 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                           .writeLine(`const opening = util.__wane__createComment(\`@for-item key: \${key} index: \${currNewIndex} (opening)\`)`)
                           .writeLine(`const closing = util.__wane__createComment(\`@for-item key: \${key} index: \${currNewIndex} (closing)\`)`)
 
-                          .writeLine(`util.__wane__insertBefore(this.__wane__closingCommentOutlet, [opening, closing])`)
+                          .writeLine(`// If we're appending to the end, we use the closing comment outlet of the whole w:for, otherwise we look where we're at in the DOM.`)
+                          .writeLine(`if (currDomIndex >= oldKeys.length) {`)
+                          .indentBlock(() => {
+                            this.writer
+                              .writeLine(`util.__wane__insertBefore(this.__wane__closingCommentOutlet, [opening, closing])`)
+                          })
+                          .writeLine(`} else {`)
+                          .indentBlock(() => {
+                            this.writer
+                              .writeLine(`util.__wane__insertBefore(this.__wane__factoryChildren[oldKeys[currDomIndex]].__wane__openingCommentOutlet, [opening, closing])`)
+                          })
+                          .writeLine(`}`)
 
                           .writeLine(`this.__wane__positions[key] = currNewIndex`)
                           .writeLine(`this.__wane__factoryChildren[key] = ${fa.getPartialViewFactoryAnalyzer().getFactoryName()}()`)
