@@ -1,5 +1,5 @@
 // @ts-ignore
-import { Register, Template, Style } from 'wane'
+import { Register, Style, Template } from 'wane'
 
 interface Item {
   id: string

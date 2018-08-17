@@ -10,6 +10,6 @@ import { Template, Style } from 'wane'
     </circle>
   </svg>
 `)
-export default class Loader {
+export default class {
 
 }
