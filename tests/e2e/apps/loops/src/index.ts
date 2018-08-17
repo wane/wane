@@ -124,7 +124,6 @@ class InsertEverywhere {
       ...this.list.slice(1),
       item('z'),
     ]
-    console.log(this.list.map(({id}) => id).join(''))
   }
 }
 
