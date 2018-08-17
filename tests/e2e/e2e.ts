@@ -24,6 +24,7 @@ const APP_NAMES = [
   // Basic usages of w:for
   'fibonacci-sequence',
   'crud-table',
+  'loops',
   // Basic usages of async code
   'hello-api',
   'counter-async',

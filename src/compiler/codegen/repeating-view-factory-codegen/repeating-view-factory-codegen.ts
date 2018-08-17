@@ -91,8 +91,8 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
           .writeLine(`const newModel = this.__wane__data`)
           .writeLine(`const oldKeys = this.__wane__keys`)
           .writeLine(`this.__wane__keys = []`)
-          .writeLine(`const backlog: { [key: string]: [Comment, Comment] | undefined } = {}`)
-          .writeLine(`const used: { [key: string]: true } = {}`)
+          .writeLine(`const backlog: { [key: string]: number | undefined } = {}`)
+          .writeLine(`const used: { [key: number]: true } = {} // indexes in oldKeys which are used in DOM`)
           .blankLine()
           .writeLine(`let currOldIndex: number = 0`)
           .writeLine(`let currNewIndex: number = 0`)
@@ -115,7 +115,7 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                       .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.item = newModel[currNewIndex]`)
                       .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.index = currNewIndex`)
                       .writeLine(`this.__wane__factoryChildren[newKey].__wane__update(diff)`)
-                      .writeLine(`used[oldKey] = true`)
+                      .writeLine(`used[currOldIndex] = true`)
                       .writeLine(`currDomIndex = util.__wane__getNextNotUsed(oldKeys, currDomIndex, used)`)
                       .writeLine(`currNewIndex++`)
                       .writeLine(`currOldIndex++`)
@@ -129,7 +129,7 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                       .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.index = currNewIndex`)
                       .writeLine(`this.__wane__factoryChildren[newKey].__wane__update(diff)`)
                       .writeLine(`this.__wane__moveView(this.__wane__factoryChildren[oldKeys[currDomIndex]].__wane__openingCommentOutlet, [this.__wane__factoryChildren[newKey].__wane__openingCommentOutlet, this.__wane__factoryChildren[newKey].__wane__closingCommentOutlet])`)
-                      .writeLine(`used[oldKey] = true`)
+                      .writeLine(`used[currOldIndex] = true`)
                       .writeLine(`currNewIndex++`)
                       .writeLine(`currOldIndex++`)
                   })
@@ -138,9 +138,8 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
               .writeLine(`} else {`)
               .indentBlock(() => {
                 this.writer
-                  .writeLine(`backlog[oldKey] = [this.__wane__factoryChildren[oldKey].__wane__openingCommentOutlet, this.__wane__factoryChildren[oldKey].__wane__closingCommentOutlet]`)
-                  .writeLine(`let fromBacklog = backlog[newKey]`)
-                  .writeLine(`if (fromBacklog != null) {`)
+                  .writeLine(`backlog[oldKey] = currOldIndex`)
+                  .writeLine(`if (backlog[newKey] !== undefined) {`)
                   .indentBlock(() => {
                     this.writer
                       .writeLine(`// remove from backlog (important because of deleting later), only update`)
@@ -149,7 +148,7 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                       .writeLine(`this.__wane__factoryChildren[newKey].__wane__data.index = currNewIndex`)
                       .writeLine(`this.__wane__factoryChildren[newKey].__wane__update(diff)`)
                       .writeLine(`backlog[newKey] = undefined`)
-                      .writeLine(`used[oldKey] = true`)
+                      .writeLine(`used[currOldIndex] = true`)
                       .writeLine(`currDomIndex = util.__wane__getNextNotUsed(oldKeys, currDomIndex, used)`)
                       .writeLine(`currNewIndex++`)
                   })
@@ -186,7 +185,7 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
               .indentBlock(() => {
                 this.writer
                   .writeLine(`const k = keys[i]`)
-                  .writeLine(`if (backlog[k] == null) continue`)
+                  .writeLine(`if (backlog[k] === undefined) continue`)
                   .writeLine(`this.__wane__factoryChildren[k].__wane__destroy()`)
                   .writeLine(`this.__wane__positions[k] = undefined`)
                   .writeLine(`this.__wane__factoryChildren[k] = undefined`)
@@ -210,19 +209,19 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                       .writeLine(`this.__wane__factoryChildren[key].__wane__data.index = currNewIndex`)
                       .writeLine(`this.__wane__factoryChildren[key].__wane__update(diff)`)
                       .writeLine(`backlog[key] = undefined // we don't cant to delete it later`)
-                      .writeLine(`used[key] = true`)
+                      .writeLine(`used[currDomIndex] = true`)
                       .writeLine(`currDomIndex = util.__wane__getNextNotUsed(oldKeys, currDomIndex, used)`)
                   })
                   .writeLine(`} else {`)
                   .indentBlock(() => {
                     this.writer
-                      .writeLine(`const fromBacklog = backlog[key]`)
-                      .writeLine(`if (fromBacklog != null) {`)
+                      .writeLine(`if (backlog[key] !== undefined) {`)
                       .indentBlock(() => {
                         this.writer
-                          .writeLine(`// remove from backlog (important becauyse of deleting later), move node, do not advance in dom`)
+                          .writeLine(`// remove from backlog (important because of deleting later), move node, do not advance in dom`)
+                          .writeLine(`this.__wane__moveView(this.__wane__factoryChildren[oldKeys[currDomIndex]].__wane__openingCommentOutlet, [this.__wane__factoryChildren[key].__wane__openingCommentOutlet, this.__wane__factoryChildren[key].__wane__closingCommentOutlet])`)
+                          .writeLine(`used[backlog[key]] = true`)
                           .writeLine(`backlog[key] = undefined`)
-                          .writeLine(`this.__wane__moveView(comments[oldKeys[currDomIndex]][0], comments[key]`)
                       })
                       .writeLine(`} else {`)
                       .indentBlock(() => {
@@ -231,7 +230,18 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
                           .writeLine(`const opening = util.__wane__createComment(\`@for-item key: \${key} index: \${currNewIndex} (opening)\`)`)
                           .writeLine(`const closing = util.__wane__createComment(\`@for-item key: \${key} index: \${currNewIndex} (closing)\`)`)
 
-                          .writeLine(`util.__wane__insertBefore(this.__wane__closingCommentOutlet, [opening, closing])`)
+                          .writeLine(`// If we're appending to the end, we use the closing comment outlet of the whole w:for, otherwise we look where we're at in the DOM.`)
+                          .writeLine(`if (currDomIndex >= oldKeys.length) {`)
+                          .indentBlock(() => {
+                            this.writer
+                              .writeLine(`util.__wane__insertBefore(this.__wane__closingCommentOutlet, [opening, closing])`)
+                          })
+                          .writeLine(`} else {`)
+                          .indentBlock(() => {
+                            this.writer
+                              .writeLine(`util.__wane__insertBefore(this.__wane__factoryChildren[oldKeys[currDomIndex]].__wane__openingCommentOutlet, [opening, closing])`)
+                          })
+                          .writeLine(`}`)
 
                           .writeLine(`this.__wane__positions[key] = currNewIndex`)
                           .writeLine(`this.__wane__factoryChildren[key] = ${fa.getPartialViewFactoryAnalyzer().getFactoryName()}()`)
