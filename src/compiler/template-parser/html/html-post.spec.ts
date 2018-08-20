@@ -7,6 +7,7 @@ import {removeWhitespaceNodes} from './html-post'
 import {TemplateNodeValue} from '../../template-nodes/nodes/template-node-value-base'
 import {parseTemplate} from './html'
 import * as himalaya from '../../template-parser/html/himalaya'
+import { stripIndent } from 'common-tags'
 
 describe(`removeWhitespaceNodes`, () => {
 
@@ -39,92 +40,17 @@ describe(`removeWhitespaceNodes`, () => {
         <span>b</span>
       </div>
 `
-    const actual = removeWhitespaceNodes(parseTemplate(html))
+    const actual = removeWhitespaceNodes(parseTemplate(html)).printIndented()
 
-    const himalayaA: himalaya.NodeText = {
-      type: himalaya.NodeType.Text,
-      content: `a`,
-      position: position(27, 2, 14, 28, 2, 15),
-    }
+    const expected = stripIndent`
+      [Html] <div>
+        [Html] <span>
+          [Text] 'a'
+        [Html] <span>
+          [Text] 'b'
+    `
 
-    const himalayaB: himalaya.NodeText = {
-      type: himalaya.NodeType.Text,
-      content: `b`,
-      position: position(27, 0, 0, 0, 0, 0),
-    }
-
-    const a = new TemplateNodeInterpolationValue(
-      new InterpolationBinding(
-        new ViewBoundConstant(`'a'`),
-      ),
-      himalayaA,
-    )
-
-    const b = new TemplateNodeInterpolationValue(
-      new InterpolationBinding(
-        new ViewBoundConstant(`'b'`),
-      ),
-      himalayaB,
-    )
-
-    const himalayaSpanA: himalaya.NodeElement = {
-      type: himalaya.NodeType.Element,
-      tagName: 'span',
-      attributes: [],
-      position: position(21, 2, 8, 35, 2, 22),
-      children: [himalayaA],
-    }
-
-    const himalayaSpanB: himalaya.NodeElement = {
-      type: himalaya.NodeType.Element,
-      tagName: 'span',
-      attributes: [],
-      position: position(0, 0, 0, 0, 0, 0),
-      children: [himalayaB],
-    }
-
-    const spanA = new TemplateNodeHtmlValue(
-      'span',
-      new Set(),
-      new Set(),
-      new Set(),
-      himalayaSpanA,
-    )
-
-    const spanB = new TemplateNodeHtmlValue(
-      'span',
-      new Set(),
-      new Set(),
-      new Set(),
-      himalayaSpanB,
-    )
-
-    const expected = new Forest([
-      new TreeNode(
-        new TemplateNodeHtmlValue(
-          'div',
-          new Set(),
-          new Set(),
-          new Set(),
-          {
-            type: himalaya.NodeType.Element,
-            tagName: 'div',
-            attributes: [],
-            position: position(7, 1, 7, 71, 4, 12),
-            children: [
-              himalayaSpanA,
-              himalayaSpanB,
-            ],
-          },
-        ),
-        [
-          new TreeNode<TemplateNodeValue>(spanA, [new TreeNode(a)]),
-          new TreeNode<TemplateNodeValue>(spanB, [new TreeNode(b)]),
-        ],
-      ),
-    ])
-
-    expect(actual.printIndented()).toEqual(expected.printIndented())
+    expect(actual).toEqual(expected)
   })
 
 })

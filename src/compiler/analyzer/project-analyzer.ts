@@ -146,9 +146,11 @@ export class ProjectAnalyzer {
         this._processTemplateNode(responsibleFactory, templateNodeChild, viewNode, definitionFactory)
       }
     } else {
-      if (isInstance(TemplateNodeComponentValue)(value)) {
-        const componentClassName: string = (viewNode.getValueOrThrow() as TemplateNodeComponentValue).getRegisteredName()
-        const componentDeclaration = definitionFactory.componentAnalyzer.getRegisteredClassDeclarationOrThrow(componentClassName)
+      if (value instanceof TemplateNodeComponentValue) {
+        const componentClassName: string = value.getRegisteredName()
+        const componentDeclaration = responsibleFactory instanceof ComponentFactoryAnalyzer
+          ? responsibleFactory.componentAnalyzer.getRegisteredClassDeclarationOrThrow(componentClassName)
+          : definitionFactory.componentAnalyzer.getRegisteredClassDeclarationOrThrow(componentClassName)
         const componentCompilerNode = new ComponentAnalyzer(this, componentDeclaration)
         const childFactory = new ComponentFactoryAnalyzer(
           this,

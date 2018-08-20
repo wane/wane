@@ -30,12 +30,7 @@ export class TemplateNodeInterpolationValue extends TemplateNodeValue {
   }
 
   public rawContent (): string {
-    const boundValue = this.interpolationBinding.boundValue
-    if (boundValue.isConstant()) {
-      return boundValue.resolve()
-    } else {
-      return (boundValue as ViewBoundPropertyAccess).getRawPath()
-    }
+    return (this.originalTemplateNode as himalaya.NodeText).content
   }
 
 }
