@@ -119,7 +119,7 @@ export class ViewBoundPropertyAccess extends ViewBoundValue {
   public isConstant (): boolean {
     const definitionFactory = this.getDefinitionFactory()
     if (definitionFactory instanceof ComponentFactoryAnalyzer) {
-      const canBeModified = definitionFactory.componentAnalyzer.canPropBeModified(this.getName())
+      const canBeModified = definitionFactory.componentAnalyzer.canPropOrGetterBeModified(this.getName())
       return !canBeModified
     }
     return false

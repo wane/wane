@@ -219,25 +219,30 @@ export class ComponentAnalyzer {
    * We can address this edge case later.
    * TODO ^
    *
-   * @param {string} propName
+   * @param {string} propOrGetterName
    * @returns {boolean}
    */
   @echoize()
-  public canPropBeModified (propName: string): boolean {
+  public canPropOrGetterBeModified (propOrGetterName: string): boolean {
+    if (![...this.getNamesOfAllPropsAndGetters()].includes(propOrGetterName)) {
+      throw new Error(`Expected to find prop or getter "${propOrGetterName}" in "${this.getPrettyClassName()}".`)
+    }
+
     const allGetters = this.classDeclaration.getGetAccessors()
       .map(getAccessor => getAccessor.getName())
-    const isGetter = allGetters.includes(propName)
 
-    const isInput = [...this.getNamesOfInputs()].includes(propName)
+    const isGetter = allGetters.includes(propOrGetterName)
+    const isInput = [...this.getNamesOfInputs()].includes(propOrGetterName)
+    const isModifiableInClass = canPropBeModifiedInClass(propOrGetterName, this.classDeclaration)
 
-    return isInput || isGetter || canPropBeModifiedInClass(propName, this.classDeclaration)
+    return isInput || isGetter || isModifiableInClass
   }
 
   @echoize()
   public getAllVariables (): Set<string> {
     const result = new Set<string>()
     for (const prop of this.getNamesOfAllPropsAndGetters()) {
-      if (this.canPropBeModified(prop)) {
+      if (this.canPropOrGetterBeModified(prop)) {
         result.add(prop)
       }
     }
@@ -248,7 +253,7 @@ export class ComponentAnalyzer {
   public getAllConstants (): Set<string> {
     const result = new Set<string>()
     for (const prop of this.getNamesOfAllPropsAndGetters()) {
-      if (!this.canPropBeModified(prop)) {
+      if (!this.canPropOrGetterBeModified(prop)) {
         result.add(prop)
       }
     }
