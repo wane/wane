@@ -4,9 +4,12 @@ import { TemplateNodeValue } from '../template-nodes/nodes/template-node-value-b
 import { ViewBinding } from '../template-nodes/view-bindings'
 import iterare from 'iterare'
 import { ViewBoundPropertyAccess } from '../template-nodes/view-bound-value'
-import { getIntersection } from '../utils/utils'
-import chalk from "chalk";
-import { oneLine } from "common-tags";
+import { getIntersection, isInstance } from '../utils/utils'
+import chalk from 'chalk'
+import { oneLine } from 'common-tags'
+import { or } from '../template-nodes/nodes/utils'
+import { TemplateNodeHtmlValue } from '../template-nodes'
+import { TemplateNodeComponentValue } from '../template-nodes/nodes/component-node'
 
 export abstract class BaseFactoryCodegen extends BaseCodegen {
 
@@ -225,6 +228,19 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
 
       })
       .writeLine(`}`)
+    return this
+  }
+
+  protected printStylesEncapsulationAttributes (fa: FactoryAnalyzer<TemplateNodeValue>): this {
+    const scopeMaster = fa.getFirstScopeBoundaryUpwardsIncludingSelf()
+    if (!scopeMaster.hasStyles()) return this
+    const nodes = fa.getSavedNodes()
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i]
+      if (or(isInstance(TemplateNodeHtmlValue), isInstance(TemplateNodeComponentValue))(node)) {
+        this.writer.writeLine(`this.__wane__domNodes[${i}].setAttribute('data-w-${scopeMaster.identifier.id}', '')`)
+      }
+    }
     return this
   }
 
