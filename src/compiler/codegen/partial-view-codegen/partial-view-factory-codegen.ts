@@ -23,6 +23,7 @@ export class PartialViewFactoryCodegen extends BaseFactoryCodegen {
           .printAssemblingDomNodes(fa)
           .printAssembleFactoryChildren(fa)
           .printDomPropsInit(fa)
+          .printStylesEncapsulationAttributes(fa)
       })
       .writeLine(`},`)
 

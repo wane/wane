@@ -128,18 +128,6 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
     return this
   }
 
-  private printStylesEncapsulationAttributes (fa: ComponentFactoryAnalyzer): this {
-    if (!fa.hasStyles()) return this
-    const nodes = fa.getSavedNodes()
-    for (let i = 0; i < nodes.length; i++) {
-      const node = nodes[i]
-      if (or(isInstance(TemplateNodeHtmlValue), isInstance(TemplateNodeComponentValue))(node)) {
-        this.writer.writeLine(`this.__wane__domNodes[${i}].setAttribute('data-w-${fa.identifier.id}', '')`)
-      }
-    }
-    return this
-  }
-
   public printCode (fa: ComponentFactoryAnalyzer): CodeBlockWriter {
     this
       .resetWriter()
