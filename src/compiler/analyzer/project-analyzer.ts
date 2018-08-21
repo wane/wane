@@ -146,11 +146,9 @@ export class ProjectAnalyzer {
         this._processTemplateNode(responsibleFactory, templateNodeChild, viewNode, definitionFactory)
       }
     } else {
-      if (value instanceof TemplateNodeComponentValue) {
+      if (isInstance(TemplateNodeComponentValue)(value)) {
         const componentClassName: string = value.getRegisteredName()
-        const componentDeclaration = responsibleFactory instanceof ComponentFactoryAnalyzer
-          ? responsibleFactory.componentAnalyzer.getRegisteredClassDeclarationOrThrow(componentClassName)
-          : definitionFactory.componentAnalyzer.getRegisteredClassDeclarationOrThrow(componentClassName)
+        const componentDeclaration = definitionFactory.componentAnalyzer.getRegisteredClassDeclarationOrThrow(componentClassName)
         const componentCompilerNode = new ComponentAnalyzer(this, componentDeclaration)
         const childFactory = new ComponentFactoryAnalyzer(
           this,
@@ -160,7 +158,7 @@ export class ProjectAnalyzer {
           componentCompilerNode,
         )
         responsibleFactory.registerChild(viewNode, childFactory)
-        this._generateFactoryTree(childFactory, definitionFactory)
+        this._generateFactoryTree(childFactory, childFactory)
       } else if (isInstance(TemplateNodeConditionalViewValue)(value)) {
         const partialView = new PartialViewFactoryAnalyzer(
           this,
