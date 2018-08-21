@@ -43,7 +43,7 @@ export class ConditionalViewFactoryAnalyzer extends DirectiveFactoryAnalyzer<Tem
 
   public getFactoryName (): string {
     const boundValue = this.getBinding().boundValue as ViewBoundPropertyAccess
-    const path = boundValue.getRawPath().replace(/\./g, '-')
+    const path = boundValue.getRawPath().replace(/\./g, '_')
     return `ConditionalView_${path}_${this.uniqueId}`
   }
 

@@ -351,17 +351,17 @@ describe(`FactoryAnalyzer`, () => {
       })
       describe(`for w:if with condition "visibility.a"`, () => {
         it(`gets type, condition and a unique suffix`, () => {
-          expect(fas.ifA.getFactoryName()).toMatch(/ConditionalView_visibility-a_\d+/)
+          expect(fas.ifA.getFactoryName()).toMatch(/ConditionalView_visibility_a_\d+/)
         })
       })
       describe(`for w:if with condition "visibility.b"`, () => {
         it(`gets type, condition and a unique suffix`, () => {
-          expect(fas.ifB.getFactoryName()).toMatch(/ConditionalView_visibility-b_\d+/)
+          expect(fas.ifB.getFactoryName()).toMatch(/ConditionalView_visibility_b_\d+/)
         })
       })
       describe(`for w:if with condition "visibility.c"`, () => {
         it(`gets type, condition and a unique suffix`, () => {
-          expect(fas.ifC.getFactoryName()).toMatch(/ConditionalView_visibility-c_\d+/)
+          expect(fas.ifC.getFactoryName()).toMatch(/ConditionalView_visibility_c_\d+/)
         })
       })
       describe(`for App component`, () => {
