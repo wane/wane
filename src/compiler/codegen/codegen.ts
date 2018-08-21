@@ -21,8 +21,9 @@ import { PartialViewFactoryCodegen } from './partial-view-codegen/partial-view-f
 import { PartialViewFactoryAnalyzer } from '../analyzer/factory-analyzer/partial-view-factory-analyzer'
 import { StyleCodegen } from './style-codegen/style-codegen'
 import { ConstantsCodegen } from './constants-codegen'
-import { wrapAsyncCode } from "./wrap-async-code";
-import { getPropNamesWhichCanBeModifiedBy } from "../analyzer/utils";
+import { wrapAsyncCode } from './wrap-async-code'
+import { getPropNamesWhichCanBeModifiedBy } from '../analyzer/utils'
+import { ComponentAnalyzer } from '../analyzer/component-analyzer'
 
 type Constructor<T> = {
   new (
@@ -152,6 +153,47 @@ export class Codegen {
     return this
   }
 
+  /**
+   * (1) Remove props which are copied to the constants file.
+   * (2) Replace all usages of those props so the code still references the correct value.
+   * (3) In order to be able to access components, we need to the import the constants file.
+   */
+  private handleConstants (componentAnalyzer: ComponentAnalyzer) {
+    const declaration = componentAnalyzer.classDeclaration
+
+    // (1)
+    const propsToRemove = [...componentAnalyzer.getAllConstants()]
+    declaration
+      .getProperties()
+      .filter(prop => propsToRemove.includes(prop.getName()))
+      .forEach(propDeclaration => {
+        propDeclaration.remove()
+      })
+
+    // (2)
+    declaration
+      .getDescendantsOfKind(SyntaxKind.PropertyAccessExpression)
+      .reverse()
+      .forEach(propertyAccessExpression => {
+        const expression = propertyAccessExpression.getExpression()
+        const name = propertyAccessExpression.getName()
+        if (expression.getKind() != SyntaxKind.ThisKeyword) return
+        if (propsToRemove.includes(name)) {
+          const constantName = componentAnalyzer.getConstantName(name)
+          const replacement = `__wane__constants.${constantName}`
+          propertyAccessExpression.replaceWithText(replacement)
+        }
+      })
+
+    // (3)
+    declaration
+      .getSourceFile()
+      .insertImportDeclaration(0, {
+        moduleSpecifier: './constants.js',
+        namespaceImport: '__wane__constants',
+      })
+  }
+
   private postProcessComponents (): this {
     this.analyzer
       .getAllComponentAnalyzers()
@@ -165,14 +207,7 @@ export class Codegen {
             decorator.remove()
           })
 
-        // Remove props which were moved to "constants" file
-        const propsToRemove = [...componentAnalyzer.getAllConstants()]
-        declaration
-          .getProperties()
-          .filter(prop => propsToRemove.includes(prop.getName()))
-          .forEach(propDeclartion => {
-            propDeclartion.remove()
-          })
+        this.handleConstants(componentAnalyzer)
 
         // Export classes if they are not exported so they can be consumed
         // by other parts of code.
