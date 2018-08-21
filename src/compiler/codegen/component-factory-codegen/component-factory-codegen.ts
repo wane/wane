@@ -7,8 +7,7 @@ import { or } from '../../template-nodes/nodes/utils'
 import { isInstance } from '../../utils/utils'
 import { TemplateNodeHtmlValue } from '../../template-nodes'
 import { TemplateNodeComponentValue } from '../../template-nodes/nodes/component-node'
-import { SyntaxKind } from "ts-simple-ast";
-import { oneLine } from 'common-tags'
+import { SyntaxKind } from 'ts-simple-ast'
 
 export class ComponentFactoryCodegen extends BaseFactoryCodegen {
 
@@ -146,7 +145,6 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
       .resetWriter()
       .printImports(fa)
       .generateComponentFactory(fa)
-      .getWriter()
 
     const styles = fa.getStyles()
     if (styles != null) {
@@ -179,7 +177,9 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
     const absoluteFilePath = fa.getComponentAbsoluteFilePathWithoutExtension()
     const importPath = path.relative(this.waneCompilerOptions.output, absoluteFilePath)
     const isDefaultExport = fa.componentAnalyzer.isDefaultExport()
-    const importClause = `${isDefaultExport ? '' : '{ '}${fa.getClassName()}${isDefaultExport ? '' : ' }'}`
+    const importClause = (isDefaultExport ? '' : '{ ')
+      + fa.getClassName()
+      + (isDefaultExport ? '' : ' }')
     this.writer
       .writeLine(`import ${importClause} from './${importPath}'`)
     return this
