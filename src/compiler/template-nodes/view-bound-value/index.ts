@@ -140,6 +140,12 @@ export class ViewBoundMethodCall extends ViewBoundPropertyAccess {
     super(path)
   }
 
+  public registerViewBinding (viewBinding: ViewBinding<TemplateNodeValue>): this {
+    super.registerViewBinding(viewBinding)
+    this.args.forEach(arg => arg.registerViewBinding(viewBinding))
+    return this
+  }
+
   public usesPlaceholder (): boolean {
     return this.args.some(isInstance(ViewBoundPlaceholder))
   }
