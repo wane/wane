@@ -322,19 +322,20 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
     // }
     const result = new Set<FactoryAnalyzer<TemplateNodeValue>>()
 
-    const anchorViewNode = this.getFirstScopeBoundaryUpwardsIncludingSelf().getAnchorViewNodeOrUndefined()
-    if (anchorViewNode != null) {
-      const anchorView = anchorViewNode.getValueOrThrow()
+      const anchorViewNode = this.getFirstScopeBoundaryUpwardsIncludingSelf().getAnchorViewNodeOrUndefined()
+      if (anchorViewNode != null) {
+        const anchorView = anchorViewNode.getValueOrThrow()
 
-      // const outputBindings = new Set<ComponentOutputBinding>()
-      for (const binding of anchorView.viewBindings) {
-        if (binding instanceof ComponentOutputBinding) {
+        // const outputBindings = new Set<ComponentOutputBinding>()
+        for (const binding of anchorView.viewBindings) {
+          if (!(binding instanceof ComponentOutputBinding)) continue
+
           const boundValue = binding.boundValue
           const boundValueMethodName = boundValue.getName()
           const outputName = binding.getName()
           const originFactory = boundValue.getDefinitionFactory() as ComponentFactoryAnalyzer
 
-          // we skip this binding if it cannot be called when methodName is invoked...
+          // we skip this binding if it is not called when methodName is invoked...
           const allMethods = this.getFirstScopeBoundaryUpwardsIncludingSelf()
             .componentAnalyzer
             .getMethodsNamesCalledFrom(functionBody)
@@ -348,6 +349,13 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
             continue
           }
 
+          // Now we know that the block we're at calls a method defined on "origin factory".
+          // From here, we need to do two things: (1) and (2) below.
+
+
+          // (1) We find which properties in this component can be modified when this function
+          // is invoked. This already follows the path of function calls across the
+          // component, but never leaves it to serach through ancestors invoked by chained outputs.
           const propsWhichCanBeModified = originFactory.componentAnalyzer.getPropsWhichCanBeModifiedBy(boundValueMethodName)
           const propsWhichAffectView = originFactory.getPropsBoundToView().keys()
 
@@ -355,13 +363,25 @@ export abstract class FactoryAnalyzer<Anchor extends TemplateNodeValue> {
           if (intersection.size != 0) {
             result.add(originFactory)
           }
+
+          // (2) A function call can invoke another function through and output,
+          // and that function can invoke _another_ one through the output.
+          // We need to check recursively upwards for this behavior.
+          const methodsWhichCanBeCalled = originFactory.componentAnalyzer.getMethodsNamesCalledFrom(boundValueMethodName)
+          methodsWhichCanBeCalled.add(boundValueMethodName)
+
+          for (const method of methodsWhichCanBeCalled) {
+            const factories = originFactory.getFactoriesAffectedByCalling(method)
+            for (const factory of factories) {
+              result.add(factory)
+            }
+          }
         }
       }
-    }
 
-    if (this.getFirstScopeBoundaryUpwardsIncludingSelf().isAffectedByCalling(methodNameOrBlock)) {
-      result.add(this.getFirstScopeBoundaryUpwardsIncludingSelf())
-    }
+      if (this.getFirstScopeBoundaryUpwardsIncludingSelf().isAffectedByCalling(methodNameOrBlock)) {
+        result.add(this.getFirstScopeBoundaryUpwardsIncludingSelf())
+      }
 
     return result
   }
