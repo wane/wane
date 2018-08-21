@@ -285,6 +285,7 @@ export class Codegen {
                     regex: /^__wane__/,
                   },
                 },
+                ecma: 8,
                 toplevel: true,
               }),
             ]
