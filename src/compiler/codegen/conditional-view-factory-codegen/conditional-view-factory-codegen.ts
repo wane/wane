@@ -72,7 +72,12 @@ export class ConditionalViewFactoryCodegen extends BaseFactoryCodegen {
       .writeLine(`__wane__destroy() {`)
       .indentBlock(() => {
         this.writer
-          .writeLine(`this.__wane__factoryChildren[0].__wane__destroy()`)
+          .writeLine(`if (this.__wane__factoryChildren[0] != null) {`)
+          .indentBlock(() => {
+            this.writer
+              .writeLine(`this.__wane__factoryChildren[0].__wane__destroy()`)
+          })
+          .writeLine(`}`)
       })
       .writeLine(`},`)
     return this
