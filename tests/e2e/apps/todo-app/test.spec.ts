@@ -19,14 +19,16 @@ type DomData = {
 
 function domTodoItem (item: TodoItem) {
   if (item.isEditMode) {
-    return h('w-edit', shadow(10), [
-      h.input({ type: 'text', 'aria-label': `Change text` }),
+    return h('w-item', [
+      h('w-edit', shadow(10), [
+        h.input({ type: 'text', 'aria-label': `Change text` }),
+      ]),
     ])
   } else {
     return h('w-item', [
       h.div({
         ...shadow(10),
-        class: item.isComplete ? 'complete' : 'undefined',
+        class: item.isComplete ? 'complete' : '',
       }, [
         h.span(shadow(10), [item.text]),
         h.button(shadow(10), [item.isComplete ? `Undo` : `Done`]),
@@ -78,14 +80,12 @@ function dom ({ totalItemsCount, items, filter }: DomData) {
     return h.body([
       h.script({ src: 'index.js' }),
       h('w-list', [
-        h.ol([
-          h.p({ class: 'empty' }, [
-            `No items to show for this filter.`,
-            h.br(),
-            `There are `,
-            totalItemsCount.toString(10),
-            ` items in total.`,
-          ]),
+        h.p({ class: 'empty' }, [
+          `No items to show for this filter.`,
+          h.br(),
+          `There are `,
+          totalItemsCount.toString(10),
+          ` items in total.`,
         ]),
         domItemCreator(),
       ]),
@@ -108,6 +108,12 @@ function dom ({ totalItemsCount, items, filter }: DomData) {
 const selector = {
   itemToggleButton (n: number) {
     return `w-list > ol > li:nth-child(${n}) > w-item > div > button:first-of-type`
+  },
+  itemEditButton (n: number) {
+    return `w-list > ol > li:nth-child(${n}) > w-item > div > button:nth-of-type(2)`
+  },
+  itemEditInput (n: number) {
+    return `w-list > ol > li:nth-child(${n}) > w-item > w-edit > input`
   },
   filter (filter: Filter) {
     const index = ['all', 'complete', 'incomplete'].indexOf(filter)
@@ -220,8 +226,49 @@ export default function () {
         { text: `first`, isComplete: true },
         { text: `second`, isComplete: true },
       ],
-      filter: 'complete'
-    }, `After marking one of three as complete in Completed filter.`)
+      filter: 'complete',
+    }, `After marking one of three as complete in Completed filter`)
+
+
+    await page.click(selector.filter('all'))
+    await page.click(selector.itemToggleButton(1))
+    await page.click(selector.itemToggleButton(2))
+    await testDom({
+      totalItemsCount: 3,
+      items: [{ text: `first` }, { text: `second` }, { text: `third` }],
+      filter: 'all',
+    }, `After resetting all and back to "All"`)
+
+    await page.click(selector.itemEditButton(1))
+    await testDom({
+      totalItemsCount: 3,
+      items: [{ text: `first`, isEditMode: true }, { text: `second` }, { text: `third` }],
+      filter: 'all',
+    }, `After entering edit mode for "first"`)
+
+    await page.type(selector.itemEditInput(1), `new name`)
+    await page.keyboard.press('Enter')
+    await testDom({
+      totalItemsCount: 3,
+      items: [{ text: `new name` }, { text: `second` }, { text: `third` }],
+      filter: 'all',
+    }, `After editing "first" into "new name"`)
+
+    await page.click(selector.itemEditButton(2))
+    await testDom({
+      totalItemsCount: 3,
+      items: [{ text: `new name` }, { text: `second`, isEditMode: true }, { text: `third` }],
+      filter: 'all',
+    }, `After entering edit mode for "second"`)
+
+    await page.focus(selector.itemEditInput(2))
+    await page.type(selector.itemEditInput(2), `foo bar`)
+    await page.keyboard.press('Escape')
+    await testDom({
+      totalItemsCount: 3,
+      items: [{ text: `new name` }, { text: `second` }, { text: `third` }],
+      filter: 'all',
+    }, `After pressing ESC while on edit for "second"`)
 
   })
 }

@@ -13,6 +13,7 @@ let counter: number = 0
     [totalItemsCount]="items.length"
     (add)="addItem(#)"
     (toggle)="toggle(#)"
+    (edit)="edit(#)"
   />
   <Filters
     [filter]="selectedFilter"
@@ -23,11 +24,6 @@ export default class Entry {
 
   private items: TodoItem[] = []
   private selectedFilter: Filter = 'all'
-  private editItemId: number | null = null
-
-  private get isEmpty (): boolean {
-    return this.items.length == 0
-  }
 
   private get visibleItems (): TodoItem[] {
     switch (this.selectedFilter) {
@@ -51,13 +47,25 @@ export default class Entry {
     this.items = [...this.items, newItem]
   }
 
-  private toggle (itemId: number): void {
-    const index = this.items.findIndex(({ id }) => id == itemId)
+  private toggle (id: number): void {
+    const index = this.items.findIndex(item => item.id == id)
     if (index == -1) {
-      throw new Error(`Item with ID ${itemId} not found.`)
+      throw new Error(`Item with ID ${id} not found.`)
     }
     const oldItem = this.items[index]
     const newItem: TodoItem = { ...oldItem, isCompleted: !oldItem.isCompleted }
+    const before = this.items.slice(0, index)
+    const after = this.items.slice(index + 1)
+    this.items = [...before, newItem, ...after]
+  }
+
+  private edit ({ id, text }: { id: number, text: string }): void {
+    const index = this.items.findIndex(item => item.id == id)
+    if (index == -1) {
+      throw new Error(`Item with ID ${id} not found.`)
+    }
+    const oldItem = this.items[index]
+    const newItem: TodoItem = { ...oldItem, text }
     const before = this.items.slice(0, index)
     const after = this.items.slice(index + 1)
     this.items = [...before, newItem, ...after]

@@ -1,5 +1,5 @@
 // @ts-ignore
-import { Template, Register } from 'wane'
+import { Register, Template } from 'wane'
 import Item from './Item'
 import ItemCreator from './ItemCreator'
 import { TodoItem } from '../types'
@@ -10,23 +10,26 @@ import { TodoItem } from '../types'
     The list is empty.
   </p>
 
-  <ol [w:if]="!isEmpty">
+  <w:if !isEmpty>
     <w:if !isItemsEmpty>
-      <li [w:for]="item of items; key: id">
-        <Item
-          [item]="item"
-          (toggle)="toggle(item.id)"
-        />
-      </li>    
+      <ol>
+        <li [w:for]="item of items; key: id">
+          <Item
+            [item]="item"
+            (toggle)="toggle(item.id)"
+            (edit)="edit(#)"
+          />
+        </li>
+      </ol>    
     </w:if>
     
     <p [w:if]="isItemsEmpty" className="empty">
       No items to show for this filter.<br>
       There are {{ totalItemsCount }} items in total.     
     </p>
-  </ol>
+  </w:if>
 
-  <ItemCreator (add)="onAdd(#)"/>
+  <ItemCreator (add)="add(#)"/>
 `)
 export default class List {
 
@@ -34,7 +37,10 @@ export default class List {
   public totalItemsCount!: number
 
   public add (text: string) {}
+
   public toggle (id: number) {}
+
+  public edit (data: {id: number, text: string}) {}
 
   private get isEmpty () {
     return this.totalItemsCount == 0
@@ -42,10 +48,6 @@ export default class List {
 
   private get isItemsEmpty () {
     return this.items.length == 0
-  }
-
-  private onAdd (text: string) {
-    this.add(text)
   }
 
 }

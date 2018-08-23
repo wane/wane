@@ -8,6 +8,7 @@ import { TodoItem } from '../types'
     aria-label="Change text"
     [value]="value"
     (input)="onChange(#)"
+    (keydown)="onKeyDown(#)"
   >
 `)
 class Edit {
@@ -19,22 +20,20 @@ class Edit {
 
   private value: string = ''
 
-  private onChange (event: KeyboardEvent) {
-    if (event.key == 'Enter') {
-      event.preventDefault()
-      this.submit(this.value)
-      return
-    }
-
-    if (event.key == 'Escape') {
-      event.preventDefault()
-      this.submit(null)
-      return
-    }
-
+  private onChange (event: KeyboardEvent): void {
     const $input = event.target as HTMLInputElement
     const { value } = $input
     this.value = value
+  }
+
+  private onKeyDown (event: KeyboardEvent): void {
+    if (event.key == 'Enter') {
+      event.preventDefault()
+      this.submit(this.value)
+    } else if (event.key == 'Escape') {
+      event.preventDefault()
+      this.submit(null)
+    }
   }
 
 }
@@ -52,7 +51,7 @@ class Edit {
   <Edit [w:if]="isEditMode" [item]="item" (submit)="onEditSubmit(#)"/>
   <div [w:if]="!isEditMode" [className]="className">
     <span>{{ item.text }}</span>
-    <button (click)="onToggleClick()">{{ toggleText }}</button>
+    <button (click)="toggle()">{{ toggleText }}</button>
     <button (click)="onEditClick()" [w:if]="!item.isCompleted">Edit</button>
   </div>
 `)
@@ -63,7 +62,7 @@ export default class Item {
   public toggle () {
   }
 
-  public edit (newText: string) {
+  public edit (data: { id: number, text: string }) {
   }
 
   private isEditMode = false
@@ -73,11 +72,7 @@ export default class Item {
   }
 
   private get className () {
-    return this.item.isCompleted ? 'complete' : undefined
-  }
-
-  private onToggleClick (): void {
-    this.toggle()
+    return this.item.isCompleted ? 'complete' : ''
   }
 
   private onEditClick (): void {
@@ -85,12 +80,11 @@ export default class Item {
   }
 
   private onEditSubmit (text: string | null): void {
-    if (text == null) {
-      this.isEditMode = false
-      return
+    this.isEditMode = false
+    if (text != null) {
+      const data = { id: this.item.id, text }
+      this.edit(data)
     }
-
-    this.edit(text)
   }
 
 }
