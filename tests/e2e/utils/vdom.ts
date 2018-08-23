@@ -1,10 +1,13 @@
 import * as puppeteer from 'puppeteer'
 import { expect } from 'chai'
+import chalk from 'chalk'
+
+type UnpackArray<T> = T extends Array<infer V> ? V : never
 
 export interface VNode {
   tagName: string
   attributes: Record<string, any>
-  children: (VNode | string)[]
+  children: (VNode | string | undefined | null | false)[]
 }
 
 export interface HTag {
@@ -14,9 +17,9 @@ export interface HTag {
 
   (textContent: string): VNode
 
-  (children: (VNode | string)[]): VNode
+  (children: (VNode | string | undefined | null)[]): VNode
 
-  (attributes: Record<string, any>, children: (VNode | string)[]): VNode
+  (attributes: Record<string, any>, children: VNode['children']): VNode
 }
 
 export interface H {
@@ -26,9 +29,9 @@ export interface H {
 
   (tagName: string, textContent: string): VNode
 
-  (tagName: string, children: (VNode | string)[]): VNode
+  (tagName: string, children: VNode['children']): VNode
 
-  (tagName: string, attributes: Record<string, any>, children: (VNode | string)[]): VNode
+  (tagName: string, attributes: Record<string, any>, children: VNode['children']): VNode
 
   body: HTag
   div: HTag
@@ -63,6 +66,10 @@ export interface H {
   tr: HTag
   th: HTag
   td: HTag
+  ol: HTag
+  ul: HTag
+  li: HTag
+  br: HTag
 }
 
 const hFun: H = ((tagName: string, second?: any, third?: any): VNode => {
@@ -145,6 +152,10 @@ const tagNames = [
   'tr',
   'th',
   'td',
+  'ol',
+  'ul',
+  'li',
+  'br',
 ]
 
 tagNames.forEach(tagName => {
@@ -162,12 +173,53 @@ function toQuery (vNode: VNode, path: string, childIndex: number | undefined | n
   return path == '' ? withIndex : `${path} > ${withIndex}`
 }
 
-async function expectHtmlElement (page: puppeteer.Page, vNode: VNode, path: string, childIndex: number | undefined | null) {
+const RAINBOW = [
+  chalk.red,
+  chalk.yellow,
+  chalk.green,
+  chalk.blue,
+  chalk.cyan,
+  chalk.magenta,
+]
+
+const spaces = (n: number) => Array.from({ length: n * 2 }).fill(' ').join('')
+
+function printVirtualDom (vNode: UnpackArray<VNode['children']>, level: number = 0): string {
+  if (!vNode) return ''
+  if (typeof vNode == 'string') {
+    return RAINBOW[(level - 1) % RAINBOW.length](`${spaces(level)}${vNode}`)
+  } else {
+    const { children, attributes, tagName } = vNode
+    const attributesString = Object.entries(attributes).map(([key, value]) => {
+      return value != null && value != ''
+        ? `${key}="${value}"`
+        : key
+    }).join(' ')
+    const openingTagString = attributesString.length > 0
+      ? `${spaces(level)}<${chalk.bold(tagName)} ${chalk.italic(attributesString)}>`
+      : `${spaces(level)}<${chalk.bold(tagName)}>`
+    const content = children.map(child => printVirtualDom(child, level + 1)).join('\n')
+    const closingTag = `${spaces(level)}</${chalk.bold(tagName)}>`
+    return [
+      RAINBOW[level % RAINBOW.length](openingTagString),
+      content,
+      RAINBOW[level % RAINBOW.length](closingTag),
+    ].join('\n')
+  }
+}
+
+async function expectHtmlElement (page: puppeteer.Page, rootVNode: VNode, vNode: VNode, path: string, childIndex: number | undefined | null) {
   const query = toQuery(vNode, path, childIndex)
 
   const element = await page.$(query)
-  // noinspection BadExpressionStatementJS
-  expect(element, query).to.be.ok
+  try {
+    // noinspection BadExpressionStatementJS
+    expect(element, query).to.be.ok
+  } catch (e) {
+    console.error(`Wrong tree structure. Expected:`)
+    console.error(printVirtualDom(rootVNode))
+    console.error(e)
+  }
 
   // Although query already uses attributes to target an element,
   // here we assure that no additional shit exists on it.
@@ -185,8 +237,9 @@ async function expectHtmlElement (page: puppeteer.Page, vNode: VNode, path: stri
 
   let i: number = 0
   for (const child of vNode.children) {
+    if (!child) continue
     if (typeof child == 'object') {
-      await expectHtmlElement(page, child, query, i)
+      await expectHtmlElement(page, rootVNode, child, query, i)
       i++
     } else {
       const textContent: string = await page.evaluate((query: string) => {
@@ -198,8 +251,15 @@ async function expectHtmlElement (page: puppeteer.Page, vNode: VNode, path: stri
   }
 }
 
-export async function expectDomStructure (page: puppeteer.Page, vDom: VNode) {
-  await expectHtmlElement(page, vDom, ``, null)
+export async function expectDomStructure (page: puppeteer.Page, vDom: VNode, failureString?: string) {
+  try {
+    await expectHtmlElement(page, vDom, vDom, ``, null)
+  } catch (e) {
+    if (failureString != null) {
+      console.error(chalk.red.bold(`FAILURE: `), chalk.bold(failureString))
+    }
+    throw e
+  }
 }
 
 export { hFun as h }
