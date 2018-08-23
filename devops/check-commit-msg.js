@@ -50,20 +50,25 @@ const ALLOWED_SCOPES = {
 
 const ALLOWED_TYPES = Object.keys(ALLOWED_SCOPES)
 
-const REGEX = /^(?<type>.+)\((?<scope>.+?)\): (?<message>.+) \(close #(?<issue>\d+)\)$/u
+const REGEX_CLOSE_MANDATORY = /^(?<type>.+)\((?<scope>.+?)\): (?<message>.+) \(close #(?<issue>\d+)\)$/u
+const REGEX_CLOSE_OPTIONAL = /^(?<type>.+)\((?<scope>.+?)\): (?<message>.+)(?: \(close #(?<issue>\d+)\))?$/u
 
-if (!REGEX.test(commitMessage)) {
+if (!REGEX_CLOSE_OPTIONAL.test(commitMessage)) {
   console.error(chalk.red(`Commit message "${chalk.bold(commitMessage)}" is in wrong format.`))
   const msg = stripIndent`
     Examples of proper messages:
       feat(cli): support configuration file (close #3)
-      fix(compiler): do not break when a negative number is used (close #21)
+      fix(compiler): do not break when a negative number is used
   `
   console.info(chalk.gray(msg))
   process.exit(1)
 }
 
-const {groups: {type, scope, message, issue}} = REGEX.exec(commitMessage)
+if (!REGEX_CLOSE_MANDATORY.test(commitMessage)) {
+  console.warn(chalk.yellow(`Missing "(closes #xxx)" at the end of the commit message.`))
+}
+
+const {groups: {type, scope, message, issue}} = REGEX_CLOSE_OPTIONAL.exec(commitMessage)
 
 // Collect errors
 
