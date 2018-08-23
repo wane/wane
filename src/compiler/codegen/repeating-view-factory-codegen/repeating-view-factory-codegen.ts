@@ -284,8 +284,15 @@ export class RepeatingViewFactoryCodegen extends BaseFactoryCodegen {
     this.writer
       .writeLine(`__wane__destroy() {`)
       .indentBlock(() => {
-        // TODO
-        this.writer.writeLine(`console.log('// TODO')`)
+        this.writer
+          .writeLine(`Object.keys(this.__wane__factoryChildren).forEach(key => {`)
+          .indentBlock(() => {
+            this.writer
+              .writeLine(`const child = this.__wane__factoryChildren[key]`)
+              .writeLine(`if (child == null) return`)
+              .writeLine(`child.__wane__destroy()`)
+          })
+          .writeLine(`})`)
       })
       .writeLine(`},`)
   }
