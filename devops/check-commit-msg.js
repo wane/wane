@@ -1,6 +1,7 @@
 const fs = require('fs-extra')
 const chalk = require('chalk').default
 const {stripIndent, oneLineCommaListsAnd, oneLine} = require('common-tags')
+const semver = require('semver')
 
 const commitMessagePath = process.argv[2]
 const commitMessageRaw = fs.readFileSync(commitMessagePath, {encoding: 'utf8'})
@@ -52,6 +53,16 @@ const ALLOWED_TYPES = Object.keys(ALLOWED_SCOPES)
 
 const REGEX_CLOSE_MANDATORY = /^(?<type>.+)\((?<scope>.+?)\): (?<message>.+) \(close #(?<issue>\d+)\)$/u
 const REGEX_CLOSE_OPTIONAL = /^(?<type>.+)\((?<scope>.+?)\): (?<message>.+)(?: \(close #(?<issue>\d+)\))?$/u
+
+// "yarn publish" will create a commit with a message of semver prepended with "v",
+// so we first check for this format.
+if (commitMessage.startsWith('v')) {
+  const version = semver.valid(commitMessage.slice(1))
+  if (version != null) {
+    console.info(chalk.green(`This is a ${chalk.bold(version)} release commit.`))
+    process.exit(0)
+  }
+}
 
 if (!REGEX_CLOSE_OPTIONAL.test(commitMessage)) {
   console.error(chalk.red(`Commit message "${chalk.bold(commitMessage)}" is in wrong format.`))
