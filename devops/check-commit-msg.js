@@ -5,8 +5,19 @@ const {stripIndent, oneLineCommaListsAnd, oneLine} = require('common-tags')
 const commitMessagePath = process.argv[2]
 const commitMessageRaw = fs.readFileSync(commitMessagePath, {encoding: 'utf8'})
 
+// Remove comments in the commit message.
+// This happens after rebasing or merging when the message is changed.
+const commitMessageWithoutComments = commitMessageRaw
+  .split('\n')
+  .map(line => line.startsWith('#') ? null : line)
+  .filter(Boolean)
+  .join('\n')
+  .replace(/\n+/g, '\n')
+
 // Strip the trailing \n if exists, otherwise don't meddle.
-const commitMessage = commitMessageRaw.endsWith('\n') ? commitMessageRaw.slice(0, -1) : commitMessageRaw
+const commitMessage = commitMessageWithoutComments.endsWith('\n')
+  ? commitMessageWithoutComments.slice(0, -1)
+  : commitMessageWithoutComments
 
 const ALLOWED_SCOPES = {
   'feat': [
