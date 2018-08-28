@@ -59,8 +59,22 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
     return this
   }
 
+  /**
+   * We print nothing if there's no destroy method in components and there are no children,
+   * since it's not needed.
+   */
+  protected printAssembleFactoryChildrenWhenFactoryHasNoChildren (fa: ComponentFactoryAnalyzer): this {
+    return this.hasNoDestroyMethod(fa)
+      ? this
+      : super.printAssembleFactoryChildrenWhenFactoryHasNoChildren(fa)
+  }
+
+  private hasNoDestroyMethod (fa: ComponentFactoryAnalyzer): boolean {
+    return fa.getPathToRoot().every(cmp => cmp instanceof ComponentFactoryAnalyzer)
+  }
+
   protected generateDestroyViewMethod (fa: ComponentFactoryAnalyzer): this {
-    if (fa.getPathToRoot().every(cmp => cmp instanceof ComponentFactoryAnalyzer)) {
+    if (this.hasNoDestroyMethod(fa)) {
       this.writer
         .writeLine(`// There is no need for __wane__destroy since this factory is not placed under`)
         .writeLine(`// any factory which can be destroyed (if you trace its ancestors, you'll see`)

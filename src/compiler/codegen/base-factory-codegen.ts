@@ -99,21 +99,30 @@ export abstract class BaseFactoryCodegen extends BaseCodegen {
     return this
   }
 
+  protected printAssembleFactoryChildrenWhenFactoryHasChildren (fa: FactoryAnalyzer<TemplateNodeValue>): this {
+    this.writer
+      .writeLine(`util.__wane__createFactoryChildren(this, [`)
+      .indentBlock(() => {
+        for (const factory of fa.getPartialViewFactoryAnalyzer().getChildrenFactories()) {
+          const name = factory.getFactoryName()
+          this.writer.writeLine(`${name}(),`)
+        }
+      })
+      .writeLine(`])`)
+    return this
+  }
+
+  protected printAssembleFactoryChildrenWhenFactoryHasNoChildren (fa: FactoryAnalyzer<TemplateNodeValue>): this {
+    this.writer.writeLine(`this.__wane__factoryChildren = []`)
+    return this
+  }
+
   protected printAssembleFactoryChildren (fa: FactoryAnalyzer<TemplateNodeValue>): this {
     if (fa.hasChildren()) {
-      this.writer
-        .writeLine(`util.__wane__createFactoryChildren(this, [`)
-        .indentBlock(() => {
-          for (const factory of fa.getPartialViewFactoryAnalyzer().getChildrenFactories()) {
-            const name = factory.getFactoryName()
-            this.writer.writeLine(`${name}(),`)
-          }
-        })
-        .writeLine(`])`)
+      return this.printAssembleFactoryChildrenWhenFactoryHasChildren(fa)
     } else {
-      this.writer.writeLine(`this.__wane__factoryChildren = []`)
+      return this.printAssembleFactoryChildrenWhenFactoryHasNoChildren(fa)
     }
-    return this
   }
 
   // TODO: This will always be empty for PartialView_ConditionalView
