@@ -104,6 +104,7 @@ export class ComponentFactoryCodegen extends BaseFactoryCodegen {
   }
 
   private printUpdateAsyncArray (fa: ComponentFactoryAnalyzer): this {
+    if (!fa.componentAnalyzer.hasAsyncBlocksWhichCauseUpdate()) return this
     this.writer
       .writeLine(`this.__wane__updateAsync = [`)
       .indentBlock(() => {
