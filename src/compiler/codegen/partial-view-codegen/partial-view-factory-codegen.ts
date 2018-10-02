@@ -3,8 +3,18 @@ import { FactoryAnalyzer } from '../../analyzer'
 import { TemplateNodeValue } from '../../template-nodes/nodes/template-node-value-base'
 import CodeBlockWriter from 'code-block-writer'
 import { PartialViewFactoryAnalyzer } from '../../analyzer/factory-analyzer/partial-view-factory-analyzer'
+import { ConditionalViewFactoryAnalyzer } from '../../analyzer/factory-analyzer/conditional-view-factory-analyzer'
+import { RepeatingViewFactoryAnalyzer } from '../../analyzer/factory-analyzer/repeating-view-factory-analyzer'
 
 export class PartialViewFactoryCodegen extends BaseFactoryCodegen {
+
+  private isConditionalPartial (fa: PartialViewFactoryAnalyzer) {
+    return fa.getDirectiveFactoryAnalyzer() instanceof ConditionalViewFactoryAnalyzer
+  }
+
+  private isRepeatingPartial (fa: PartialViewFactoryAnalyzer) {
+    return fa.getDirectiveFactoryAnalyzer() instanceof RepeatingViewFactoryAnalyzer
+  }
 
   public printCode (fa: PartialViewFactoryAnalyzer): CodeBlockWriter {
     this.resetWriter()
@@ -13,9 +23,12 @@ export class PartialViewFactoryCodegen extends BaseFactoryCodegen {
     this.writer
       .writeLine(`export default () => ({`)
 
-    this.writer
-      .writeLine(`__wane__prevData: {},`)
+    if (this.isRepeatingPartial(fa)) {
+      this.writer
+        .writeLine(`__wane__prevData: {},`)
+    }
 
+    this.writer
       .writeLine(`__wane__init() {`)
       .indentBlock(() => {
         this
@@ -27,9 +40,11 @@ export class PartialViewFactoryCodegen extends BaseFactoryCodegen {
       })
       .writeLine(`},`)
 
-    this.generateDiffMethod(fa)
+    if (this.isRepeatingPartial(fa)) {
+      this.generateDiffMethod(fa)
+    }
 
-    this.generateUpdateViewMethod(fa, `__wane__update`, false, true)
+    this.generateUpdateViewMethod(fa, `__wane__update`, false, this.isRepeatingPartial(fa))
 
     this.writer
       .writeLine(`__wane__destroy() {`)
