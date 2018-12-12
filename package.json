@@ -13,6 +13,7 @@
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/common-tags": "^1.8.0",
+    "@types/lodash": "^4.14.119",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
     "chai": "^4.2.0",
@@ -22,6 +23,7 @@
   },
   "dependencies": {
     "common-tags": "^1.8.0",
+    "lodash": "^4.17.11",
     "ts-simple-ast": "^20.0.0",
     "type-guards": "^0.5.0"
   }

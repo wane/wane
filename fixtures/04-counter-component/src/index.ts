@@ -4,11 +4,11 @@
     <button type="button" (click)="onChange(-1)"> - </button>
     <span> {{ value }} </span>
     <button type="button" (click)="onChange(+1)"> + </button>
-  `
+  `,
 })
 class Counter {
   // @ts-ignore
-  @input value
+  @input value!: number
 
   // @ts-ignore
   @output change (value: number) { }
@@ -20,11 +20,11 @@ class Counter {
 
 
 // @ts-ignore
-@Component({
+@component({
   register: [Counter],
   template: `
     <Counter [value]="value" (change)="change(#)"/>
-  `
+  `,
 })
 export default class {
   value = 21

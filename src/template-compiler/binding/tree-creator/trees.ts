@@ -8,8 +8,9 @@ import {
 } from './nodes'
 import { isInstance } from '../../../libs/is-instance-ts'
 
+type BindingSyntaxTreeTypes = Expression | Invocation | FormattedExpression
 
-export class Trees<R extends Expression | Invocation | FormattedExpression> {
+export class BindingSyntaxTree<R extends BindingSyntaxTreeTypes = BindingSyntaxTreeTypes> {
 
   constructor (protected readonly root: R) {
   }
@@ -22,13 +23,13 @@ export class Trees<R extends Expression | Invocation | FormattedExpression> {
    * @example
    * a.b.z[c.d] |> e.f(g.h) => a, c, e, g
    */
-  public getUsedMembers (): Array<Identifier> { return this.getRoot().getUsedMemberNames() }
+  public getUsedMembers (): Array<Identifier> { return this.getRoot().getUsedMembers() }
 
   public getUsedMemberNames (): Array<string> { return this.getUsedMembers().map(m => m.getData()) }
 
 }
 
-export class ExpressionTree extends Trees<Expression> {
+export class ExpressionTree extends BindingSyntaxTree<Expression> {
 
   @rule(() => [Expression])
   public static accept (root: Expression) {
@@ -37,7 +38,7 @@ export class ExpressionTree extends Trees<Expression> {
 
 }
 
-export class InvocationTree extends Trees<Invocation> {
+export class InvocationTree extends BindingSyntaxTree<Invocation> {
 
   @rule(() => [Invocation])
   public static accept (root: Invocation) {
@@ -54,7 +55,7 @@ export class InvocationTree extends Trees<Invocation> {
 
 }
 
-export class InterpolationTree extends Trees<Expression | FormattedExpression> {
+export class InterpolationTree extends BindingSyntaxTree<Expression | FormattedExpression> {
 
   @rule(() => [Expression])
   @rule(() => [FormattedExpression])

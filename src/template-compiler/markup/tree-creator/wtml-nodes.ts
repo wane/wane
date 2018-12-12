@@ -29,6 +29,7 @@ import {
 import { Guard, Predicate } from '../../../libs/helper-types'
 import * as tg from 'type-guards'
 import { isInstance } from '../../../libs/is-instance-ts'
+import { TagNamesLists } from './lists'
 
 
 export abstract class WtmlNode {
@@ -222,12 +223,18 @@ export class WtmlElementNode extends WtmlNode {
 
   public static Create (
     token: StartTagToken,
+    lists: TagNamesLists,
   ): WtmlElementNode {
+    const tagName = token.getTagName()
+
     const name = token.getTagName()
     let element
     if (name.startsWith('w-')) {
       element = new WtmlDirectiveNode(token)
     } else if (name[0].toLowerCase() == name[0]) {
+      if (!lists.allowedTagNames.includes(tagName)) {
+        throw new Error(`Unknown element ${ tagName }.`)
+      }
       element = new WtmlElementNode(token)
     } else {
       element = new WtmlComponentNode(token)

@@ -18,6 +18,10 @@ import * as path from 'path'
 import {
   WtmlPhantomRootNode,
   WtmlComponentNode,
+  WtmlInterpolationNode,
+  WtmlElementNode,
+  WtmlBracketedAttribute,
+  WtmlParenthesisedAttribute,
 } from '../../template-compiler/markup/tree-creator/wtml-nodes'
 import { parseTemplate } from '../../template-compiler'
 import { Predicate, Guard } from '../../libs/helper-types'
@@ -25,9 +29,9 @@ import { isInstance } from '../../libs/is-instance-ts'
 import * as flow from './flow-analysis'
 import { Queue } from '../../libs/stack'
 import * as tg from 'type-guards'
+import { BindingSyntaxTree } from '../../template-compiler/binding/tree-creator/trees'
+import * as _ from 'lodash'
 
-
-type Ctor<T> = Function & { prototype: T }
 
 type NonConstructorClassMember = Exclude<ClassMemberTypes, ConstructorDeclaration>
 
@@ -59,9 +63,17 @@ export class Io {
   public getComponent<T extends ComponentIoNode> (guard: Guard<ComponentIoNode, T>): T | undefined
   public getComponent (predicate: Predicate<ComponentIoNode>): ComponentIoNode | undefined
   public getComponent (classDeclaration: ClassDeclaration): ComponentIoNode | undefined
-  public getComponent (functionOrClassDeclaration: ClassDeclaration | Predicate<ComponentIoNode>): ComponentIoNode | undefined {
-    if (functionOrClassDeclaration instanceof ClassDeclaration) return this.components.get(functionOrClassDeclaration)
-    return this.getComponents().find(functionOrClassDeclaration)
+  public getComponent (className: string): ComponentIoNode | undefined
+  public getComponent (arg: string | ClassDeclaration | Predicate<ComponentIoNode>): ComponentIoNode | undefined {
+    if (arg instanceof ClassDeclaration) {
+      return this.components.get(arg)
+    }
+    if (typeof arg == 'string') {
+      return this.getComponents().find(component => {
+        return component.getClassDeclaration().getName() == arg
+      })
+    }
+    return this.getComponents().find(arg)
   }
 
   public getComponentOrThrow<T extends ComponentIoNode> (guard: Guard<ComponentIoNode, T>): T
@@ -185,6 +197,38 @@ export class ComponentIoNode extends IoNode {
     return this.members.filter(fn)
   }
 
+  public getProperties<T extends ComponentPropertyIoNode> (guard: Guard<ComponentPropertyIoNode, T>): Array<T>
+  public getProperties (predicate: Predicate<ComponentPropertyIoNode>): Array<ComponentPropertyIoNode>
+  public getProperties (): Array<ComponentPropertyIoNode>
+  public getProperties (predicateOrnNothing?: Predicate<ComponentPropertyIoNode>): Array<ComponentPropertyIoNode> {
+    const fn = predicateOrnNothing == null ? () => true : predicateOrnNothing
+    return this.getMembers(tg.fp.and(isInstance(ComponentPropertyIoNode), fn))
+  }
+
+  public getInputs<T extends ComponentInputIoNode> (guard: Guard<ComponentInputIoNode, T>): Array<T>
+  public getInputs (predicate: Predicate<ComponentInputIoNode>): Array<ComponentInputIoNode>
+  public getInputs (): Array<ComponentInputIoNode>
+  public getInputs (predicateOrnNothing?: Predicate<ComponentInputIoNode>): Array<ComponentInputIoNode> {
+    const fn = predicateOrnNothing == null ? () => true : predicateOrnNothing
+    return this.getMembers(tg.fp.and(isInstance(ComponentInputIoNode), fn))
+  }
+
+  public getMethods<T extends ComponentMethodIoNode> (guard: Guard<ComponentMethodIoNode, T>): Array<T>
+  public getMethods (predicate: Predicate<ComponentMethodIoNode>): Array<ComponentMethodIoNode>
+  public getMethods (): Array<ComponentMethodIoNode>
+  public getMethods (predicateOrnNothing?: Predicate<ComponentMethodIoNode>): Array<ComponentMethodIoNode> {
+    const fn = predicateOrnNothing == null ? () => true : predicateOrnNothing
+    return this.getMembers(tg.fp.and(isInstance(ComponentMethodIoNode), fn))
+  }
+
+  public getOutputs<T extends ComponentOutputIoNode> (guard: Guard<ComponentOutputIoNode, T>): Array<T>
+  public getOutputs (predicate: Predicate<ComponentOutputIoNode>): Array<ComponentOutputIoNode>
+  public getOutputs (): Array<ComponentOutputIoNode>
+  public getOutputs (predicateOrnNothing?: Predicate<ComponentOutputIoNode>): Array<ComponentOutputIoNode> {
+    const fn = predicateOrnNothing == null ? () => true : predicateOrnNothing
+    return this.getMembers(tg.fp.and(isInstance(ComponentOutputIoNode), fn))
+  }
+
   public getMember<T extends ComponentMemberIoNode> (guard: Guard<ComponentMemberIoNode, T>): T | undefined
   public getMember (predicate: Predicate<ComponentMemberIoNode>): ComponentMemberIoNode | undefined
   public getMember (name: string): ComponentMemberIoNode | undefined
@@ -203,28 +247,28 @@ export class ComponentIoNode extends IoNode {
     return result
   }
 
-  public getMemberWithNameOrThrow<T extends ComponentMemberIoNode> (guard: Guard<ComponentMemberIoNode, T>, name: string): T {
-    return this.getMemberOrThrow(tg.fp.and(guard, t => t.getName() == name))
-  }
-
   public getPropertyOrThrow (name: string): ComponentPropertyIoNode {
     return this.getMemberWithNameOrThrow(isInstance(ComponentPropertyIoNode), name)
+  }
+
+  public getInputOrThrow (name: string): ComponentInputIoNode {
+    return this.getMemberWithNameOrThrow(isInstance(ComponentInputIoNode), name)
   }
 
   public getMethodOrThrow (name: string): ComponentMethodIoNode {
     return this.getMemberWithNameOrThrow(isInstance(ComponentMethodIoNode), name)
   }
 
+  public getOutputOrThrow (name: string): ComponentOutputIoNode {
+    return this.getMemberWithNameOrThrow(isInstance(ComponentOutputIoNode), name)
+  }
+
   // endregion Members
 
   // region Template
 
-  public getWtmlTemplate () {
-    return this.template.getWtmlPhantomRoot()
-  }
-
-  public getWtmlComponentNodes (): Array<WtmlComponentNode> {
-    return this.template.getWtmlComponentNodes()
+  public getTemplate () {
+    return this.template
   }
 
   // endregion Template
@@ -307,6 +351,10 @@ export class ComponentIoNode extends IoNode {
     return propAssignment.getInitializerIfKind(expectedType)
   }
 
+  private getMemberWithNameOrThrow<T extends ComponentMemberIoNode> (guard: Guard<ComponentMemberIoNode, T>, name: string): T {
+    return this.getMemberOrThrow(tg.fp.and(guard, t => t.getName() == name))
+  }
+
   // endregion Utils
 
 }
@@ -339,6 +387,31 @@ export class TemplateIoNode extends IoNode {
     return this.phantomRootNode.filter(isInstance(WtmlComponentNode))
   }
 
+  public getBindingSyntaxTrees () {
+    const trees: Array<BindingSyntaxTree> = []
+
+    this.phantomRootNode
+      .filter(isInstance(WtmlInterpolationNode))
+      .forEach(node => trees.push(node.getBindingSyntaxTree()))
+
+    this.phantomRootNode
+      .filter(isInstance(WtmlElementNode))
+      .map(el => el.getAttributes(tg.fp.or(isInstance(WtmlBracketedAttribute), isInstance(WtmlParenthesisedAttribute))))
+      .reduce((acc, curr) => [...acc, ...curr], [])
+      .forEach(attr => trees.push(attr.getBindingSyntaxTree()))
+
+    return trees
+  }
+
+  public getUsedMembers () {
+    const result = this.getBindingSyntaxTrees()
+      .map(tree => tree.getUsedMembers())
+      .reduce((acc, curr) => [...acc, ...curr], [])
+    return _.uniqBy(result, item => item.getData())
+  }
+
+  public getUsedMemberNames () { return this.getUsedMembers().map(m => m.getData()) }
+
 }
 
 export class ComponentMemberIoNode<T extends NonConstructorClassMember = NonConstructorClassMember> extends IoNode {
@@ -365,6 +438,10 @@ export class ComponentGetterIoNode extends ComponentMemberIoNode<GetAccessorDecl
 
 
 export class ComponentInputIoNode extends ComponentPropertyIoNode {
+
+  public isRequired (): boolean {
+    return !!this.member.getStructure().hasExclamationToken
+  }
 
 }
 

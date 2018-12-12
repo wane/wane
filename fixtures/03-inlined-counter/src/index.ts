@@ -1,5 +1,5 @@
 // @ts-ignore
-@Component({
+@component({
   template: `
     <button type="button" (click)="change(-1)">
       -

@@ -102,9 +102,8 @@ export class TreeCreator {
 
   protected handleStartTagToken (token: StartTagToken) {
     const tagName = token.getTagName()
-    if (!this.lists.allowedTagNames.includes(tagName)) throw new Error(`Unknown element ${tagName}.`)
 
-    const element = WtmlElementNode.Create(token)
+    const element = WtmlElementNode.Create(token, this.lists)
     this.getCurrentNode<WtmlElementNode>().addChildren(element)
 
     const isElementDone = token.isSelfClosing() || this.lists.elementsWithOnlyOpeningTag.includes(tagName)

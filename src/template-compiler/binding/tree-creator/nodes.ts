@@ -108,7 +108,7 @@ export abstract class BindingNode {
    * @example
    * a.b.z[c.d] |> e.f(g.h) => a, c, e, g
    */
-  public abstract getUsedMemberNames (): Array<Identifier>
+  public abstract getUsedMembers (): Array<Identifier>
 }
 
 
@@ -145,7 +145,7 @@ export class ParameterPlaceholder extends Parameter {
 
   public getEnd (): number { return this.token.getEndOrThrow() }
 
-  public getUsedMemberNames (): Array<Identifier> { return [] }
+  public getUsedMembers (): Array<Identifier> { return [] }
 
 }
 
@@ -184,7 +184,7 @@ export class Identifier extends Expression {
 
   public getEnd (): number { return this.token.getEndOrThrow() }
 
-  public getUsedMemberNames (): Array<Identifier> { return [this] }
+  public getUsedMembers (): Array<Identifier> { return [this] }
 
 }
 
@@ -219,7 +219,7 @@ export class StringLiteral extends Literal {
 
   public getEnd (): number { return this.token.getEndOrThrow() }
 
-  public getUsedMemberNames (): Array<Identifier> { return [] }
+  public getUsedMembers (): Array<Identifier> { return [] }
 
 }
 
@@ -238,7 +238,7 @@ export class NumberLiteral extends Literal {
 
   public getEnd (): number { return this.token.getEndOrThrow() }
 
-  public getUsedMemberNames (): Array<Identifier> { return [] }
+  public getUsedMembers (): Array<Identifier> { return [] }
 
 }
 
@@ -274,10 +274,10 @@ export class ElementAccessExpression extends Expression {
 
   public getEnd (): number { return this.closeSquareBracketToken.getEndOrThrow() }
 
-  public getUsedMemberNames (): Array<Identifier> {
+  public getUsedMembers (): Array<Identifier> {
     return [
-      ...this.expression.getUsedMemberNames(),
-      ...this.argumentExpression.getUsedMemberNames(),
+      ...this.expression.getUsedMembers(),
+      ...this.argumentExpression.getUsedMembers(),
     ]
   }
 
@@ -311,7 +311,7 @@ export class PropertyAccessExpression extends Expression {
 
   public getEnd (): number { return this.name.getEnd() }
 
-  public getUsedMemberNames (): Array<Identifier> { return this.expression.getUsedMemberNames() }
+  public getUsedMembers (): Array<Identifier> { return this.expression.getUsedMembers() }
 
 
 }
@@ -344,10 +344,10 @@ export class FormattedExpression extends BindingNode {
 
   public getEnd (): number { return this.invocation.getEnd() }
 
-  public getUsedMemberNames (): Array<Identifier> {
+  public getUsedMembers (): Array<Identifier> {
     return [
-      ...this.expression.getUsedMemberNames(),
-      ...this.invocation.getUsedMemberNames(),
+      ...this.expression.getUsedMembers(),
+      ...this.invocation.getUsedMembers(),
     ]
 
   }
@@ -388,10 +388,10 @@ export class Invocation extends BindingNode {
 
   public getEnd (): number { return this.closeParenToken.getEndOrThrow() }
 
-  public getUsedMemberNames (): Array<Identifier> {
+  public getUsedMembers (): Array<Identifier> {
     return [
-      ...this.expression.getUsedMemberNames(),
-      ...this.parameterList.getUsedMemberNames(),
+      ...this.expression.getUsedMembers(),
+      ...this.parameterList.getUsedMembers(),
     ]
   }
 
@@ -441,9 +441,9 @@ export class ParameterList extends BindingNode {
     return this.getParameters()[this.getParameters().length - 1].getEnd()
   }
 
-  public getUsedMemberNames (): Array<Identifier> {
+  public getUsedMembers (): Array<Identifier> {
     return this.parameters
-      .map(parameter => parameter.getUsedMemberNames())
+      .map(parameter => parameter.getUsedMembers())
       .reduce((acc, curr) => [...acc, ...curr])
   }
 

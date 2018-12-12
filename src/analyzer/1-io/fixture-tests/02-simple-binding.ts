@@ -1,15 +1,11 @@
 import { Io, ComponentPropertyIoNode, ComponentMethodIoNode } from '../index'
-import * as path from 'path'
-import { getFixturesAbsolutePath } from './utils'
 import { assert } from 'chai'
 import { isInstance } from '../../../libs/is-instance-ts'
 
 
-describe(`Io`, () => {
+export default function (io: Io) {
 
   describe(`02 Simple Binding`, () => {
-
-    const io = new Io(path.join(getFixturesAbsolutePath(__dirname), '02-simple-binding'))
 
     it(`should read a single component: the entry`, () => {
       assert.lengthOf(io.getComponents(), 1)
@@ -50,9 +46,7 @@ describe(`Io`, () => {
           })
 
           it(`modifies "name"`, () => {
-            assert.sameMembers(onChange.getModifiedProperties(), [
-              entry.getPropertyOrThrow('name'),
-            ])
+            assert.sameMembers(onChange.getModifiedProperties(), [entry.getPropertyOrThrow('name')])
           })
 
         })
@@ -60,10 +54,11 @@ describe(`Io`, () => {
       })
 
       describe(`template`, () => {
-        const template = entry.getWtmlTemplate()
+        const template = entry.getTemplate()
+        const root = template.getWtmlPhantomRoot()
 
         describe(`input node`, () => {
-          const inputNode = template.findElementOrThrow('label')
+          const inputNode = root.findElementOrThrow('input')
 
           it(`exists`, () => {
             assert.isDefined(inputNode)
@@ -105,10 +100,14 @@ describe(`Io`, () => {
 
         })
 
+        it(`uses both members`, () => {
+          assert.sameMembers(template.getUsedMemberNames(), ['name', 'onChange'])
+        })
+
       })
 
     })
 
   })
 
-})
+}

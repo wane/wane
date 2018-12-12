@@ -1,17 +1,13 @@
 import 'mocha'
 import { assert } from 'chai'
 import { ComponentPropertyIoNode, Io } from '..'
-import * as path from 'path'
 import { isInstance } from '../../../libs/is-instance-ts'
 import { WtmlInterpolationNode } from '../../../template-compiler/markup/tree-creator/wtml-nodes'
-import { getFixturesAbsolutePath } from './utils'
 
 
-describe(`Io`, () => {
+export default function (io: Io) {
 
   describe(`01 Hello World`, () => {
-
-    const io = new Io(path.join(getFixturesAbsolutePath(__dirname), '01-hello-world'))
 
     it(`should read a single component: the entry`, () => {
       assert.lengthOf(io.getComponents(), 1)
@@ -46,18 +42,23 @@ describe(`Io`, () => {
       })
 
       describe(`template`, () => {
-        const template = entry.getWtmlTemplate()
+        const template = entry.getTemplate()
+        const root = template.getWtmlPhantomRoot()
 
         it(`has three nodes`, () => {
-          assert.lengthOf(template.getAllDescendants(), 3)
+          assert.lengthOf(root.getAllDescendants(), 3)
         })
 
         it(`has one interpolation node`, () => {
-          const interpolationNode = template.find(isInstance(WtmlInterpolationNode))!
+          const interpolationNode = root.find(isInstance(WtmlInterpolationNode))!
           assert.isDefined(interpolationNode)
           assert.equal(interpolationNode.getText(), ' name ')
           const tree = interpolationNode.getBindingSyntaxTree()
           assert.sameOrderedMembers(tree.getUsedMemberNames(), ['name'])
+        })
+
+        it(`uses only "name"`, () => {
+          assert.sameMembers(template.getUsedMemberNames(), ['name'])
         })
 
       })
@@ -66,4 +67,4 @@ describe(`Io`, () => {
 
   })
 
-})
+}
