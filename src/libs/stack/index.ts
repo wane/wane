@@ -22,9 +22,9 @@ export class Stack<T> {
     return this.data[this.data.length - 1]
   }
 
-  public peek (): T {
+  public peek<V extends T = T> (): V {
     if (this.isEmpty()) throw new Error(`Cannot peek into empty stack.`)
-    return this.peekUnsafe()!
+    return this.peekUnsafe() as V
   }
 
   public pop (): T
@@ -35,6 +35,58 @@ export class Stack<T> {
     } else {
       return this.data.splice(-count, count)
     }
+  }
+
+  public reset () {
+    this.data = []
+  }
+
+  public toArray () {
+    return this.data
+  }
+
+}
+
+export class Queue<T> {
+
+  private data: Array<T> = []
+
+  public get size () {
+    return this.data.length
+  }
+
+  public isEmpty () {
+    return this.size == 0
+  }
+
+  public isNotEmpty () {
+    return !this.isEmpty()
+  }
+
+  public push (t: T) {
+    this.data.push(t)
+  }
+
+  public peekUnsafe (): T | undefined {
+    return this.data[this.data.length - 1]
+  }
+
+  public peek<V extends T = T> (): V {
+    if (this.isEmpty()) throw new Error(`Cannot peek into empty stack.`)
+    return this.peekUnsafe() as V
+  }
+
+  public popUnsafe (): T | undefined {
+    return this.data.shift()
+  }
+
+  public pop (): T {
+    if (this.isEmpty()) throw new Error(`Cannot pop an empty stack.`)
+    return this.data.shift()!
+  }
+
+  public reset () {
+    this.data = []
   }
 
   public toArray () {
