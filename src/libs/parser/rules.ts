@@ -1,6 +1,7 @@
 import { isEps } from './eps'
 import { Lhs, Rhs } from './decorators'
 
+
 export class Rule {
 
   constructor (public lhs: Lhs,
@@ -16,11 +17,18 @@ export class Rule {
     return this.rhs
   }
 
+  /**
+   * Doesn't count eps.
+   */
+  public getRhsLength () {
+    return this.rhs().filter(s => !isEps(s)).length
+  }
+
   public getAcceptingFunctionName () {
     return this.acceptingFunctionName
   }
 
-  public derivesEps (): boolean {
+  public isEpsRule (): boolean {
     return this.rhs().length == 1 && isEps(this.rhs()[0])
   }
 

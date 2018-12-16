@@ -1,5 +1,5 @@
 import { Grammar } from './grammar'
-import { doShiftReduce, generateTable } from './slr-parser'
+import { SlrTable, ShiftReducer } from './slr-parser'
 import { getCtor, Terminal } from './decorators'
 
 export class Parser {
@@ -8,7 +8,7 @@ export class Parser {
   }
 
   public parse (terminals: Array<any>) {
-    const unknownTerminals = terminals.filter(terminal => !this.grammar.hasTerminal(getCtor(terminal) as any))
+    const unknownTerminals = terminals.filter(terminal => !this.grammar.isKnownTerminal(getCtor(terminal) as any))
     if (unknownTerminals.length > 0) {
       const e = new Error(`Cannot parse because the array of tokens contains unknown terminals`)
       console.error(e)
@@ -16,8 +16,9 @@ export class Parser {
       throw e
     }
     const typedTerminals = terminals as Array<Terminal>
-    const table = generateTable(this.grammar)
-    return doShiftReduce(typedTerminals, table, this.grammar)
+    const table = new SlrTable(this.grammar)
+    const shiftReducer = new ShiftReducer(table)
+    return shiftReducer.buildAst(terminals)
   }
 
 }

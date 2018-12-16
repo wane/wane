@@ -3,6 +3,7 @@ import { Rule } from './rules'
 
 export type LhsSymbol = NonTerminalCtor
 export type RhsSymbol = NonTerminalCtor | TerminalCtor | Eps
+export type NonEpsRhsSymbol = Exclude<RhsSymbol, Eps>
 
 export type Lhs = LhsSymbol
 export type Rhs = Array<RhsSymbol>
@@ -54,7 +55,7 @@ export const rule = (rhsFn: () => Array<Function | Eps>) => {
     if (!target.hasOwnProperty('__rules__')) {
       target.__rules__ = []
     }
-    target.__rules__.push(newRule)
+    target.__rules__.unshift(newRule)
   }
   return decorator
 }

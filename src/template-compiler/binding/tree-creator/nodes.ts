@@ -19,10 +19,14 @@ import { Guard, Predicate } from '../../../libs/helper-types'
 http://jsmachines.sourceforge.net/machines
 http://jsmachines.sourceforge.net/machines/slr.html
 
-Start -> Interpolation
+Start -> InvocationTree
 
-Interpolation -> Expression
-Interpolation -> PipeExpression
+InterpolationTree -> Expression
+InterpolationTree -> FormattedExpression
+
+ExpressionTree -> Expression
+
+InvocationTree -> Invocation
 
 Expression -> id
 Expression -> Literal
@@ -31,13 +35,10 @@ Expression -> PropertyAccessExpression
 
 Literal -> string
 Literal -> number
-Literal -> boolean
-Literal -> undefined
-Literal -> null
 
 ElementAccessExpression -> Expression [ Expression ]
 PropertyAccessExpression -> Expression . id
-PipeExpression -> Expression |> Invocation
+FormattedExpression -> Expression |> Invocation
 
 Invocation -> Expression ( ParameterList )
 

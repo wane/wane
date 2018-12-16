@@ -68,11 +68,11 @@ export class Queue<T> {
   }
 
   public peekUnsafe (): T | undefined {
-    return this.data[this.data.length - 1]
+    return this.data[0]
   }
 
   public peek<V extends T = T> (): V {
-    if (this.isEmpty()) throw new Error(`Cannot peek into empty stack.`)
+    if (this.isEmpty()) throw new Error(`Cannot peek into empty queue.`)
     return this.peekUnsafe() as V
   }
 
@@ -81,8 +81,8 @@ export class Queue<T> {
   }
 
   public pop (): T {
-    if (this.isEmpty()) throw new Error(`Cannot pop an empty stack.`)
-    return this.data.shift()!
+    if (this.isEmpty()) throw new Error(`Cannot pop an empty queue.`)
+    return this.popUnsafe()!
   }
 
   public reset () {

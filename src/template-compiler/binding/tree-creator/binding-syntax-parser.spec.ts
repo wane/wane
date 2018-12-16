@@ -2,7 +2,7 @@ import 'mocha'
 import { assert } from 'chai'
 import { Parser } from '../../../libs/parser'
 import { WaneTemplateBindingLexer } from '../lexer'
-import { expressionGrammar } from '.'
+import { expressionGrammar, invocationGrammar } from './index'
 import * as n from './nodes'
 import * as Tree from './trees'
 import * as t from '../lexer/binding-tokens'
@@ -163,6 +163,31 @@ describe(`Binding parser`, () => {
         ))
       })
 
+    })
+
+  })
+
+  describe(`Invocation parser`, () => {
+
+    const parser = new Parser(invocationGrammar)
+    const lexer = new WaneTemplateBindingLexer()
+
+    function doTest (input: string, expression: Tree.InvocationTree) {
+      const actual = parser.parse(lexer.lex(input).toArray()) as any
+      assert.deepEqual(actual, expression)
+    }
+
+    it(`should parse a function call`, () => {
+      doTest(`a()`, new Tree.InvocationTree(
+        new n.Invocation(
+          new n.Identifier(
+            new t.IdentifierToken('a').setPos(0, 1),
+          ),
+          new t.OpenParenToken().setPos(1, 2),
+          new n.ParameterList([]),
+          new t.CloseParenToken().setPos(2, 3),
+        ),
+      ))
     })
 
   })
