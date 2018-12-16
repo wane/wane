@@ -1,9 +1,14 @@
 import 'mocha'
 import { assert } from 'chai'
 import { Io, ComponentInputIoNode, ComponentOutputIoNode, ComponentMethodIoNode } from '../index'
+import * as path from "path"
+import { getFixturesAbsolutePath } from './utils'
 
 
-export default function (io: Io) {
+describe(`Io`, () => {
+
+  const fixturePath = path.resolve(getFixturesAbsolutePath(__dirname), '04-counter-component')
+  const io = new Io(fixturePath)
 
   describe(`04 Counter Component`, () => {
 
@@ -46,4 +51,4 @@ export default function (io: Io) {
 
   })
 
-}
+})

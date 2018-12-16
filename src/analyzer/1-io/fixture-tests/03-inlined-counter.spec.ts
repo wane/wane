@@ -1,9 +1,14 @@
 import 'mocha'
 import { assert } from 'chai'
 import { Io } from '../index'
+import * as path from "path"
+import { getFixturesAbsolutePath } from './utils'
 
 
-export default function (io: Io) {
+describe(`Io`, () => {
+
+  const fixturePath = path.resolve(getFixturesAbsolutePath(__dirname), '03-inlined-counter')
+  const io = new Io(fixturePath)
 
   describe(`03 Inlined Counter`, () => {
 
@@ -58,4 +63,4 @@ export default function (io: Io) {
 
   })
 
-}
+})

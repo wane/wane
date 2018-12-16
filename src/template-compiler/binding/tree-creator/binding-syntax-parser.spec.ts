@@ -190,6 +190,38 @@ describe(`Binding parser`, () => {
       ))
     })
 
+    it(`should parse a more complex function call with multiple arguments`, () => {
+      doTest(`a.b(c, 1, 's', #)`, new Tree.InvocationTree(
+        new n.Invocation(
+          new n.PropertyAccessExpression(
+            new n.Identifier(
+              new t.IdentifierToken('a').setPos(0, 1),
+            ),
+            new t.DotToken().setPos(1, 2),
+            new n.Identifier(
+              new t.IdentifierToken('b').setPos(2, 3),
+            ),
+          ),
+          new t.OpenParenToken().setPos(3, 4),
+          new n.ParameterList([
+            new n.Identifier(
+              new t.IdentifierToken('c').setPos(4, 5),
+            ),
+            new n.NumberLiteral(
+              new t.NumberLiteralToken('1').setPos(7, 8),
+            ),
+            new n.StringLiteral(
+              new t.StringLiteralToken('s').setPos(10, 13),
+            ),
+            new n.ParameterPlaceholder(
+              new t.PlaceholderArgumentToken().setPos(15, 16),
+            ),
+          ]),
+          new t.CloseParenToken().setPos(16, 17),
+        ),
+      ))
+    })
+
   })
 
 })

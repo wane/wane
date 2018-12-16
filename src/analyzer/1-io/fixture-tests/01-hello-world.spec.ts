@@ -3,9 +3,14 @@ import { assert } from 'chai'
 import { ComponentPropertyIoNode, Io } from '..'
 import { isInstance } from '../../../libs/is-instance-ts'
 import { WtmlInterpolationNode } from '../../../template-compiler/markup/tree-creator/wtml-nodes'
+import * as path from "path"
+import { getFixturesAbsolutePath } from './utils'
 
 
-export default function (io: Io) {
+describe(`Io`, () => {
+
+  const fixturePath = path.resolve(getFixturesAbsolutePath(__dirname), '01-hello-world')
+  const io = new Io(fixturePath)
 
   describe(`01 Hello World`, () => {
 
@@ -67,4 +72,4 @@ export default function (io: Io) {
 
   })
 
-}
+})

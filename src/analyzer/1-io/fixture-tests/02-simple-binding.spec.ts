@@ -1,9 +1,14 @@
 import { Io, ComponentPropertyIoNode, ComponentMethodIoNode } from '../index'
 import { assert } from 'chai'
 import { isInstance } from '../../../libs/is-instance-ts'
+import * as path from "path"
+import { getFixturesAbsolutePath } from './utils'
 
 
-export default function (io: Io) {
+describe(`Io`, () => {
+
+  const fixturePath = path.resolve(getFixturesAbsolutePath(__dirname), '02-simple-binding')
+  const io = new Io(fixturePath)
 
   describe(`02 Simple Binding`, () => {
 
@@ -110,4 +115,4 @@ export default function (io: Io) {
 
   })
 
-}
+})
