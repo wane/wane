@@ -19,7 +19,7 @@ import { Item } from './item'
         <select name="continent" [value]="initialValue.continent">
           <option value="">Unknown</option>
             <option
-              [w-for]="continent of listOfContinents"
+              [w-for]="const continent of listOfContinents"
               [value]="continent"
             >
               {{ continent }}

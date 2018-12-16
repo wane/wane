@@ -21,7 +21,10 @@ import Form from './form'
         <th>Continent</th>
         <th [attr.colspan]="'2'">Actions</th>
       </tr>
-      <w-block [w-for]="[item, index] of data; key: id">
+      <w-block
+        [w-for]="const [index, item] of data"
+        [w-key]="item.id"
+      >
         <tr>
           <td>{{ item.name }}</td>
           <td>{{ item.age }}</td>

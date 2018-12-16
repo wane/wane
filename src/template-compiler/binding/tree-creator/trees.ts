@@ -4,7 +4,7 @@ import {
   Invocation,
   FormattedExpression,
   Identifier,
-  ParameterPlaceholder,
+  ParameterPlaceholder, RepeatingInstruction, ConditionalExpression,
 } from './nodes'
 import { isInstance } from '../../../libs/is-instance-ts'
 
@@ -61,6 +61,24 @@ export class InterpolationTree extends BindingSyntaxTree<Expression | FormattedE
   @rule(() => [FormattedExpression])
   public static accept (root: Expression | FormattedExpression) {
     return new InterpolationTree(root)
+  }
+
+}
+
+export class ConditionalExpressionTree extends BindingSyntaxTree<ConditionalExpression> {
+
+  @rule(() => [ConditionalExpression])
+  public static accept (root: ConditionalExpression) {
+    return new ConditionalExpressionTree(root)
+  }
+
+}
+
+export class RepeatingInstructionTree extends BindingSyntaxTree<RepeatingInstruction> {
+
+  @rule(() => [RepeatingInstruction])
+  public static accept (root: RepeatingInstruction) {
+    return new RepeatingInstructionTree(root)
   }
 
 }

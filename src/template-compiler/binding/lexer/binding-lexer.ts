@@ -11,6 +11,7 @@ import {
   isNonZeroAsciiDigit,
   isSpaceCharacter,
   range,
+  Token,
 } from '../../../libs/lexer'
 import {
   BindingToken,
@@ -22,7 +23,14 @@ import {
   OpenParenToken,
   OpenSquareBracketToken,
   PipeToken,
-  StringLiteralToken, PlaceholderArgumentToken, CommaToken,
+  StringLiteralToken,
+  PlaceholderArgumentToken,
+  CommaToken,
+  UndefinedLiteralToken,
+  NullLiteralToken,
+  BooleanLiteralToken,
+  ConstKeywordToken,
+  OfKeywordToken, ExclamationMarkToken,
 } from './binding-tokens'
 
 
@@ -70,6 +78,9 @@ export class WaneTemplateBindingLexer extends Lexer<BindingToken> {
       case is(Unicode.Comma)(c):
         this.create(new CommaToken()).emit()
         break
+      case is(Unicode.ExclamationMark)(c):
+        this.create(new ExclamationMarkToken()).emit()
+        break
       case is(Unicode.DigitZero)(c):
         this.create(new NumberLiteralToken())
         this.reconsumeIn(this.leadingZeroNumberLiteralState)
@@ -104,9 +115,46 @@ export class WaneTemplateBindingLexer extends Lexer<BindingToken> {
         this.getToken(IdentifierToken).appendData(c as string)
         break
       default:
-        this.emit(1)
+        this.emitIdentifierToken(1)
         this.reconsumeIn(this.betweenExpressionTokensState)
     }
+  }
+
+  private emitIdentifierToken (delay: number) {
+    const token = this.getToken(IdentifierToken)
+    const data = token.getData()
+    const start = token.getStart()
+    const end = token.getEnd()
+
+    let newToken: Token | undefined
+    switch (data) {
+      case 'undefined':
+        newToken = new UndefinedLiteralToken()
+        break
+      case 'null':
+        newToken = new NullLiteralToken()
+        break
+      case 'true':
+      case 'false':
+        newToken = new BooleanLiteralToken(data)
+        break
+      case 'const':
+        newToken = new ConstKeywordToken()
+        break
+      case 'of':
+        newToken = new OfKeywordToken()
+        break
+      default:
+        newToken = token
+    }
+
+    if (newToken != null) {
+      this.discardCurrentToken(IdentifierToken)
+      if (start != null) token.setStart(start)
+      if (end != null) token.setEnd(end)
+      this.create(newToken)
+    }
+    this.emit(delay)
   }
 
   private stringLiteralState: State = () => {

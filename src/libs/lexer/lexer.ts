@@ -185,6 +185,11 @@ export abstract class Lexer<T extends Token = Token> {
     return this
   }
 
+  protected discardCurrentToken<V extends T = T> (token: TokenCtor<V>): this {
+    this.currentToken = undefined
+    return this
+  }
+
   /**
    * Emits the previously created token.
    *

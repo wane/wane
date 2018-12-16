@@ -76,22 +76,34 @@ export class NumberLiteralToken extends LiteralToken {
   }
 }
 
-// TODO: These are treated as identifiers for now.
-//
-// export class BooleanLiteralToken extends WithData(BindingToken) {
-// }
-//
-// export class UndefinedLiteralToken extends BindingToken {
-// }
-//
-// export class NullLiteralToken extends BindingToken {
-// }
-//
-// export class NanLiteralToken extends BindingToken {
-// }
-//
-// export class InfinityLiteralToken extends BindingToken {
-// }
+export class BooleanLiteralToken extends WithData(BindingToken) {
+  public kind = 'BooleanLiteralToken'
+
+  public constructor (data?: string) {
+    super()
+    if (data != null) this.data = data
+  }
+
+  public toString (): string {
+    return `${ this.kind }<${ this.getData() }>`
+  }
+}
+
+export class UndefinedLiteralToken extends BindingToken {
+  public kind = 'UndefinedLiteralToken'
+}
+
+export class NullLiteralToken extends BindingToken {
+  public kind = 'NullLiteralToken'
+}
+
+export class ConstKeywordToken extends BindingToken {
+  public kind = 'ConstKeywordToken'
+}
+
+export class OfKeywordToken extends BindingToken {
+  public kind = 'OfKeywordToken'
+}
 
 export class IdentifierToken extends WithData(BindingToken) {
   public kind = 'IdentifierToken'
@@ -108,4 +120,8 @@ export class IdentifierToken extends WithData(BindingToken) {
 
 export class PlaceholderArgumentToken extends BindingToken {
   public kind = `PlaceholderArgumentToken`
+}
+
+export class ExclamationMarkToken extends BindingToken {
+  public kind = 'ExclamationMarkToken'
 }

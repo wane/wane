@@ -1,14 +1,28 @@
-import { ExpressionTree, InvocationTree, InterpolationTree } from './trees'
-import { expressionGrammar, invocationGrammar, interpolationGrammar } from './grammars'
-import * as BindingNodeTg from './binding-node-type-guards'
+import {
+  ExpressionTree,
+  InvocationTree,
+  InterpolationTree,
+  RepeatingInstructionTree,
+  ConditionalExpressionTree,
+} from './trees'
+import {
+  expressionGrammar,
+  invocationGrammar,
+  interpolationGrammar,
+  repeatingInstructionGrammar,
+  conditionalExpressionGrammar,
+} from './grammars'
 
 
 export {
   ExpressionTree,
   InterpolationTree,
   InvocationTree,
+  ConditionalExpressionTree,
+  RepeatingInstructionTree,
   expressionGrammar,
   interpolationGrammar,
   invocationGrammar,
-  BindingNodeTg,
+  conditionalExpressionGrammar,
+  repeatingInstructionGrammar,
 }

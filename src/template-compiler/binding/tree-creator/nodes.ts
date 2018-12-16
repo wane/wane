@@ -1,6 +1,14 @@
 import { rule, eps } from '../../../libs/parser'
 import * as t from '../lexer/binding-tokens'
 import {
+  ExclamationMarkToken,
+  OpenSquareBracketToken,
+  CommaToken,
+  CloseSquareBracketToken,
+  ConstKeywordToken,
+  OfKeywordToken,
+} from '../lexer/binding-tokens'
+import {
   TraversalControl,
   forEach,
   forEachDescendant,
@@ -13,43 +21,6 @@ import {
 } from '../../../libs/traversals'
 import { Guard, Predicate } from '../../../libs/helper-types'
 
-
-/*
-
-http://jsmachines.sourceforge.net/machines
-http://jsmachines.sourceforge.net/machines/slr.html
-
-Start -> InvocationTree
-
-InterpolationTree -> Expression
-InterpolationTree -> FormattedExpression
-
-ExpressionTree -> Expression
-
-InvocationTree -> Invocation
-
-Expression -> id
-Expression -> Literal
-Expression -> ElementAccessExpression
-Expression -> PropertyAccessExpression
-
-Literal -> string
-Literal -> number
-
-ElementAccessExpression -> Expression [ Expression ]
-PropertyAccessExpression -> Expression . id
-FormattedExpression -> Expression |> Invocation
-
-Invocation -> Expression ( ParameterList )
-
-ParameterList -> ''
-ParameterList -> Parameter
-ParameterList -> Parameter , ParameterList
-
-Parameter -> Expression
-Parameter -> #
-
- */
 
 export abstract class BindingNode {
 
@@ -447,5 +418,109 @@ export class ParameterList extends BindingNode {
       .map(parameter => parameter.getUsedMembers())
       .reduce((acc, curr) => [...acc, ...curr])
   }
+
+}
+
+export class ConditionalExpression extends BindingNode {
+
+  @rule(() => [ExclamationMarkToken, Expression])
+  public static acceptNegatedExpression (exclamationMarkToken: ExclamationMarkToken,
+                                         expression: Expression) {
+    return new ConditionalExpression(exclamationMarkToken, expression)
+  }
+
+  @rule(() => [Expression])
+  public static acceptExpression (expression: Expression) {
+    return new ConditionalExpression(null, expression)
+  }
+
+  public constructor (private readonly exclamationMarkToken: ExclamationMarkToken | null,
+                      private readonly expression: Expression) {
+    super()
+  }
+
+  public getExpression () { return this.expression}
+
+  public isNegated () { return this.exclamationMarkToken != null }
+
+  public getChildren (): Array<BindingNode> { return [this.expression] }
+
+  public getStart (): number {
+    return this.exclamationMarkToken == null
+      ? this.expression.getStart()
+      : this.exclamationMarkToken.getStartOrThrow()
+  }
+
+  public getEnd (): number { return this.expression.getEnd() }
+
+  public getUsedMembers (): Array<Identifier> { return this.expression.getUsedMembers() }
+
+  public toString (): string { return `ConditionalExpression` }
+
+}
+
+export class RepeatingInstruction extends BindingNode {
+
+  @rule(() => [ConstKeywordToken, Identifier, OfKeywordToken, Expression])
+  public static acceptBasic (constKeywordToken: ConstKeywordToken,
+                             identifier: Identifier,
+                             ofKeywordToken: OfKeywordToken,
+                             expression: Expression) {
+    return new RepeatingInstruction(null, identifier, expression, constKeywordToken, null, null, ofKeywordToken)
+  }
+
+  @rule(() => [
+    ConstKeywordToken,
+    OpenSquareBracketToken,
+    Identifier,
+    CommaToken,
+    Identifier,
+    CloseSquareBracketToken,
+    OfKeywordToken,
+    Expression,
+  ])
+  public static acceptExtended (constKeywordToken: ConstKeywordToken,
+                                openSquareBracketToken: OpenSquareBracketToken,
+                                indexDeclaration: Identifier,
+                                commaToken: CommaToken,
+                                valueDeclaration: Identifier,
+                                closeSquareBracketToken: CloseSquareBracketToken,
+                                ofKeywordToken: OfKeywordToken,
+                                expression: Expression) {
+    return new RepeatingInstruction(
+      indexDeclaration,
+      valueDeclaration,
+      expression,
+      constKeywordToken,
+      openSquareBracketToken,
+      closeSquareBracketToken,
+      ofKeywordToken,
+    )
+  }
+
+  public constructor (private readonly indexDeclaration: Identifier | null,
+                      private readonly valueDeclaration: Identifier,
+                      private readonly arrayExpression: Expression,
+                      private readonly constKeywordToken: ConstKeywordToken,
+                      private readonly openSquareBracketToken: OpenSquareBracketToken | null,
+                      private readonly closeSquareBracketToken: CloseSquareBracketToken | null,
+                      private readonly ofKeywordToken: OfKeywordToken) {
+    super()
+  }
+
+  public getChildren (): Array<BindingNode> {
+    const array = [this.valueDeclaration, this.arrayExpression]
+    if (this.indexDeclaration != null) return array
+    array.push(this.indexDeclaration!)
+    return array
+  }
+
+  public getStart (): number { return this.constKeywordToken.getStartOrThrow() }
+
+  public getEnd (): number { return this.arrayExpression.getEnd() }
+
+  public getUsedMembers (): Array<Identifier> { return this.arrayExpression.getUsedMembers() }
+
+  public toString () { return `RepeatingInstruction<${this.arrayExpression.toString()}>` }
 
 }

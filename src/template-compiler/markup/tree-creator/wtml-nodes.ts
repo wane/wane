@@ -13,7 +13,7 @@ import {
   parseExpression,
   parseInvocation,
   InterpolationTree,
-  parseInterpolation,
+  parseInterpolation, parseConditionalExpression, parseRepeatingInstruction,
 } from '../../binding'
 import {
   TraversalControl,
@@ -30,6 +30,7 @@ import { Guard, Predicate } from '../../../libs/helper-types'
 import * as tg from 'type-guards'
 import { isInstance } from '../../../libs/is-instance-ts'
 import { TagNamesLists } from './lists'
+import { ConditionalExpressionTree, RepeatingInstructionTree } from '../../binding/tree-creator'
 
 
 export abstract class WtmlNode {
@@ -347,16 +348,31 @@ export class WtmlComponentNode extends WtmlElementNode {
 export class WtmlAttribute {
 
   public static Create (attribute: Attribute): WtmlAttribute {
+    const name = attribute.getName()
+    const value = attribute.getValue()
+
     if (attribute instanceof PlainAttribute) {
       return attribute.isBoolean()
-        ? new WtmlBooleanAttribute(attribute.getName())
-        : new WtmlPlainAttribute(attribute.getName(), attribute.getValue())
+        ? new WtmlBooleanAttribute(name)
+        : new WtmlPlainAttribute(name, value)
     } else if (attribute instanceof ExpressionAttribute) {
-      const tree = parseExpression(attribute.getValue())
-      return new WtmlBracketedAttribute(attribute.getName(), tree)
+      switch (name) {
+        case 'w-if': {
+          const tree = parseConditionalExpression(value)
+          return new WtmlConditionalAttribute(name, tree)
+        }
+        case 'w-for': {
+          const tree = parseRepeatingInstruction(value)
+          return new WtmlRepeatingAttribute(name, tree)
+        }
+        default: {
+          const tree = parseExpression(value)
+          return new WtmlBracketedAttribute(name, tree)
+        }
+      }
     } else if (attribute instanceof InvocationAttribute) {
-      const tree = parseInvocation(attribute.getValue())
-      return new WtmlParenthesisedAttribute(attribute.getName(), tree)
+      const tree = parseInvocation(value)
+      return new WtmlParenthesisedAttribute(name, tree)
     } else {
       throw new Error(`Unknown type of attribute.`)
     }
@@ -400,6 +416,24 @@ export class WtmlBracketedAttribute extends WtmlAttributeWithValue<ExpressionTre
 }
 
 export class WtmlParenthesisedAttribute extends WtmlAttributeWithValue<InvocationTree> {
+
+  /**
+   * @alias getValue
+   */
+  public getBindingSyntaxTree () { return this.getValue() }
+
+}
+
+export class WtmlConditionalAttribute extends WtmlAttributeWithValue<ConditionalExpressionTree> {
+
+  /**
+   * @alias getValue
+   */
+  public getBindingSyntaxTree () { return this.getValue() }
+
+}
+
+export class WtmlRepeatingAttribute extends WtmlAttributeWithValue<RepeatingInstructionTree> {
 
   /**
    * @alias getValue

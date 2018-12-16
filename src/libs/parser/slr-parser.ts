@@ -747,6 +747,7 @@ export class ShiftReducer {
     console.error(`------------------------------------------------------------`)
     console.error(this.table.toString())
     console.error(`------------------------------------------------------------`)
+    console.error(this.terminals.join(' '))
     console.error(this.logger.getAll().join('\n'))
     console.error(`============================================================`)
   }
